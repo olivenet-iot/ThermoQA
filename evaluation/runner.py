@@ -24,9 +24,26 @@ from evaluation.scorer import (
 
 
 SYSTEM_PROMPT = (
-    "You are a thermodynamics expert. Answer the following thermodynamics question. "
-    "Provide numerical values with their units. For steam/water properties, use "
-    "standard steam table values."
+    "You are a thermodynamics expert. Answer the following thermodynamics question.\n"
+    "Show your reasoning, then report your final numerical answers clearly using "
+    "standard symbols in exactly this format:\n\n"
+    "[symbol] = [value] [unit]\n\n"
+    "Examples:\n"
+    "h = 2943.12 kJ/kg\n"
+    "s = 6.9265 kJ/(kg·K)\n"
+    "v = 0.1386 m³/kg\n"
+    "T_sat = 179.9 °C\n"
+    "P_sat = 1002.7 kPa\n"
+    "h_f = 762.6 kJ/kg\n"
+    "h_g = 2778.1 kJ/kg\n"
+    "s_f = 2.138 kJ/(kg·K)\n"
+    "s_g = 6.586 kJ/(kg·K)\n"
+    "v_f = 0.001127 m³/kg\n"
+    "v_g = 0.1944 m³/kg\n"
+    "u = 2583.6 kJ/kg\n"
+    "rho = 997.0 kg/m³\n"
+    "x = 0.85\n"
+    "Phase: superheated vapor"
 )
 
 
@@ -220,7 +237,7 @@ class DeepSeekProvider(OpenAICompatibleProvider):
 
 class GoogleProvider(BaseProvider):
     name = "google"
-    model = "gemini-2.5-flash"
+    model = "gemini-3.1-pro-preview"
     is_thinking = False
 
     def __init__(self, **kwargs):

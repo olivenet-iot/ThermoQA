@@ -32,6 +32,27 @@ CATEGORY_CODES = {
 DEFAULT_TOLERANCE_PCT = 2.0
 DEFAULT_ABS_TOLERANCE = 0.5
 
+# Answer format hints: map expected keys to symbol + unit hint
+ANSWER_HINTS = {
+    "h_kJ_kg": "h = ___ kJ/kg",
+    "s_kJ_kgK": "s = ___ kJ/(kg\u00b7K)",
+    "v_m3_kg": "v = ___ m\u00b3/kg",
+    "u_kJ_kg": "u = ___ kJ/kg",
+    "rho_kg_m3": "rho = ___ kg/m\u00b3",
+    "T_C": "T = ___ \u00b0C",
+    "T_sat_C": "T_sat = ___ \u00b0C",
+    "P_kPa": "P = ___ kPa",
+    "P_sat_kPa": "P_sat = ___ kPa",
+    "h_f_kJ_kg": "h_f = ___ kJ/kg",
+    "h_g_kJ_kg": "h_g = ___ kJ/kg",
+    "s_f_kJ_kgK": "s_f = ___ kJ/(kg\u00b7K)",
+    "s_g_kJ_kgK": "s_g = ___ kJ/(kg\u00b7K)",
+    "v_f_m3_kg": "v_f = ___ m\u00b3/kg",
+    "v_g_m3_kg": "v_g = ___ m\u00b3/kg",
+    "x": "x = ___",
+    "phase_name": "Phase: ___",
+}
+
 # Phase aliases for exact-match scoring
 PHASE_ALIASES = {
     "subcooled_liquid": [
@@ -75,25 +96,38 @@ def _format_expected(prop_key: str, result: dict) -> dict:
     }
 
 
-def _format_question_text(template, params: dict) -> str:
-    """Select and format a question template string with parameters."""
+def _format_question_text(template, params: dict, target_properties: list | None = None) -> str:
+    """Select and format a question template string with parameters.
+
+    If target_properties is provided, appends an answer format hint line.
+    """
     # Use a deterministic index based on parameter values
     idx = hash(frozenset(params.items())) % len(template.question_templates)
 
     # Try templates starting from idx, cycling through all options
     templates = template.question_templates
+    text = None
     for i in range(len(templates)):
         tmpl = templates[(idx + i) % len(templates)]
         try:
-            return tmpl.format(**params)
+            text = tmpl.format(**params)
+            break
         except (KeyError, ValueError, IndexError):
             continue
 
-    # Last resort: manual substitution
-    result = templates[0]
-    for k, v in params.items():
-        result = result.replace("{" + k + "}", str(v))
-    return result
+    if text is None:
+        # Last resort: manual substitution
+        text = templates[0]
+        for k, v in params.items():
+            text = text.replace("{" + k + "}", str(v))
+
+    # Append answer format hint
+    if target_properties:
+        hints = [ANSWER_HINTS[k] for k in target_properties if k in ANSWER_HINTS]
+        if hints:
+            text += "\n\nReport your answers as:\n" + "\n".join(hints)
+
+    return text
 
 
 def generate_tier1_questions(output_dir: str, total_target: int = 110,
@@ -147,7 +181,7 @@ def generate_tier1_questions(output_dir: str, total_target: int = 110,
             verified = cross_verify(params, results, fluid="Water")
 
             # Format question text
-            question_text = _format_question_text(template, params)
+            question_text = _format_question_text(template, params, template.target_properties)
 
             # Build expected dict
             expected = {}
