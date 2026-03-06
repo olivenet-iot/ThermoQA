@@ -1,0 +1,202 @@
+# ThermoQA Tier 1 Property Taxonomy
+# Fluid: Water/Steam only (Phase 1)
+# Defines the complete space of Tier 1 questions
+# Total target: 110 questions
+
+fluid: Water  # CoolProp fluid string
+
+# CoolProp 7.2.0 phase index mapping (verified experimentally)
+phase_map:
+  0: subcooled_liquid         # iphase_liquid
+  1: supercritical            # iphase_supercritical (T>Tc AND P>Pc)
+  2: supercritical_gas        # iphase_supercritical_gas (T>Tc, P<Pc)
+  3: supercritical_liquid     # iphase_supercritical_liquid (T<Tc, P>Pc)
+  5: superheated_vapor        # iphase_gas
+  6: wet_steam                # iphase_twophase
+
+# Normalized phase names for scoring (multiple CoolProp indices -> one name)
+phase_normalization:
+  subcooled_liquid: [0, 3]          # liquid + supercritical_liquid (P>Pc, T<Tc)
+  superheated_vapor: [2, 5]         # supercritical_gas + gas (both are superheated when P<Pc)
+  supercritical: [1]                # true supercritical (T>Tc AND P>Pc)
+  wet_steam: [6]                    # two-phase
+
+# Critical point reference
+critical_point:
+  T_crit_C: 373.946
+  T_crit_K: 647.096
+  P_crit_kPa: 22064.0
+  P_crit_Pa: 22064000.0
+
+# Dead state reference
+dead_state:
+  T0_C: 25.0
+  T0_K: 298.15
+  P0_kPa: 101.325
+  P0_Pa: 101325.0
+
+categories:
+  subcooled_liquid:
+    code: SL
+    description: "Compressed/subcooled liquid: T < T_sat at given P"
+    given_pairs: [[T_C, P_kPa]]
+    target_properties: [h, s, v, u, rho, phase_name]
+    param_ranges:
+      T_C: [20, 300]
+      P_kPa: [500, 15000]
+    constraints:
+      - "T_C < T_sat(P_kPa) - 5"
+    n_questions: 10
+    difficulty: easy
+    notes: >
+      Ensure T is at least 5C below T_sat(P) to avoid near-boundary ambiguity.
+      Use higher pressures to allow wider subcooled range.
+
+  saturated_liquid:
+    code: SF
+    description: "Saturated liquid on the saturation curve, x = 0"
+    given_pairs: [[P_kPa], [T_C]]
+    target_properties: [T_sat, P_sat, h_f, s_f, v_f, u_f, rho_f]
+    param_ranges:
+      P_kPa: [100, 10000]
+      T_C: [100, 311]
+    constraints: []
+    n_questions: 12
+    difficulty: easy-medium
+    notes: >
+      Include both P-given and T-given variants.
+      P-given: 8 questions. T-given: 4 questions.
+
+  wet_steam:
+    code: WS
+    description: "Two-phase mixture, 0 < x < 1"
+    given_pairs: [[P_kPa, x], [T_C, x], [P_kPa, h_kJ_kg], [P_kPa, s_kJ_kgK]]
+    target_properties: [h, s, v, u, T_sat, P_sat, x, phase_name]
+    param_ranges:
+      P_kPa: [100, 8000]
+      T_C: [100, 295]
+      x: [0.1, 0.95]
+    constraints:
+      - "0.1 <= x <= 0.95"
+    n_questions: 18
+    difficulty: medium-hard
+    notes: >
+      Most discriminating category. Models often fail wet steam.
+      Include inverse problems: given h and P, find x.
+      P,x given: 8 questions. T,x given: 3 questions.
+      P,h inverse: 4 questions. P,s inverse: 3 questions.
+
+  saturated_vapor:
+    code: SV
+    description: "Saturated vapor on the saturation curve, x = 1"
+    given_pairs: [[P_kPa], [T_C]]
+    target_properties: [T_sat, P_sat, h_g, s_g, v_g, u_g, rho_g]
+    param_ranges:
+      P_kPa: [100, 10000]
+      T_C: [100, 311]
+    constraints: []
+    n_questions: 10
+    difficulty: easy-medium
+    notes: >
+      Include both P-given and T-given variants.
+      P-given: 7 questions. T-given: 3 questions.
+
+  superheated_vapor:
+    code: SH
+    description: "Superheated vapor: T > T_sat at given P"
+    given_pairs: [[T_C, P_kPa]]
+    target_properties: [h, s, v, u, rho, phase_name]
+    param_ranges:
+      T_C: [120, 600]
+      P_kPa: [100, 15000]
+    constraints:
+      - "T_C > T_sat(P_kPa) + 10"
+      - "P_kPa < P_crit"
+    n_questions: 20
+    difficulty: easy-medium
+    notes: >
+      Most common engineering scenario.
+      Ensure T > T_sat(P) + 10C minimum superheat.
+      Include high superheat (500C+) and moderate superheat cases.
+      Spread across low, medium, and high pressure ranges.
+
+  supercritical:
+    code: SC
+    description: "Supercritical fluid: T > T_crit AND P > P_crit"
+    given_pairs: [[T_C, P_kPa]]
+    target_properties: [h, s, v, u, rho, phase_name]
+    param_ranges:
+      T_C: [375, 600]
+      P_kPa: [22500, 35000]
+    constraints:
+      - "T_C > 373.946"
+      - "P_kPa > 22064"
+    n_questions: 10
+    difficulty: hard
+    notes: >
+      Edge case. Many models don't know the critical point.
+      Very discriminating. Both T and P must exceed critical values.
+
+  phase_determination:
+    code: PD
+    description: "Given T and P, determine the phase (no property calculation needed)"
+    given_pairs: [[T_C, P_kPa]]
+    target_properties: [phase_name]
+    param_ranges:
+      T_C: [20, 600]
+      P_kPa: [50, 35000]
+    constraints: []
+    n_questions: 15
+    difficulty: easy-hard
+    notes: >
+      Include deliberately constructed cases:
+      3 obviously subcooled (T well below T_sat)
+      3 obviously superheated (T well above T_sat)
+      3 near saturation boundary (within 2-5C of T_sat)
+      3 supercritical (T>Tc, P>Pc)
+      3 tricky (near critical point, high pressure subcooled, etc.)
+
+  inverse_lookups:
+    code: IL
+    description: "Given property values, find T, P, x, or phase"
+    given_pairs: [[P_kPa, h_kJ_kg], [P_kPa, s_kJ_kgK], [T_C, h_kJ_kg], [h_kJ_kg, s_kJ_kgK]]
+    target_properties: [T_C, P_kPa, x, phase_name]
+    param_ranges:
+      T_C: [50, 550]
+      P_kPa: [100, 15000]
+    constraints: []
+    n_questions: 15
+    difficulty: medium-hard
+    notes: >
+      Hardest Tier 1 category. Requires state determination from properties.
+      P,h -> T: 4 questions (various phases)
+      P,s -> T: 4 questions (various phases)
+      T,h -> P: 3 questions
+      h,s -> T,P: 4 questions
+
+# Scoring configuration
+scoring:
+  numerical:
+    tolerance_pct: 2.0
+    abs_tolerance: 0.5
+    method: "pass if relative_error <= tolerance_pct% OR absolute_error <= abs_tolerance"
+  phase:
+    type: exact_match
+    acceptable_aliases:
+      subcooled_liquid: ["subcooled", "compressed liquid", "subcooled liquid", "liquid"]
+      superheated_vapor: ["superheated", "superheated vapor", "superheated steam", "vapor", "gas"]
+      wet_steam: ["two-phase", "two phase", "wet steam", "mixture", "liquid-vapor mixture", "saturated mixture"]
+      supercritical: ["supercritical", "supercritical fluid"]
+      saturated_liquid: ["saturated liquid", "saturated water"]
+      saturated_vapor: ["saturated vapor", "saturated steam", "dry saturated steam"]
+
+# Unit conventions for questions (engineering units, not SI)
+units:
+  temperature: "C"      # Celsius in questions
+  pressure: "kPa"       # kPa in questions (except where MPa is clearer)
+  enthalpy: "kJ/kg"
+  entropy: "kJ/(kg*K)"
+  specific_volume: "m3/kg"
+  internal_energy: "kJ/kg"
+  density: "kg/m3"
+  quality: "dimensionless"
