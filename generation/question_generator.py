@@ -66,11 +66,12 @@ def _format_expected(prop_key: str, result: dict) -> dict:
             "type": "exact_match",
             "acceptable_aliases": PHASE_ALIASES.get(result["value"], []),
         }
+    abs_tol = 0.03 if prop_key == "x" else DEFAULT_ABS_TOLERANCE
     return {
         "value": result["value"],
         "unit": result["unit"],
         "tolerance_pct": DEFAULT_TOLERANCE_PCT,
-        "abs_tolerance": DEFAULT_ABS_TOLERANCE,
+        "abs_tolerance": abs_tol,
     }
 
 

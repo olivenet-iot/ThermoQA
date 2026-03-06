@@ -230,20 +230,31 @@ def sample_supercritical(template: PropertyTemplate, count: int,
 
 def sample_phase_obvious(template: PropertyTemplate, count: int,
                           rng: np.random.Generator) -> list[dict]:
-    """Sample obviously subcooled or superheated states for phase determination."""
-    params = []
-    half = count // 2
-    # Obviously subcooled
-    for P in _stratified_sample(rng, 200, 10000, half):
+    """Sample obviously subcooled, superheated, and supercritical states for phase determination.
+
+    Guarantees phase diversity: ~1/3 subcooled, ~1/2 superheated, ~1/6 supercritical.
+    Uses quota-based assembly so over-sampling doesn't skew the distribution.
+    """
+    # Fixed quotas based on desired count (not the over-sampled count)
+    # For count=6: 2 subcooled, 3 superheated, 1 supercritical
+    # For larger counts: roughly same proportions
+    n_supercritical = max(1, count // 6)
+    n_subcooled = max(1, count // 3)
+    n_superheated = max(1, count - n_subcooled - n_supercritical)
+
+    # Generate each bucket with +2 overshoot for CoolProp failures
+    subcooled = []
+    for P in _stratified_sample(rng, 200, 10000, n_subcooled + 2):
         P = _round_pressure(P)
         try:
             T_sat = _t_sat_c(P)
         except Exception:
             continue
         T = _round_temperature(rng.uniform(20, max(25, T_sat - 30)))
-        params.append({"T_C": float(T), "P_kPa": float(P)})
-    # Obviously superheated
-    for P in _stratified_sample(rng, 100, 10000, count - half):
+        subcooled.append({"T_C": float(T), "P_kPa": float(P)})
+
+    superheated = []
+    for P in _stratified_sample(rng, 100, 10000, n_superheated + 2):
         P = _round_pressure(P)
         try:
             T_sat = _t_sat_c(P)
@@ -253,7 +264,21 @@ def sample_phase_obvious(template: PropertyTemplate, count: int,
         if T_min > 600:
             continue
         T = _round_temperature(rng.uniform(T_min, 600))
-        params.append({"T_C": float(T), "P_kPa": float(P)})
+        superheated.append({"T_C": float(T), "P_kPa": float(P)})
+
+    supercritical = []
+    for T, P in zip(
+        _stratified_sample(rng, 400, 550, n_supercritical + 2),
+        _stratified_sample(rng, 25000, 35000, n_supercritical + 2),
+    ):
+        supercritical.append({
+            "T_C": float(_round_temperature(T)),
+            "P_kPa": float(_round_pressure(P)),
+        })
+
+    # Take exact quotas from each bucket
+    params = subcooled[:n_subcooled] + superheated[:n_superheated] + supercritical[:n_supercritical]
+    rng.shuffle(params)
     return params[:count]
 
 
@@ -262,7 +287,7 @@ def sample_phase_near_boundary(template: PropertyTemplate, count: int,
     """Sample states near the saturation boundary (within 2-5C of T_sat)."""
     params = []
     pressures = _stratified_sample(rng, 100, 15000, count)
-    for P in pressures:
+    for i, P in enumerate(pressures):
         P = _round_pressure(P)
         if P >= P_CRIT_KPA:
             P = 15000.0
@@ -270,12 +295,11 @@ def sample_phase_near_boundary(template: PropertyTemplate, count: int,
             T_sat = _t_sat_c(P)
         except Exception:
             continue
-        # Randomly above or below T_sat
-        if rng.random() < 0.5:
-            offset = rng.uniform(2, 5)
+        # Alternate deterministically: even index → below (subcooled), odd → above (superheated)
+        offset = rng.uniform(2, 5)
+        if i % 2 == 0:
             T = round(T_sat - offset, 1)
         else:
-            offset = rng.uniform(2, 5)
             T = round(T_sat + offset, 1)
         params.append({"T_C": float(T), "P_kPa": float(P)})
     return params[:count]
@@ -322,12 +346,21 @@ def sample_inverse_Ph_T(template: PropertyTemplate, count: int,
     """Generate forward state, compute h, present as P,h -> T inverse problem."""
     params = []
     pressures = _stratified_sample(rng, 200, 12000, count)
-    for P in pressures:
+    for i, P in enumerate(pressures):
         P = _round_pressure(P)
         P_Pa = P * 1000
         try:
             if P >= P_CRIT_KPA:
                 T_C = _round_temperature(rng.uniform(380, 550))
+            elif i % 4 == 0 and P < P_CRIT_KPA:
+                # Subcooled state: T well below T_sat
+                T_sat = _t_sat_c(P)
+                T_max = T_sat - 10
+                if T_max < 25:
+                    T_sat = _t_sat_c(P)
+                    T_C = _round_temperature(rng.uniform(T_sat + 20, min(600, T_sat + 300)))
+                else:
+                    T_C = _round_temperature(rng.uniform(25, T_max))
             else:
                 T_sat = _t_sat_c(P)
                 T_C = _round_temperature(rng.uniform(T_sat + 20, min(600, T_sat + 300)))
@@ -347,12 +380,21 @@ def sample_inverse_Ps_T(template: PropertyTemplate, count: int,
     """Generate forward state, compute s, present as P,s -> T inverse problem."""
     params = []
     pressures = _stratified_sample(rng, 200, 12000, count)
-    for P in pressures:
+    for i, P in enumerate(pressures):
         P = _round_pressure(P)
         P_Pa = P * 1000
         try:
             if P >= P_CRIT_KPA:
                 T_C = _round_temperature(rng.uniform(380, 550))
+            elif i % 4 == 0 and P < P_CRIT_KPA:
+                # Subcooled state: T well below T_sat
+                T_sat = _t_sat_c(P)
+                T_max = T_sat - 10
+                if T_max < 25:
+                    T_sat = _t_sat_c(P)
+                    T_C = _round_temperature(rng.uniform(T_sat + 20, min(600, T_sat + 300)))
+                else:
+                    T_C = _round_temperature(rng.uniform(25, T_max))
             else:
                 T_sat = _t_sat_c(P)
                 T_C = _round_temperature(rng.uniform(T_sat + 20, min(600, T_sat + 300)))
@@ -377,9 +419,16 @@ def sample_inverse_hs_TP(template: PropertyTemplate, count: int,
                            rng: np.random.Generator) -> list[dict]:
     """Generate forward state, compute h and s, present as h,s -> T,P."""
     params = []
-    targets = [
-        (400, 5000), (250, 1000), (500, 10000), (350, 3000),
+
+    # Superheated targets (T, P in kPa)
+    sh_targets = [
+        (400, 5000), (250, 1000), (500, 10000),
     ]
+    # Subcooled target
+    sl_targets = [
+        (80, 5000),
+    ]
+    targets = sh_targets + sl_targets
     rng.shuffle(targets)
     for T_C, P in targets[:count]:
         P_Pa = P * 1000
