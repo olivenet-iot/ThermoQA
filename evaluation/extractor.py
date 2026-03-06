@@ -7,6 +7,13 @@ import re
 from generation.question_generator import PHASE_ALIASES
 
 
+def strip_thinking_tags(text: str) -> str:
+    """Remove <think>...</think> and <reasoning>...</reasoning> blocks from text."""
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    text = re.sub(r"<reasoning>.*?</reasoning>", "", text, flags=re.DOTALL)
+    return text
+
+
 # Regex patterns for each property key.
 # Each key maps to a list of (pattern, conversion_factor) tuples.
 # Patterns are tried in order; the LAST match in the text wins
@@ -213,7 +220,8 @@ def extract_properties(
     Returns:
         Dict mapping each expected key to an extracted value (float, str, or None if not found).
     """
-    text = _preprocess(response_text)
+    text = strip_thinking_tags(response_text)
+    text = _preprocess(text)
     result: dict[str, float | str | None] = {}
 
     for key in expected_keys:

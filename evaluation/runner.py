@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from evaluation.extractor import extract_properties
+from evaluation.extractor import extract_properties, strip_thinking_tags
 from evaluation.scorer import (
     DatasetResults,
     QuestionResult,
@@ -172,6 +172,12 @@ class OpenAICompatibleProvider(BaseProvider):
         thinking = getattr(choice.message, "reasoning_content", None)
         raw = (thinking + "\n" + text) if thinking else text
 
+        # Strip inline thinking tags (e.g. MiniMax <think>...</think>)
+        text_clean = strip_thinking_tags(text)
+        if text_clean != text and not thinking:
+            thinking = text  # preserve original as thinking_text
+        text = text_clean
+
         usage = response.usage
         return ProviderResponse(
             text=text,
@@ -239,7 +245,7 @@ class GoogleProvider(BaseProvider):
         )
         latency = time.monotonic() - t0
 
-        text = response.text or ""
+        text = strip_thinking_tags(response.text or "")
         # Collect all parts for raw_text
         raw_parts = []
         if response.candidates:
@@ -291,10 +297,11 @@ class OllamaProvider(BaseProvider):
             body = json.loads(resp.read())
         latency = time.monotonic() - t0
 
-        text = body.get("response", "")
+        raw_text = body.get("response", "")
+        text = strip_thinking_tags(raw_text)
         return ProviderResponse(
             text=text,
-            raw_text=text,
+            raw_text=raw_text,
             thinking_text=None,
             model=self.model,
             latency_s=latency,
@@ -396,6 +403,12 @@ def run_evaluation(
             for i, q in enumerate(pending, 1):
                 qid = q["id"]
                 expected_keys = list(q["expected"].keys())
+
+                # Show progress before the (potentially slow) API call
+                sys.stdout.write(
+                    f"\r  [{len(completed) + i}/{len(questions)}] {qid} ..."
+                )
+                sys.stdout.flush()
 
                 try:
                     resp = provider.generate(SYSTEM_PROMPT, q["question"])
