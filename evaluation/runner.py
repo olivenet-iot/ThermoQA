@@ -238,7 +238,7 @@ class DeepSeekProvider(OpenAICompatibleProvider):
 class GoogleProvider(BaseProvider):
     name = "google"
     model = "gemini-3.1-pro-preview"
-    is_thinking = False
+    is_thinking = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -256,26 +256,36 @@ class GoogleProvider(BaseProvider):
             contents=user_prompt,
             config=self._genai.types.GenerateContentConfig(
                 system_instruction=system_prompt,
-                temperature=0.7,
-                max_output_tokens=8000,
+                max_output_tokens=32000,
+                thinking_config=self._genai.types.ThinkingConfig(
+                    thinking_level="LOW",
+                    include_thoughts=True,
+                ),
             ),
         )
         latency = time.monotonic() - t0
 
-        text = strip_thinking_tags(response.text or "")
-        # Collect all parts for raw_text
-        raw_parts = []
+        # Separate thinking parts from answer parts
+        thinking_parts = []
+        answer_parts = []
         if response.candidates:
             for part in response.candidates[0].content.parts:
                 if hasattr(part, "text") and part.text:
-                    raw_parts.append(part.text)
-        raw = "\n".join(raw_parts) if raw_parts else text
+                    if getattr(part, "thought", False):
+                        thinking_parts.append(part.text)
+                    else:
+                        answer_parts.append(part.text)
+
+        thinking_text = "\n".join(thinking_parts) if thinking_parts else None
+        text = "\n".join(answer_parts) if answer_parts else (response.text or "")
+        text = strip_thinking_tags(text)
+        raw = "\n".join(thinking_parts + answer_parts) if (thinking_parts or answer_parts) else text
 
         usage = getattr(response, "usage_metadata", None)
         return ProviderResponse(
             text=text,
             raw_text=raw,
-            thinking_text=None,
+            thinking_text=thinking_text,
             model=self.model,
             latency_s=latency,
             input_tokens=getattr(usage, "prompt_token_count", None) if usage else None,
