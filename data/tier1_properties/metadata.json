@@ -1,0 +1,30 @@
+{
+  "total_questions": 110,
+  "target": 110,
+  "tier": 1,
+  "fluid": "Water",
+  "coolprop_version": "7.2.0",
+  "generated_at": "2026-03-06T13:05:56.918762+00:00",
+  "seed": 42,
+  "category_distribution": {
+    "subcooled_liquid": 10,
+    "saturated_liquid": 12,
+    "wet_steam": 18,
+    "saturated_vapor": 10,
+    "superheated_vapor": 20,
+    "supercritical": 10,
+    "phase_determination": 15,
+    "inverse_lookups": 15
+  },
+  "difficulty_distribution": {
+    "easy": 52,
+    "medium": 30,
+    "hard": 28
+  },
+  "warnings": [],
+  "scoring": {
+    "numerical_tolerance_pct": 2.0,
+    "absolute_tolerance": 0.5,
+    "phase_matching": "exact_match_with_aliases"
+  }
+}
