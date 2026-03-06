@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "thermoqa"
+version = "0.1.0"
+description = "A benchmark for evaluating thermodynamic reasoning in large language models"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Kemal Düzkar"},
+]
+keywords = ["thermodynamics", "benchmark", "llm", "evaluation", "steam-tables"]
+
+dependencies = [
+    "CoolProp>=6.6.0",
+    "numpy>=1.24.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Repository = "https://github.com/olivenet-iot/ThermoQA"
