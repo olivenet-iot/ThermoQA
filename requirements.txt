@@ -1,3 +1,8 @@
 CoolProp>=6.6.0
 numpy>=1.24.0
 pyyaml>=6.0
+
+# API providers (install as needed)
+# anthropic>=0.80.0
+# openai>=1.50.0
+# google-genai>=1.0.0
