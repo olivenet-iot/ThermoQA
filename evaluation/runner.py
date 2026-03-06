@@ -102,7 +102,7 @@ class BaseProvider(ABC):
 
 class AnthropicProvider(BaseProvider):
     name = "anthropic"
-    model = "claude-opus-4-6-20250612"
+    model = "claude-opus-4-6"
     is_thinking = True
 
     def __init__(self, **kwargs):
@@ -118,10 +118,7 @@ class AnthropicProvider(BaseProvider):
         message = self._client.messages.create(
             model=self.model,
             max_tokens=16000,
-            thinking={
-                "type": "enabled",
-                "budget_tokens": 10000,
-            },
+            thinking={"type": "adaptive"},
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )
