@@ -117,8 +117,8 @@ class AnthropicProvider(BaseProvider):
         t0 = time.monotonic()
         message = self._client.messages.create(
             model=self.model,
-            max_tokens=16000,
-            thinking={"type": "enabled", "budget_tokens": 32000},
+            max_tokens=64000,
+            thinking={"type": "adaptive"},
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )
@@ -463,10 +463,9 @@ def run_evaluation(
                         time.sleep(delay_s)
                     continue
 
-                if not resp.text.strip():
-                    print(f"\n  WARNING: {qid} response_text is empty")
-
-                extracted = extract_properties(resp.text, expected_keys)
+                # Fallback: Opus adaptive may put everything in thinking block
+                extraction_text = resp.text if resp.text.strip() else (resp.thinking_text or "")
+                extracted = extract_properties(extraction_text, expected_keys)
                 qr = score_question(q, extracted)
 
                 n_scored += 1
