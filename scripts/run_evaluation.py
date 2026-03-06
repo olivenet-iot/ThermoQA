@@ -49,8 +49,8 @@ def main():
         help="Delay between API calls in seconds (default: 1.0)",
     )
     parser.add_argument(
-        "--timeout", type=float, default=120.0,
-        help="API timeout in seconds (default: 120)",
+        "--timeout", type=float, default=300.0,
+        help="API timeout in seconds (default: 300)",
     )
     parser.add_argument(
         "--report",

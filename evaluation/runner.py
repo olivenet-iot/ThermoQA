@@ -67,7 +67,7 @@ class BaseProvider(ABC):
     timeout: float
     max_retries: int
 
-    def __init__(self, model: str | None = None, timeout: float = 120.0,
+    def __init__(self, model: str | None = None, timeout: float = 300.0,
                  max_retries: int = 3):
         if model is not None:
             self.model = model
