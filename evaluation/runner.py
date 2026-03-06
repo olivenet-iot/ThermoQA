@@ -118,7 +118,7 @@ class AnthropicProvider(BaseProvider):
         message = self._client.messages.create(
             model=self.model,
             max_tokens=16000,
-            thinking={"type": "adaptive"},
+            thinking={"type": "enabled", "budget_tokens": 32000},
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )
@@ -462,6 +462,9 @@ def run_evaluation(
                     if delay_s > 0:
                         time.sleep(delay_s)
                     continue
+
+                if not resp.text.strip():
+                    print(f"\n  WARNING: {qid} response_text is empty")
 
                 extracted = extract_properties(resp.text, expected_keys)
                 qr = score_question(q, extracted)
