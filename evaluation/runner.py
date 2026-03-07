@@ -211,7 +211,7 @@ class OpenAICompatibleProvider(BaseProvider):
 
 class OpenAIProvider(OpenAICompatibleProvider):
     name = "openai"
-    model = "gpt-5.3"
+    model = "gpt-5.4"
     is_thinking = True
     api_key_env = "OPENAI_API_KEY"
 
