@@ -58,7 +58,7 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
                 "body": {
                     "model": model,
                     "max_completion_tokens": 64000,
-                    "reasoning": {"effort": "high"},
+                    "reasoning_effort": "high",
                     "messages": [
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": q["question"]},
