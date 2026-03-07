@@ -29,12 +29,22 @@ BATCH_ID_FILE = "batch_id.txt"
 MODEL = "claude-opus-4-6"
 
 
-def submit(questions_path: str, output_dir: str, model: str):
+def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | None = None):
     """Build and submit a batch of requests to the Anthropic Batches API."""
     import anthropic
 
     questions = load_questions(questions_path)
     print(f"Loaded {len(questions)} questions from {questions_path}")
+
+    if ids:
+        all_ids = {q["id"] for q in questions}
+        unknown = set(ids) - all_ids
+        if unknown:
+            print(f"ERROR: Unknown question IDs: {', '.join(sorted(unknown))}", file=sys.stderr)
+            sys.exit(1)
+        ids_set = set(ids)
+        questions = [q for q in questions if q["id"] in ids_set]
+        print(f"Filtered to {len(questions)} questions: {', '.join(ids)}")
 
     requests = []
     for q in questions:
@@ -193,20 +203,35 @@ def collect(questions_path: str, output_dir: str, model: str):
 
         entries.append(entry)
 
-    # Write responses
+    # Merge with existing responses (preserves old entries not in this batch)
     responses_path = os.path.join(output_dir, "responses.jsonl")
-    with open(responses_path, "w") as f:
-        for entry in entries:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    print(f"Wrote {len(entries)} responses to {responses_path}")
+    all_entries = {}
+    if os.path.exists(responses_path):
+        with open(responses_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    existing = json.loads(line)
+                    all_entries[existing["id"]] = existing
+        print(f"Loaded {len(all_entries)} existing responses from {responses_path}")
 
-    # Build summary (replicating _build_summary logic without provider object)
+    # New entries overwrite existing ones by ID
+    for entry in entries:
+        all_entries[entry["id"]] = entry
+    print(f"Merged: {len(entries)} new/updated + {len(all_entries) - len(entries)} unchanged = {len(all_entries)} total")
+
+    with open(responses_path, "w") as f:
+        for entry in all_entries.values():
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    print(f"Wrote {len(all_entries)} responses to {responses_path}")
+
+    # Build summary over ALL entries (not just new batch)
     responses_for_scoring = {}
     latencies = []
     input_tokens_list = []
     output_tokens_list = []
 
-    for entry in entries:
+    for entry in all_entries.values():
         responses_for_scoring[entry["id"]] = entry.get("response_text", "")
         latencies.append(entry.get("latency_s", 0))
         if entry.get("input_tokens") is not None:
@@ -221,7 +246,7 @@ def collect(questions_path: str, output_dir: str, model: str):
         "model": model,
         "batch_id": batch_id,
         "total_questions": ds.total_questions,
-        "total_responses": len(entries),
+        "total_responses": len(all_entries),
         "total_properties": ds.total_properties,
         "total_correct_properties": ds.total_correct_properties,
         "property_accuracy": round(ds.property_accuracy, 4),
@@ -303,10 +328,14 @@ def main():
         "--model", default=MODEL,
         help=f"Anthropic model to use (default: {MODEL})",
     )
+    parser.add_argument(
+        "--ids", nargs="+",
+        help="Only submit these question IDs (for re-running specific questions)",
+    )
     args = parser.parse_args()
 
     if args.submit:
-        submit(args.questions, args.output, args.model)
+        submit(args.questions, args.output, args.model, args.ids)
     elif args.status:
         status(args.output)
     elif args.collect:
