@@ -25,7 +25,7 @@ class LLMExtractor:
         self.client = anthropic.Anthropic(
             api_key=api_key or os.environ.get("ANTHROPIC_API_KEY")
         )
-        self.model = "claude-sonnet-4-6-20250514"
+        self.model = "claude-sonnet-4-6"
 
     def extract(
         self,
