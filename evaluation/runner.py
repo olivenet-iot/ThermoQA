@@ -174,7 +174,7 @@ class OpenAICompatibleProvider(BaseProvider):
         response = self._client.chat.completions.create(
             model=self.model,
             max_completion_tokens=16000,
-            reasoning={"effort": "medium"},
+            reasoning={"effort": "high"},
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
