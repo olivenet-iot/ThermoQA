@@ -118,8 +118,9 @@ PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
 
 def _preprocess(text: str) -> str:
     """Clean up markdown formatting and number separators."""
-    # Normalize LaTeX subscript braces: T_{sat} -> T_sat, h_{fg} -> h_fg, etc.
-    text = text.replace("{", "").replace("}", "")
+    # Normalize LaTeX subscript braces only around known symbols
+    # T_{sat} -> T_sat, h_{fg} -> h_fg, s_{fg} -> s_fg, P_{sat} -> P_sat, etc.
+    text = re.sub(r'([A-Za-z])_\{([A-Za-z0-9]+)\}', r'\1_\2', text)
     # Strip bold/italic markers
     text = re.sub(r"\*{1,2}([^*]+)\*{1,2}", r"\1", text)
     # Strip commas inside numbers (e.g., 2,695.3 -> 2695.3)
