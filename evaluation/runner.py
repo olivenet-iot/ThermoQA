@@ -256,7 +256,7 @@ class GoogleProvider(BaseProvider):
                 system_instruction=system_prompt,
                 max_output_tokens=32000,
                 thinking_config=self._genai.types.ThinkingConfig(
-                    thinking_level="LOW",
+                    thinking_level="HIGH",
                     include_thoughts=True,
                 ),
             ),
