@@ -82,6 +82,72 @@ class LLMExtractor:
                 logger.warning(f"Anthropic API error during extraction: {e}")
                 return {}
 
+    def extract_tier2(
+        self,
+        response_text: str,
+        expected_step_ids: list[str],
+        question_text: str = "",
+    ) -> dict[str, float | None]:
+        """Extract Tier 2 step values using Sonnet."""
+        keys_str = ", ".join(f'"{k}"' for k in expected_step_ids)
+
+        # Build unit hints for the prompt
+        unit_hints = {
+            "h1": "kJ/kg", "s1": "kJ/(kg·K)", "h2s": "kJ/kg", "h2": "kJ/kg",
+            "s2": "kJ/(kg·K)", "w_out": "kJ/kg", "w_in": "kJ/kg",
+            "s_gen": "kJ/(kg·K)", "x_dest": "kJ/kg", "eta_II": "dimensionless (0-1)",
+            "h_in": "kJ/kg", "h_out": "kJ/kg", "s_in": "kJ/(kg·K)",
+            "s_out": "kJ/(kg·K)", "q_in": "kJ/kg",
+            "h_h_in": "kJ/kg", "h_h_out": "kJ/kg", "h_c_in": "kJ/kg",
+            "h_c_out": "kJ/kg", "Q_dot": "kW", "T_c_out": "°C",
+            "s_h_in": "kJ/(kg·K)", "s_h_out": "kJ/(kg·K)",
+            "s_c_in": "kJ/(kg·K)", "s_c_out": "kJ/(kg·K)",
+            "S_gen_dot": "kW/K", "X_dest_dot": "kW",
+            "V2": "m/s", "h3": "kJ/kg", "T3": "°C", "m3": "kg/s",
+            "s3": "kJ/(kg·K)",
+        }
+        hints = [f'  "{k}": {unit_hints.get(k, "numeric")}' for k in expected_step_ids]
+
+        user_prompt = (
+            f"QUESTION:\n{question_text}\n\n"
+            f"FULL RESPONSE:\n{response_text}\n\n"
+            f"Extract the FINAL answer values for these step variables:\n"
+            + "\n".join(hints) + "\n\n"
+            f"Rules:\n"
+            f"- Return a JSON object with keys: [{keys_str}]\n"
+            f"- All values should be numbers (float)\n"
+            f"- Use null if not found\n"
+            f"- Extract ONLY final answers, ignore intermediate calculations\n"
+            f"- eta_II should be a fraction (0-1), not a percentage\n"
+            f"- Return ONLY the JSON object"
+        )
+
+        for attempt in range(2):
+            try:
+                msg = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=500,
+                    temperature=0,
+                    system=SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_prompt}],
+                )
+                text = msg.content[0].text.strip()
+                if text.startswith("```"):
+                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                    if text.endswith("```"):
+                        text = text[:-3]
+                    text = text.strip()
+                return json.loads(text)
+            except (json.JSONDecodeError, IndexError) as e:
+                if attempt == 0:
+                    logger.debug(f"JSON parse failed, retrying: {e}")
+                    continue
+                logger.warning(f"LLM Tier 2 extraction failed: {e}")
+                return {}
+            except anthropic.APIError as e:
+                logger.warning(f"Anthropic API error: {e}")
+                return {}
+
     def extract_batch(
         self, items: list[dict]
     ) -> list[dict[str, float | str | None]]:

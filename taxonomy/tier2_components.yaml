@@ -1,0 +1,407 @@
+# ThermoQA — Tier 2: Component Analysis Taxonomy
+# Draft v0.1 — 8 March 2026
+#
+# Structure mirrors tier1_properties.yaml
+# Each component has: parameter ranges, depth levels, step definitions, scoring weights
+
+meta:
+  tier: 2
+  name: "Component Analysis"
+  description: "Single steady-state flow device analysis: energy balance, entropy generation, exergy destruction"
+  target_questions: 100
+  working_fluids: ["Water", "R134a", "Air"]
+  dead_state:
+    standard: {T0: 25.0, P0: 0.1, T0_K: 298.15}  # °C, MPa — always used
+  unit_system: SI
+  scoring:
+    tolerance_relative: 0.02    # ±2%
+    tolerance_absolute: 0.5     # ±0.5 (whichever more lenient)
+    quality_tolerance: 0.03     # x ∈ [0,1]
+
+# ──────────────────────────────────────────────
+# DEPTH LEVELS
+# ──────────────────────────────────────────────
+
+depth_levels:
+  A:
+    name: "First Law (Energy Balance)"
+    steps: ["property_lookup_inlet", "property_lookup_outlet", "energy_balance"]
+    description: "Given inlet/outlet states → calculate work or heat transfer"
+    fraction: 0.30
+
+  B:
+    name: "First + Second Law (Entropy Generation)"
+    steps: ["property_lookup_inlet", "property_lookup_outlet", "energy_balance", "entropy_balance"]
+    description: "Level A + entropy generation calculation"
+    fraction: 0.35
+
+  C:
+    name: "Full Exergy Analysis"
+    steps: ["property_lookup_inlet", "property_lookup_outlet", "energy_balance", "entropy_balance", "exergy_destruction", "second_law_efficiency"]
+    description: "Level B + exergy destruction and η_II"
+    fraction: 0.35
+
+# ──────────────────────────────────────────────
+# SCORING WEIGHTS (per step category)
+# ──────────────────────────────────────────────
+
+scoring_weights:
+  property_lookup_inlet:   0.15   # h₁, s₁ (already tested in Tier 1)
+  property_lookup_outlet:  0.15   # h₂, s₂ (may require isentropic calc)
+  energy_balance:          0.30   # w, q — core first-law result
+  entropy_balance:         0.20   # s_gen — second-law
+  exergy_destruction:      0.10   # x_dest = T₀·s_gen
+  second_law_efficiency:   0.10   # η_II — most advanced
+
+# ──────────────────────────────────────────────
+# COMPONENTS
+# ──────────────────────────────────────────────
+
+components:
+
+  turbine:
+    id_prefix: "TRB"
+    count: 18
+    depths: [A, B, C]
+    description: "Adiabatic expansion device — converts enthalpy to work"
+    assumptions: ["steady-state", "adiabatic (default)", "ΔKE≈0", "ΔPE≈0"]
+    key_equation: "w_out = h₁ - h₂"
+    has_isentropic_efficiency: true
+
+    parameter_ranges:
+      Water:
+        T1: {min: 300, max: 600, unit: "°C", region: "superheated"}
+        P1: {min: 1.0, max: 15.0, unit: "MPa"}
+        P2: {min: 0.01, max: 1.0, unit: "MPa"}  # always P2 < P1
+        eta_s: {min: 0.70, max: 0.95}
+      Air:
+        T1: {min: 800, max: 1500, unit: "K"}
+        P1: {min: 0.5, max: 2.0, unit: "MPa"}
+        P2: {min: 0.1, max: 0.5, unit: "MPa"}
+        eta_s: {min: 0.80, max: 0.92}
+
+    anchor_derive:
+      anchor: [T1, P1]
+      constraints: [P2, eta_s]
+      derive_sequence:
+        - "h1, s1 = CoolProp(T=T1, P=P1)"
+        - "h2s = CoolProp(s=s1, P=P2)"
+        - "h2 = h1 - eta_s * (h1 - h2s)"
+        - "s2, T2, x2 = CoolProp(h=h2, P=P2)"
+
+    steps:
+      A:
+        - {id: "h1", formula: "CoolProp(T1, P1)", unit: "kJ/kg", weight: 0.15}
+        - {id: "s1", formula: "CoolProp(T1, P1)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "h2s", formula: "CoolProp(s=s1, P=P2)", unit: "kJ/kg", weight: 0.15}
+        - {id: "h2", formula: "h1 - eta_s*(h1-h2s)", unit: "kJ/kg", weight: 0.15}
+        - {id: "w_out", formula: "h1 - h2", unit: "kJ/kg", weight: 0.30}
+      B:  # extends A
+        - {id: "s2", formula: "CoolProp(h=h2, P=P2)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "s_gen", formula: "s2 - s1", unit: "kJ/kg·K", weight: 0.20}
+      C:  # extends B
+        - {id: "x_dest", formula: "T0_K * s_gen", unit: "kJ/kg", weight: 0.10}
+        - {id: "eta_II", formula: "w_out / (w_out + x_dest)", unit: "–", weight: 0.10}
+
+    # Alternative eta_II for turbine (SPECO):
+    # η_II = w_out / (ψ₁ - ψ₂) = w_out / [(h₁-h₂) - T₀(s₁-s₂)]
+    # Since w_out = h₁-h₂ and x_dest = T₀(s₂-s₁):
+    # η_II = w_out / (w_out + T₀(s₂-s₁)) = w_out / (w_out + x_dest)
+
+  compressor:
+    id_prefix: "CMP"
+    count: 14
+    depths: [A, B, C]
+    description: "Adiabatic compression device — work input to raise pressure"
+    assumptions: ["steady-state", "adiabatic", "ΔKE≈0", "ΔPE≈0"]
+    key_equation: "w_in = h₂ - h₁"
+    has_isentropic_efficiency: true
+
+    parameter_ranges:
+      Water:
+        T1: {min: 100, max: 300, unit: "°C", region: "superheated_low"}
+        P1: {min: 0.01, max: 0.5, unit: "MPa"}
+        P2: {min: 0.5, max: 5.0, unit: "MPa"}
+        eta_s: {min: 0.75, max: 0.90}
+      R134a:
+        T1: {min: -10, max: 30, unit: "°C", region: "superheated_vapor"}
+        P1: {min: 0.1, max: 0.5, unit: "MPa"}
+        P2: {min: 0.8, max: 2.0, unit: "MPa"}
+        eta_s: {min: 0.75, max: 0.88}
+      Air:
+        T1: {min: 280, max: 350, unit: "K"}
+        P1: {min: 0.1, max: 0.2, unit: "MPa"}
+        P2: {min: 0.5, max: 2.0, unit: "MPa"}
+        eta_s: {min: 0.78, max: 0.90}
+
+    anchor_derive:
+      anchor: [T1, P1]
+      constraints: [P2, eta_s]
+      derive_sequence:
+        - "h1, s1 = CoolProp(T=T1, P=P1)"
+        - "h2s = CoolProp(s=s1, P=P2)"
+        - "h2 = h1 + (h2s - h1) / eta_s"
+        - "s2, T2 = CoolProp(h=h2, P=P2)"
+
+    steps:
+      A:
+        - {id: "h1", formula: "CoolProp(T1, P1)", unit: "kJ/kg", weight: 0.15}
+        - {id: "s1", formula: "CoolProp(T1, P1)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "h2s", formula: "CoolProp(s=s1, P=P2)", unit: "kJ/kg", weight: 0.15}
+        - {id: "h2", formula: "h1 + (h2s-h1)/eta_s", unit: "kJ/kg", weight: 0.15}
+        - {id: "w_in", formula: "h2 - h1", unit: "kJ/kg", weight: 0.30}
+      B:
+        - {id: "s2", formula: "CoolProp(h=h2, P=P2)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "s_gen", formula: "s2 - s1", unit: "kJ/kg·K", weight: 0.20}
+      C:
+        - {id: "x_dest", formula: "T0_K * s_gen", unit: "kJ/kg", weight: 0.10}
+        - {id: "eta_II", formula: "1 - x_dest / w_in", unit: "–", weight: 0.10}
+        # η_II for work-consuming: η_II = exergy_out / w_in = (w_in - x_dest) / w_in
+
+  pump:
+    id_prefix: "PMP"
+    count: 10
+    depths: [A, B, C]
+    description: "Liquid pressurization — work input on incompressible fluid"
+    assumptions: ["steady-state", "adiabatic", "ΔKE≈0", "ΔPE≈0"]
+    key_equation: "w_pump = v₁(P₂-P₁)/η_s  or  (h₂-h₁)"
+    has_isentropic_efficiency: true
+
+    parameter_ranges:
+      Water:
+        T1: {min: 20, max: 80, unit: "°C", region: "compressed_liquid"}
+        P1: {min: 0.005, max: 0.1, unit: "MPa"}
+        P2: {min: 1.0, max: 15.0, unit: "MPa"}
+        eta_s: {min: 0.70, max: 0.90}
+
+    anchor_derive:
+      anchor: [T1, P1]
+      constraints: [P2, eta_s]
+      derive_sequence:
+        - "h1, s1, v1 = CoolProp(T=T1, P=P1)"
+        - "h2s = CoolProp(s=s1, P=P2)  # or approximate: h1 + v1*(P2-P1)*1000"
+        - "h2 = h1 + (h2s - h1) / eta_s"
+        - "s2 = CoolProp(h=h2, P=P2)"
+
+    notes: >
+      Pump questions test two approaches:
+      1. Exact: h₂s via CoolProp at (s=s₁, P=P₂)
+      2. Approximate: w_pump ≈ v₁(P₂-P₁) — acceptable for compressed liquid.
+      Both approaches should score correctly within tolerance.
+      Some questions may explicitly say "use the incompressible liquid approximation."
+
+  heat_exchanger:
+    id_prefix: "HX"
+    count: 18
+    depths: [A, B, C]
+    description: "Sensible heat transfer between two liquid streams"
+    assumptions: ["steady-state", "no work", "ΔKE≈0", "ΔPE≈0", "both streams liquid", "no phase change"]
+    key_equation: "Q = ṁ_h(h_h_in - h_h_out) = ṁ_c(h_c_out - h_c_in)"
+    has_isentropic_efficiency: false
+
+    sub_types:
+      - water_water          # both streams water (liquid)
+      - water_r134a          # hot: water, cold: R-134a liquid
+
+    parameter_ranges:
+      Water:
+        T_h_in: {min: 60, max: 95, unit: "°C", note: "must stay liquid at P_h"}
+        T_h_out: {min: 30, max: 70, unit: "°C"}
+        T_c_in: {min: 15, max: 40, unit: "°C"}
+        P_h: {min: 0.5, max: 5.0, unit: "MPa"}
+        P_c: {min: 0.5, max: 5.0, unit: "MPa"}
+        m_h: {min: 0.5, max: 10.0, unit: "kg/s"}
+        m_c: {min: 0.5, max: 10.0, unit: "kg/s"}
+      R134a_cold:
+        T_c_in: {min: 5, max: 25, unit: "°C", note: "liquid R-134a"}
+        P_c: {min: 0.5, max: 1.5, unit: "MPa", note: "above saturation pressure at T_c"}
+
+    anchor_derive:
+      anchor: [T_h_in, P_h, T_h_out, T_c_in, P_c, m_h, m_c]
+      constraints: ["T_h_out > T_c_in + 5", "all streams liquid at their respective P"]
+      derive_sequence:
+        - "h_h_in, s_h_in = CoolProp(T_h_in, P_h)"
+        - "h_h_out, s_h_out = CoolProp(T_h_out, P_h)"
+        - "Q = m_h * (h_h_in - h_h_out)"
+        - "h_c_out = h_c_in + Q / m_c"
+        - "T_c_out, s_c_out = CoolProp(h=h_c_out, P_c)"
+        - "VALIDATE: T_c_out < T_h_in and T_c_out < T_sat(P_c)"
+
+    steps:
+      A:
+        - {id: "h_h_in", formula: "CoolProp(T_h_in, P_h)", unit: "kJ/kg", weight: 0.10}
+        - {id: "h_h_out", formula: "CoolProp(T_h_out, P_h)", unit: "kJ/kg", weight: 0.10}
+        - {id: "h_c_in", formula: "CoolProp(T_c_in, P_c)", unit: "kJ/kg", weight: 0.10}
+        - {id: "Q_dot", formula: "m_h * (h_h_in - h_h_out)", unit: "kW", weight: 0.20}
+        - {id: "h_c_out", formula: "h_c_in + Q/m_c", unit: "kJ/kg", weight: 0.10}
+        - {id: "T_c_out", formula: "CoolProp(h=h_c_out, P_c)", unit: "°C", weight: 0.10}
+      B:
+        - {id: "s_h_in", formula: "CoolProp(T_h_in, P_h)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "s_h_out", formula: "CoolProp(T_h_out, P_h)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "s_c_in", formula: "CoolProp(T_c_in, P_c)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "s_c_out", formula: "CoolProp(h=h_c_out, P_c)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "S_gen_dot", formula: "m_h*(s_h_out-s_h_in) + m_c*(s_c_out-s_c_in)", unit: "kW/K", weight: 0.20}
+      C:
+        - {id: "X_dest_dot", formula: "T0_K * S_gen_dot", unit: "kW", weight: 0.10}
+        - {id: "eta_II", formula: "m_c*(psi_c_out-psi_c_in) / m_h*(psi_h_in-psi_h_out)", unit: "–", weight: 0.10}
+
+  boiler:
+    id_prefix: "BLR"
+    count: 14
+    depths: [A, B, C]
+    description: "Steam generator — heat addition from external source, largest exergy destroyer"
+    assumptions: ["steady-state", "no work", "constant pressure", "ΔKE≈0", "ΔPE≈0"]
+    key_equation: "q_in = h_out - h_in, η_II = Δψ_fluid / [q_in · (1 - T₀/T_source)]"
+    has_isentropic_efficiency: false
+
+    parameter_ranges:
+      Water:
+        T_in: {min: 30, max: 80, unit: "°C", region: "compressed_liquid"}
+        P: {min: 1.0, max: 15.0, unit: "MPa", note: "constant through boiler"}
+        T_out: {min: 300, max: 600, unit: "°C", region: "superheated_steam"}
+        T_source: {min: 800, max: 2000, unit: "K", note: "combustion gas avg temperature"}
+
+    anchor_derive:
+      anchor: [T_in, P, T_out, T_source]
+      constraints: ["T_out > T_sat(P)", "T_source > T_out + 273.15"]
+      derive_sequence:
+        - "h_in, s_in = CoolProp(T=T_in, P=P)"
+        - "h_out, s_out = CoolProp(T=T_out, P=P)"
+        - "q_in = h_out - h_in"
+        - "s_gen = (s_out - s_in) - q_in / T_source"
+        - "x_dest = T0_K * s_gen"
+        - "psi_in = (h_in - h0) - T0_K * (s_in - s0)"
+        - "psi_out = (h_out - h0) - T0_K * (s_out - s0)"
+        - "eta_II = (psi_out - psi_in) / (q_in * (1 - T0_K / T_source))"
+
+    steps:
+      A:
+        - {id: "h_in", formula: "CoolProp(T_in, P)", unit: "kJ/kg", weight: 0.15}
+        - {id: "h_out", formula: "CoolProp(T_out, P)", unit: "kJ/kg", weight: 0.15}
+        - {id: "q_in", formula: "h_out - h_in", unit: "kJ/kg", weight: 0.30}
+      B:
+        - {id: "s_in", formula: "CoolProp(T_in, P)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "s_out", formula: "CoolProp(T_out, P)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "s_gen", formula: "(s_out - s_in) - q_in/T_source", unit: "kJ/kg·K", weight: 0.20}
+      C:
+        - {id: "x_dest", formula: "T0_K * s_gen", unit: "kJ/kg", weight: 0.10}
+        - {id: "eta_II", formula: "(psi_out - psi_in) / (q_in * (1 - T0_K/T_source))", unit: "–", weight: 0.10}
+
+    notes: >
+      Boiler is the key discriminator for exergy analysis understanding.
+      The Carnot factor (1 - T₀/T_source) tests whether models know that
+      heat has exergy proportional to its temperature level. Most models
+      can do energy balance (Level A) but will struggle with the entropy
+      balance that includes the -q_in/T_source term.
+      Working fluid goes through phase change (liquid → steam) inherently.
+
+  mixing_chamber:
+    id_prefix: "MIX"
+    count: 12
+    depths: [A, B, C]
+    description: "Adiabatic mixing of two streams at same pressure"
+    assumptions: ["steady-state", "adiabatic", "no work", "constant pressure", "ΔKE≈0", "ΔPE≈0"]
+    key_equation: "ṁ₁h₁ + ṁ₂h₂ = ṁ₃h₃ where ṁ₃ = ṁ₁ + ṁ₂"
+    has_isentropic_efficiency: false
+
+    parameter_ranges:
+      Water:
+        T1: {min: 100, max: 300, unit: "°C"}
+        T2: {min: 20, max: 80, unit: "°C"}
+        P: {min: 0.1, max: 2.0, unit: "MPa"}
+        m1: {min: 1.0, max: 10.0, unit: "kg/s"}
+        m2: {min: 1.0, max: 10.0, unit: "kg/s"}
+
+    anchor_derive:
+      anchor: [T1, T2, P, m1, m2]
+      constraints: ["T1 > T2", "both streams same phase or one sat"]
+      derive_sequence:
+        - "h1, s1 = CoolProp(T=T1, P=P)"
+        - "h2, s2 = CoolProp(T=T2, P=P)"
+        - "m3 = m1 + m2"
+        - "h3 = (m1*h1 + m2*h2) / m3"
+        - "T3, s3 = CoolProp(h=h3, P=P)"
+
+    steps:
+      A:
+        - {id: "h1", formula: "CoolProp(T1, P)", unit: "kJ/kg", weight: 0.10}
+        - {id: "h2", formula: "CoolProp(T2, P)", unit: "kJ/kg", weight: 0.10}
+        - {id: "m3", formula: "m1 + m2", unit: "kg/s", weight: 0.05}
+        - {id: "h3", formula: "(m1*h1 + m2*h2) / m3", unit: "kJ/kg", weight: 0.20}
+        - {id: "T3", formula: "CoolProp(h=h3, P)", unit: "°C", weight: 0.15}
+      B:
+        - {id: "s1", formula: "CoolProp(T1, P)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "s2", formula: "CoolProp(T2, P)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "s3", formula: "CoolProp(h=h3, P)", unit: "kJ/kg·K", weight: 0.05}
+        - {id: "S_gen_dot", formula: "m3*s3 - m1*s1 - m2*s2", unit: "kW/K", weight: 0.20}
+      C:
+        - {id: "X_dest_dot", formula: "T0_K * S_gen_dot", unit: "kW", weight: 0.10}
+        - {id: "eta_II", formula: "m3*psi3 / (m1*psi1 + m2*psi2)", unit: "–", weight: 0.10}
+
+  nozzle:
+    id_prefix: "NOZ"
+    count: 14
+    depths: [A, B, C]
+    description: "Converts enthalpy to kinetic energy — velocity calculation"
+    assumptions: ["steady-state", "adiabatic", "no work", "ΔPE≈0"]
+    key_equation: "V₂² = V₁² + 2(h₁ - h₂) × 1000"
+    has_isentropic_efficiency: true
+    includes_kinetic_energy: true  # V²/2 term in exergy
+
+    parameter_ranges:
+      Water:
+        T1: {min: 200, max: 500, unit: "°C"}
+        P1: {min: 0.5, max: 5.0, unit: "MPa"}
+        P2: {min: 0.1, max: 1.0, unit: "MPa"}
+        V1: {min: 10, max: 80, unit: "m/s"}
+        eta_nozzle: {min: 0.90, max: 0.98}
+      Air:
+        T1: {min: 400, max: 900, unit: "K"}
+        P1: {min: 0.3, max: 1.0, unit: "MPa"}
+        P2: {min: 0.1, max: 0.3, unit: "MPa"}
+        V1: {min: 30, max: 100, unit: "m/s"}
+        eta_nozzle: {min: 0.92, max: 0.98}
+
+    anchor_derive:
+      anchor: [T1, P1, V1]
+      constraints: [P2, eta_nozzle]
+      derive_sequence:
+        - "h1, s1 = CoolProp(T=T1, P=P1)"
+        - "h2s = CoolProp(s=s1, P=P2)"
+        - "V2s_sq = V1^2 + 2 * (h1 - h2s) * 1000"
+        - "V2_sq = V1^2 + 2 * eta_nozzle * (h1 - h2s) * 1000"
+        - "V2 = sqrt(V2_sq)"
+        - "h2 = h1 - (V2^2 - V1^2) / (2 * 1000)"
+        - "s2, T2 = CoolProp(h=h2, P=P2)"
+
+    steps:
+      A:
+        - {id: "h1", formula: "CoolProp(T1, P1)", unit: "kJ/kg", weight: 0.10}
+        - {id: "s1", formula: "CoolProp(T1, P1)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "h2s", formula: "CoolProp(s=s1, P=P2)", unit: "kJ/kg", weight: 0.10}
+        - {id: "V2", formula: "sqrt(V1² + 2·η·(h1-h2s)·1000)", unit: "m/s", weight: 0.20}
+        - {id: "h2", formula: "h1 - (V2²-V1²)/(2·1000)", unit: "kJ/kg", weight: 0.15}
+      B:
+        - {id: "s2", formula: "CoolProp(h=h2, P=P2)", unit: "kJ/kg·K", weight: 0.10}
+        - {id: "s_gen", formula: "s2 - s1", unit: "kJ/kg·K", weight: 0.20}
+      C:
+        - {id: "x_dest", formula: "T0_K * s_gen", unit: "kJ/kg", weight: 0.10}
+        - {id: "eta_II", formula: "(V2²/2) / (psi1 - psi2 + (V1²-V2²)/2)", unit: "–", weight: 0.10}
+        # Nozzle η_II: KE gain / exergy decrease (including KE terms)
+
+# ──────────────────────────────────────────────
+# TEMPLATE MAPPING
+# ──────────────────────────────────────────────
+# Each component × depth × fluid = 1 template
+# ~5 parameter sets per template = ~5 questions per template
+# 
+# Template count estimate:
+#   turbine:  2 fluids × 3 depths = 6 templates → 18 questions (3 per template)
+#   compressor: 3 fluids × 3 depths = 9 templates → 14 questions (~1.5 per template)
+#   pump: 1 fluid × 3 depths = 3 templates → 10 questions (~3.3 per template)
+#   heat_exchanger: 2 combos × 3 depths = 6 templates → 18 questions (3 per template)
+#   boiler: 1 fluid × 3 depths = 3 templates → 14 questions (~4.7 per template)
+#   mixer: 1 fluid × 3 depths = 3 templates → 12 questions (4 per template)
+#   nozzle: 2 fluids × 3 depths = 6 templates → 14 questions (~2.3 per template)
+#
+# Total: ~36 templates → ~100 questions

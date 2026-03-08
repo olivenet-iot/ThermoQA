@@ -234,3 +234,212 @@ def extract_properties(
             result[key] = _extract_numeric(text, key)
 
     return result
+
+
+# ══════════════════════════════════════════════════════════
+# TIER 2: Component Analysis Extraction
+# ══════════════════════════════════════════════════════════
+
+TIER2_PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
+    # State properties with subscripts
+    "h1": [
+        (r"\bh[_\s]?1\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₁\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s1": [
+        (r"\bs[_\s]?1\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"s₁\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h2": [
+        (r"\bh[_\s]?2\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₂\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s2": [
+        (r"\bs[_\s]?2\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"s₂\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h2s": [
+        (r"\bh[_\s]?2s\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₂ₛ\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h[_\s]?2,?s\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    # Energy terms
+    "w_out": [
+        (r"\bw[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"work\s+output\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"\bw\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "w_in": [
+        (r"\bw[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"work\s+input\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"\bw[_\s]?pump\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "q_in": [
+        (r"\bq[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"heat\s+input\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"heat\s+(?:addition|added|transfer)\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Entropy generation
+    "s_gen": [
+        (r"\bs[_\s]?gen\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"entropy\s+generation\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"[Ss]_gen\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "S_gen_dot": [
+        (r"[SṠ][_\s]?gen(?:\s*dot)?\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Ṡ[_\s]?gen\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"entropy\s+generation\s+rate\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Exergy destruction
+    "x_dest": [
+        (r"\bx[_\s]?dest\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"exergy\s+destruction\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"[Xx]_dest\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "X_dest_dot": [
+        (r"[XẊ][_\s]?dest(?:\s*dot)?\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Ẋ[_\s]?dest\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"exergy\s+destruction\s+rate\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Second-law efficiency
+    "eta_II": [
+        (r"η[_\s]?II\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"eta[_\s]?II\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"η₂\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"second[- ]law\s+efficiency\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"exergetic\s+efficiency\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Velocity
+    "V2": [
+        (r"\bV[_\s]?2\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"V₂\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"exit\s+velocity\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # HX-specific
+    "h_h_in": [
+        (r"\bh[_\s]?h[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h_h_out": [
+        (r"\bh[_\s]?h[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h_c_in": [
+        (r"\bh[_\s]?c[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h_c_out": [
+        (r"\bh[_\s]?c[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "Q_dot": [
+        (r"[QQ̇][_\s]?dot\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Q̇\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"heat\s+transfer\s+rate\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+        (r"\bQ\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "T_c_out": [
+        (r"\bT[_\s]?c[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"cold\s+(?:stream\s+)?(?:exit|outlet)\s+temperature\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "s_h_in": [(r"\bs[_\s]?h[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "s_h_out": [(r"\bs[_\s]?h[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "s_c_in": [(r"\bs[_\s]?c[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "s_c_out": [(r"\bs[_\s]?c[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    # Boiler-specific
+    "h_in": [
+        (r"\bh[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"inlet\s+enthalpy\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "h_out": [
+        (r"\bh[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"outlet\s+enthalpy\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "s_in": [
+        (r"\bs[_\s]?in\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s_out": [
+        (r"\bs[_\s]?out\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    # Mixer-specific
+    "h3": [
+        (r"\bh[_\s]?3\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₃\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "T3": [
+        (r"\bT[_\s]?3\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"T₃\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"exit\s+temperature\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "m3": [
+        (r"[mṁ][_\s]?3\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"ṁ₃\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s3": [
+        (r"\bs[_\s]?3\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"s₃\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+}
+
+
+def _auto_convert_tier2(key: str, value: float) -> float:
+    """Apply unit auto-conversion heuristics for Tier 2 step values."""
+    # Enthalpy: > 10000 likely J/kg → kJ/kg
+    if key in ("h1", "h2", "h2s", "h3", "h_in", "h_out",
+               "h_h_in", "h_h_out", "h_c_in", "h_c_out"):
+        if abs(value) > 10000:
+            value /= 1000.0
+
+    # Entropy: > 100 likely J/(kg·K) → kJ/(kg·K)
+    if key in ("s1", "s2", "s3", "s_in", "s_out", "s_gen",
+               "s_h_in", "s_h_out", "s_c_in", "s_c_out"):
+        if abs(value) > 100:
+            value /= 1000.0
+
+    # eta_II: > 1 likely percentage → fraction
+    if key == "eta_II":
+        if value > 1.0 and value <= 100.0:
+            value /= 100.0
+
+    return value
+
+
+def extract_tier2_properties(
+    response_text: str, expected_step_ids: list[str]
+) -> dict[str, float | None]:
+    """
+    Extract Tier 2 step values from an LLM response.
+
+    Args:
+        response_text: Raw LLM response text.
+        expected_step_ids: List of step IDs to extract (e.g., ["h1", "w_out", "s_gen"]).
+
+    Returns:
+        Dict mapping step_id -> extracted float value (or None).
+    """
+    text = strip_thinking_tags(response_text)
+    text = _preprocess(text)
+    result: dict[str, float | None] = {}
+
+    for key in expected_step_ids:
+        patterns = TIER2_PROPERTY_PATTERNS.get(key)
+        if patterns is None:
+            # Fall back to Tier 1 patterns
+            patterns = PROPERTY_PATTERNS.get(key, [])
+
+        best_value = None
+        best_pos = -1
+        for pattern, factor in patterns:
+            for m in re.finditer(pattern, text, re.IGNORECASE):
+                pos = m.start()
+                raw = m.group(1).replace(",", "")
+                try:
+                    val = float(raw) * factor
+                except ValueError:
+                    continue
+                if pos >= best_pos:
+                    best_pos = pos
+                    best_value = val
+
+        if best_value is not None:
+            best_value = _auto_convert_tier2(key, best_value)
+
+        result[key] = best_value
+
+    return result

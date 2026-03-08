@@ -277,6 +277,7 @@ def score_dataset(
 
 
 CATEGORY_CODE_MAP = {
+    # Tier 1
     "SL": "subcooled_liquid",
     "SF": "saturated_liquid",
     "WS": "wet_steam",
@@ -285,6 +286,14 @@ CATEGORY_CODE_MAP = {
     "SC": "supercritical",
     "PD": "phase_determination",
     "IL": "inverse_lookups",
+    # Tier 2
+    "TRB": "turbine",
+    "CMP": "compressor",
+    "PMP": "pump",
+    "HX": "heat_exchanger",
+    "BLR": "boiler",
+    "MIX": "mixing_chamber",
+    "NOZ": "nozzle",
 }
 
 
@@ -320,7 +329,9 @@ def build_summary_from_entries(entries: list[dict], questions: list[dict]) -> di
         scores = entry.get("scores", [])
         score_sum += q_score
 
-        # Derive category from question ID prefix (T1-XX-NNN -> XX)
+        # Derive category from question ID prefix
+        # T1-XX-NNN -> XX (Tier 1: 2-char codes like SL, SH)
+        # T2-XXX-DFNNN -> XXX (Tier 2: 3-char codes like TRB, CMP)
         parts = qid.split("-")
         code = parts[1] if len(parts) >= 3 else "??"
         category = CATEGORY_CODE_MAP.get(code, code)
@@ -403,6 +414,126 @@ def build_summary_from_entries(entries: list[dict], questions: list[dict]) -> di
         "per_difficulty": per_difficulty,
         "per_property_key": per_property_key,
     }
+
+
+# ══════════════════════════════════════════════════════════
+# TIER 2: Weighted step-level scoring
+# ══════════════════════════════════════════════════════════
+
+@dataclass
+class StepScoreResult:
+    step_id: str
+    expected: float
+    extracted: float | None
+    weight: float
+    passed: bool
+    error_pct: float | None
+    error_type: str  # "correct", "wrong", "missing"
+
+
+@dataclass
+class Tier2QuestionResult:
+    question_id: str
+    component: str
+    depth: str
+    fluid: str
+    difficulty: str
+    n_steps: int
+    n_correct: int
+    weighted_score: float
+    step_results: list[StepScoreResult]
+
+
+def score_tier2_question(question: dict, extracted: dict) -> Tier2QuestionResult:
+    """
+    Score a Tier 2 question with weighted step-level scoring.
+
+    Args:
+        question: A Tier 2 question dict with 'expected' and 'steps' fields.
+        extracted: Dict mapping step_id -> extracted value.
+
+    Returns:
+        Tier2QuestionResult with weighted score and per-step breakdown.
+    """
+    expected = question["expected"]
+    steps = question.get("steps", [])
+
+    # Build weight map from steps
+    weight_map = {s["id"]: s["weight"] for s in steps}
+
+    step_results = []
+    total_weight = 0.0
+    weighted_sum = 0.0
+    n_correct = 0
+
+    for step_id, spec in expected.items():
+        weight = weight_map.get(step_id, 1.0)
+        total_weight += weight
+        ext_val = extracted.get(step_id)
+        exp_val = spec["value"]
+        tol_pct = spec.get("tolerance_pct", 2.0)
+        abs_tol = spec.get("abs_tolerance", 0.5)
+
+        if ext_val is None:
+            step_results.append(StepScoreResult(
+                step_id=step_id, expected=exp_val, extracted=None,
+                weight=weight, passed=False, error_pct=None,
+                error_type="missing",
+            ))
+        else:
+            passed, error_pct = check_numeric(exp_val, ext_val, tol_pct, abs_tol)
+            step_results.append(StepScoreResult(
+                step_id=step_id, expected=exp_val, extracted=ext_val,
+                weight=weight, passed=passed, error_pct=error_pct,
+                error_type="correct" if passed else "wrong",
+            ))
+            if passed:
+                n_correct += 1
+                weighted_sum += weight
+
+    weighted_score = weighted_sum / total_weight if total_weight > 0 else 0.0
+
+    return Tier2QuestionResult(
+        question_id=question["id"],
+        component=question.get("component", ""),
+        depth=question.get("depth", ""),
+        fluid=question.get("fluid", ""),
+        difficulty=question.get("difficulty", ""),
+        n_steps=len(expected),
+        n_correct=n_correct,
+        weighted_score=weighted_score,
+        step_results=step_results,
+    )
+
+
+def score_question_auto(question: dict, extracted: dict):
+    """Route to Tier 1 or Tier 2 scorer based on question tier."""
+    tier = question.get("tier", 1)
+    if tier == 2:
+        result = score_tier2_question(question, extracted)
+        # Return a QuestionResult-compatible object for unified reporting
+        return QuestionResult(
+            question_id=result.question_id,
+            category=result.component,
+            subcategory=result.depth,
+            difficulty=result.difficulty,
+            n_properties=result.n_steps,
+            n_correct=result.n_correct,
+            score=result.weighted_score,
+            property_results=[
+                PropertyResult(
+                    prop_key=sr.step_id,
+                    expected=sr.expected,
+                    extracted=sr.extracted,
+                    passed=sr.passed,
+                    error_pct=sr.error_pct,
+                    error_type=sr.error_type,
+                )
+                for sr in result.step_results
+            ],
+        )
+    else:
+        return score_question(question, extracted)
 
 
 def load_questions(path: str) -> list[dict]:

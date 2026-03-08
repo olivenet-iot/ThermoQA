@@ -1,5 +1,5 @@
 """
-Physics-valid parameter generation for ThermoQA Tier 1 questions.
+Physics-valid parameter generation for ThermoQA Tier 1 and Tier 2 questions.
 
 Generates parameter sets that satisfy thermodynamic constraints (e.g.,
 superheated means T > T_sat(P) + margin). Uses stratified sampling to
@@ -500,4 +500,360 @@ def sample_params(template: PropertyTemplate, count: int,
         raise ValueError(f"No sampler for {key}")
     # Over-sample slightly then trim, in case some get filtered
     raw = sampler(template, count + 5, rng)
+    return raw[:count]
+
+
+# ══════════════════════════════════════════════════════════
+# TIER 2 SAMPLERS — Component Analysis
+# ══════════════════════════════════════════════════════════
+
+def _round_mpa(val: float, decimals: int = 2) -> float:
+    """Round MPa pressure to N decimal places."""
+    return round(val, decimals)
+
+
+def _round_mass_flow(val: float) -> float:
+    """Round mass flow rate to 1 decimal."""
+    return round(val, 1)
+
+
+def _t_sat_c_mpa(P_MPa: float, fluid: str = "Water") -> float:
+    """Saturation temperature (°C) from P in MPa."""
+    return PropsSI("T", "P", P_MPa * 1e6, "Q", 0, fluid) - 273.15
+
+
+def sample_turbine_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Turbine with water: superheated inlet, expand to lower P."""
+    params = []
+    P1_vals = _stratified_sample(rng, 1.0, 15.0, count + 3, decimals=1)
+    for P1 in P1_vals:
+        P1 = _round_mpa(P1, 1)
+        try:
+            T_sat = _t_sat_c_mpa(P1)
+        except Exception:
+            continue
+        T1 = round(rng.uniform(max(T_sat + 20, 300), 600))
+        P2 = _round_mpa(rng.uniform(0.01, min(0.5 * P1, 1.0)), 2)
+        if P2 <= 0.005:
+            P2 = 0.01
+        eta_s = round(rng.uniform(0.70, 0.95), 2)
+        params.append({"T1_C": float(T1), "P1_MPa": float(P1),
+                        "P2_MPa": float(P2), "eta_s": float(eta_s)})
+    return params[:count]
+
+
+def sample_turbine_air(count: int, rng: np.random.Generator) -> list[dict]:
+    """Turbine with air (ideal gas): T1 in Kelvin."""
+    params = []
+    T1_vals = _stratified_sample(rng, 800, 1500, count + 2, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = _round_mpa(rng.uniform(0.5, 2.0), 2)
+        P2 = _round_mpa(rng.uniform(0.1, min(0.5, P1 * 0.5)), 2)
+        if P2 <= 0.05:
+            P2 = 0.1
+        eta_s = round(rng.uniform(0.80, 0.92), 2)
+        params.append({"T1_C": float(T1), "P1_MPa": float(P1),
+                        "P2_MPa": float(P2), "eta_s": float(eta_s)})
+    return params[:count]
+
+
+def sample_compressor_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Compressor with steam: superheated vapor at low P, compress to higher P."""
+    params = []
+    P1_vals = _stratified_sample(rng, 0.01, 0.5, count + 3, decimals=2)
+    for P1 in P1_vals:
+        P1 = _round_mpa(P1, 2)
+        if P1 < 0.01:
+            P1 = 0.01
+        try:
+            T_sat = _t_sat_c_mpa(P1)
+        except Exception:
+            continue
+        T1 = round(rng.uniform(max(T_sat + 20, 100), 300))
+        P2 = _round_mpa(rng.uniform(max(P1 * 2, 0.5), 5.0), 1)
+        eta_s = round(rng.uniform(0.75, 0.90), 2)
+        params.append({"T1_C": float(T1), "P1_MPa": float(P1),
+                        "P2_MPa": float(P2), "eta_s": float(eta_s)})
+    return params[:count]
+
+
+def sample_compressor_r134a(count: int, rng: np.random.Generator) -> list[dict]:
+    """Compressor with R-134a: superheated vapor."""
+    params = []
+    P1_vals = _stratified_sample(rng, 0.1, 0.5, count + 3, decimals=2)
+    for P1 in P1_vals:
+        P1 = _round_mpa(P1, 2)
+        try:
+            T_sat = _t_sat_c_mpa(P1, "R134a")
+        except Exception:
+            continue
+        T1 = round(rng.uniform(max(T_sat + 5, -10), 30))
+        P2 = _round_mpa(rng.uniform(max(P1 * 2, 0.8), 2.0), 2)
+        eta_s = round(rng.uniform(0.75, 0.88), 2)
+        params.append({"T1_C": float(T1), "P1_MPa": float(P1),
+                        "P2_MPa": float(P2), "eta_s": float(eta_s)})
+    return params[:count]
+
+
+def sample_compressor_air(count: int, rng: np.random.Generator) -> list[dict]:
+    """Compressor with air: T1 in Kelvin."""
+    params = []
+    T1_vals = _stratified_sample(rng, 280, 350, count + 2, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = _round_mpa(rng.uniform(0.1, 0.2), 2)
+        P2 = _round_mpa(rng.uniform(0.5, 2.0), 1)
+        eta_s = round(rng.uniform(0.78, 0.90), 2)
+        params.append({"T1_C": float(T1), "P1_MPa": float(P1),
+                        "P2_MPa": float(P2), "eta_s": float(eta_s)})
+    return params[:count]
+
+
+def sample_pump_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Pump with water: liquid inlet, large P increase."""
+    params = []
+    T1_vals = _stratified_sample(rng, 20, 80, count + 2, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = _round_mpa(rng.uniform(0.005, 0.1), 3)
+        P2 = _round_mpa(rng.uniform(1.0, 15.0), 1)
+        eta_s = round(rng.uniform(0.70, 0.90), 2)
+        # Ensure liquid at inlet: T1 < T_sat(P1)
+        try:
+            T_sat = _t_sat_c_mpa(P1)
+            if T1 >= T_sat - 2:
+                # Increase P1 to keep liquid
+                P1 = _round_mpa(max(0.1, _p_sat_kpa(T1 + 5) / 1000), 3)
+        except Exception:
+            pass
+        params.append({"T1_C": float(T1), "P1_MPa": float(P1),
+                        "P2_MPa": float(P2), "eta_s": float(eta_s)})
+    return params[:count]
+
+
+def sample_hx_water_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Heat exchanger: both streams Water, liquid."""
+    params = []
+    for _ in range(count + 20):
+        P_h = _round_mpa(rng.uniform(0.5, 5.0), 1)
+        P_c = _round_mpa(rng.uniform(0.5, 5.0), 1)
+        T_h_in = round(rng.uniform(60, 95))
+        T_h_out = round(rng.uniform(30, min(70, T_h_in - 10)))
+        T_c_in = round(rng.uniform(15, min(40, T_h_out - 5)))
+        m_h = _round_mass_flow(rng.uniform(0.5, 10.0))
+        m_c = _round_mass_flow(rng.uniform(0.5, 10.0))
+        # Validate: all temps below T_sat at their pressures
+        try:
+            T_sat_h = _t_sat_c_mpa(P_h)
+            T_sat_c = _t_sat_c_mpa(P_c)
+            if T_h_in >= T_sat_h - 5:
+                continue
+            if T_c_in >= T_sat_c - 5:
+                continue
+        except Exception:
+            continue
+        if T_h_out <= T_c_in + 3:
+            continue
+        # Estimate T_c_out and ensure it stays liquid
+        Q_est = m_h * 4.18 * (T_h_in - T_h_out)
+        T_c_out_est = T_c_in + Q_est / (m_c * 4.18)
+        if T_c_out_est >= T_sat_c - 10:
+            continue
+        if T_c_out_est >= T_h_in:
+            continue
+        params.append({
+            "T_h_in": float(T_h_in), "T_h_out": float(T_h_out),
+            "T_c_in": float(T_c_in), "P_h_MPa": float(P_h),
+            "P_c_MPa": float(P_c), "m_h": float(m_h), "m_c": float(m_c),
+        })
+    return params[:count]
+
+
+def sample_hx_water_r134a(count: int, rng: np.random.Generator) -> list[dict]:
+    """Heat exchanger: hot Water, cold R-134a (both liquid)."""
+    params = []
+    for _ in range(count + 20):
+        P_h = _round_mpa(rng.uniform(0.5, 5.0), 1)
+        P_c = _round_mpa(rng.uniform(0.8, 1.5), 2)  # higher P_c for R-134a
+        T_h_in = round(rng.uniform(60, 85))
+        T_h_out = round(rng.uniform(35, min(60, T_h_in - 10)))
+        T_c_in = round(rng.uniform(10, 25))
+        m_h = _round_mass_flow(rng.uniform(1.0, 5.0))
+        m_c = _round_mass_flow(rng.uniform(2.0, 10.0))  # larger cold flow to limit T rise
+        # Validate liquid phases
+        try:
+            if T_h_in >= _t_sat_c_mpa(P_h) - 2:
+                continue
+            T_sat_r134a = _t_sat_c_mpa(P_c, "R134a")
+            if T_c_in >= T_sat_r134a - 2:
+                continue
+        except Exception:
+            continue
+        if T_h_out <= T_c_in + 3:
+            continue
+        # Estimate T_c_out to ensure it stays liquid
+        # Q ≈ m_h * cp_water * (T_h_in - T_h_out)
+        # T_c_out ≈ T_c_in + Q / (m_c * cp_r134a)
+        # cp_water ~ 4.2, cp_r134a ~ 1.4
+        Q_est = m_h * 4.2 * (T_h_in - T_h_out)
+        T_c_out_est = T_c_in + Q_est / (m_c * 1.4)
+        try:
+            if T_c_out_est >= T_sat_r134a - 5:
+                continue
+        except Exception:
+            continue
+        params.append({
+            "T_h_in": float(T_h_in), "T_h_out": float(T_h_out),
+            "T_c_in": float(T_c_in), "P_h_MPa": float(P_h),
+            "P_c_MPa": float(P_c), "m_h": float(m_h), "m_c": float(m_c),
+        })
+    return params[:count]
+
+
+def sample_boiler_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Boiler: compressed liquid in, superheated steam out."""
+    params = []
+    P_vals = _stratified_sample(rng, 1.0, 15.0, count + 3, decimals=1)
+    for P in P_vals:
+        P = _round_mpa(P, 1)
+        try:
+            T_sat = _t_sat_c_mpa(P)
+        except Exception:
+            continue
+        T_in = round(rng.uniform(30, min(80, T_sat - 10)))
+        T_out = round(rng.uniform(max(T_sat + 20, 300), 600))
+        T_source = round(rng.uniform(800, 2000))
+        # Ensure T_source > T_out_K + 100
+        T_out_K = T_out + 273.15
+        if T_source < T_out_K + 100:
+            T_source = round(T_out_K + 150)
+        params.append({
+            "T_in_C": float(T_in), "P_MPa": float(P),
+            "T_out_C": float(T_out), "T_source_K": float(T_source),
+        })
+    return params[:count]
+
+
+def sample_mixer_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Mixing chamber: two water streams at same pressure."""
+    params = []
+    P_vals = _stratified_sample(rng, 0.1, 2.0, count + 3, decimals=1)
+    for P in P_vals:
+        P = _round_mpa(P, 1)
+        if P < 0.1:
+            P = 0.1
+        try:
+            T_sat = _t_sat_c_mpa(P)
+        except Exception:
+            continue
+        # Stream 1: hotter (could be superheated or liquid)
+        T1 = round(rng.uniform(100, min(300, T_sat + 50)))
+        # Stream 2: cooler (liquid)
+        T2 = round(rng.uniform(20, min(80, T1 - 20)))
+        m1 = _round_mass_flow(rng.uniform(1.0, 10.0))
+        m2 = _round_mass_flow(rng.uniform(1.0, 10.0))
+        if T1 <= T2:
+            continue
+        params.append({
+            "T1_C": float(T1), "T2_C": float(T2),
+            "P_MPa": float(P), "m1": float(m1), "m2": float(m2),
+        })
+    return params[:count]
+
+
+def sample_nozzle_water(count: int, rng: np.random.Generator) -> list[dict]:
+    """Nozzle with steam: superheated inlet, expand."""
+    params = []
+    P1_vals = _stratified_sample(rng, 0.5, 5.0, count + 3, decimals=1)
+    for P1 in P1_vals:
+        P1 = _round_mpa(P1, 1)
+        try:
+            T_sat = _t_sat_c_mpa(P1)
+        except Exception:
+            continue
+        T1 = round(rng.uniform(max(T_sat + 20, 200), 500))
+        P2 = _round_mpa(rng.uniform(0.1, min(0.5 * P1, 1.0)), 2)
+        if P2 < 0.05:
+            P2 = 0.1
+        V1 = round(rng.uniform(10, 80))
+        eta_nozzle = round(rng.uniform(0.90, 0.98), 2)
+        params.append({
+            "T1_C": float(T1), "P1_MPa": float(P1),
+            "P2_MPa": float(P2), "V1": float(V1),
+            "eta_nozzle": float(eta_nozzle),
+        })
+    return params[:count]
+
+
+def sample_nozzle_air(count: int, rng: np.random.Generator) -> list[dict]:
+    """Nozzle with air: T1 in Kelvin."""
+    params = []
+    T1_vals = _stratified_sample(rng, 400, 900, count + 2, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = _round_mpa(rng.uniform(0.3, 1.0), 2)
+        P2 = _round_mpa(rng.uniform(0.1, min(0.3, P1 * 0.5)), 2)
+        if P2 < 0.05:
+            P2 = 0.1
+        V1 = round(rng.uniform(30, 100))
+        eta_nozzle = round(rng.uniform(0.92, 0.98), 2)
+        params.append({
+            "T1_C": float(T1), "P1_MPa": float(P1),
+            "P2_MPa": float(P2), "V1": float(V1),
+            "eta_nozzle": float(eta_nozzle),
+        })
+    return params[:count]
+
+
+# Tier 2 sampler dispatcher: maps template_id prefix → sampling function
+_TIER2_SAMPLERS = {
+    "TRB-AW": sample_turbine_water,
+    "TRB-BW": sample_turbine_water,
+    "TRB-CW": sample_turbine_water,
+    "TRB-AA": sample_turbine_air,
+    "TRB-BA": sample_turbine_air,
+    "TRB-CA": sample_turbine_air,
+    "CMP-AW": sample_compressor_water,
+    "CMP-BW": sample_compressor_water,
+    "CMP-CW": sample_compressor_water,
+    "CMP-AR": sample_compressor_r134a,
+    "CMP-BR": sample_compressor_r134a,
+    "CMP-AA": sample_compressor_air,
+    "CMP-BA": sample_compressor_air,
+    "CMP-CA": sample_compressor_air,
+    "PMP-AW": sample_pump_water,
+    "PMP-BW": sample_pump_water,
+    "PMP-CW": sample_pump_water,
+    "HX-AW": sample_hx_water_water,
+    "HX-BW": sample_hx_water_water,
+    "HX-CW": sample_hx_water_water,
+    "HX-AR": sample_hx_water_r134a,
+    "HX-BR": sample_hx_water_r134a,
+    "HX-CR": sample_hx_water_r134a,
+    "BLR-AW": sample_boiler_water,
+    "BLR-BW": sample_boiler_water,
+    "BLR-CW": sample_boiler_water,
+    "MIX-AW": sample_mixer_water,
+    "MIX-BW": sample_mixer_water,
+    "MIX-CW": sample_mixer_water,
+    "NOZ-AW": sample_nozzle_water,
+    "NOZ-BW": sample_nozzle_water,
+    "NOZ-CW": sample_nozzle_water,
+    "NOZ-AA": sample_nozzle_air,
+    "NOZ-BA": sample_nozzle_air,
+    "NOZ-CA": sample_nozzle_air,
+}
+
+
+def sample_tier2_params(template_id: str, count: int,
+                         seed: int = 42) -> list[dict]:
+    """
+    Generate `count` physically valid parameter sets for a Tier 2 template.
+    """
+    rng = np.random.default_rng(seed)
+    sampler = _TIER2_SAMPLERS.get(template_id)
+    if sampler is None:
+        raise ValueError(f"No Tier 2 sampler for template: {template_id}")
+    raw = sampler(count + 5, rng)
     return raw[:count]

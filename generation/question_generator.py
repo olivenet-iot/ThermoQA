@@ -1,5 +1,5 @@
 """
-Question generation pipeline for ThermoQA Tier 1.
+Question generation pipeline for ThermoQA Tier 1 and Tier 2.
 
 Orchestrates: templates -> param_sampler -> ground_truth -> JSON output.
 """
@@ -9,11 +9,17 @@ import os
 from datetime import datetime, timezone
 
 from generation.ground_truth import compute_properties, get_coolprop_version, cross_verify
-from generation.param_sampler import sample_params
+from generation.param_sampler import sample_params, sample_tier2_params
 from generation.templates.tier1_properties import (
     TIER1_TEMPLATES,
     TEMPLATE_COUNTS,
     get_templates_by_category,
+)
+from generation.templates.tier2_components import (
+    TIER2_TEMPLATES,
+    TIER2_TEMPLATE_COUNTS,
+    FLUID_CODES,
+    ComponentTemplate,
 )
 
 # Category code mapping
@@ -245,6 +251,306 @@ def generate_tier1_questions(output_dir: str, total_target: int = 110,
             "numerical_tolerance_pct": DEFAULT_TOLERANCE_PCT,
             "absolute_tolerance": DEFAULT_ABS_TOLERANCE,
             "phase_matching": "exact_match_with_aliases",
+        },
+    }
+    meta_path = os.path.join(output_dir, "metadata.json")
+    with open(meta_path, "w") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+    return questions, warnings, metadata
+
+
+# ══════════════════════════════════════════════════════════
+# TIER 2: Component Analysis Question Generation
+# ══════════════════════════════════════════════════════════
+
+# Component code mapping
+COMPONENT_CODES = {
+    "turbine": "TRB",
+    "compressor": "CMP",
+    "pump": "PMP",
+    "heat_exchanger": "HX",
+    "boiler": "BLR",
+    "mixing_chamber": "MIX",
+    "nozzle": "NOZ",
+}
+
+# Answer hint mapping: step_id -> formatted hint
+TIER2_ANSWER_HINTS = {
+    "h1": "h_1 = ___ kJ/kg",
+    "s1": "s_1 = ___ kJ/(kg·K)",
+    "h2s": "h_2s = ___ kJ/kg",
+    "h2": "h_2 = ___ kJ/kg",
+    "s2": "s_2 = ___ kJ/(kg·K)",
+    "w_out": "w_out = ___ kJ/kg",
+    "w_in": "w_in = ___ kJ/kg",
+    "s_gen": "s_gen = ___ kJ/(kg·K)",
+    "x_dest": "x_dest = ___ kJ/kg",
+    "eta_II": "η_II = ___",
+    "h_in": "h_in = ___ kJ/kg",
+    "h_out": "h_out = ___ kJ/kg",
+    "s_in": "s_in = ___ kJ/(kg·K)",
+    "s_out": "s_out = ___ kJ/(kg·K)",
+    "q_in": "q_in = ___ kJ/kg",
+    "h_h_in": "h_h_in = ___ kJ/kg",
+    "h_h_out": "h_h_out = ___ kJ/kg",
+    "h_c_in": "h_c_in = ___ kJ/kg",
+    "h_c_out": "h_c_out = ___ kJ/kg",
+    "Q_dot": "Q̇ = ___ kW",
+    "T_c_out": "T_c_out = ___ °C",
+    "s_h_in": "s_h_in = ___ kJ/(kg·K)",
+    "s_h_out": "s_h_out = ___ kJ/(kg·K)",
+    "s_c_in": "s_c_in = ___ kJ/(kg·K)",
+    "s_c_out": "s_c_out = ___ kJ/(kg·K)",
+    "S_gen_dot": "Ṡ_gen = ___ kW/K",
+    "X_dest_dot": "Ẋ_dest = ___ kW",
+    "h3": "h_3 = ___ kJ/kg",
+    "T3": "T_3 = ___ °C",
+    "m3": "ṁ_3 = ___ kg/s",
+    "s3": "s_3 = ___ kJ/(kg·K)",
+    "V2": "V_2 = ___ m/s",
+}
+
+
+def _format_tier2_question_text(template: ComponentTemplate, params: dict) -> str:
+    """Format a Tier 2 question with parameter substitution and answer hints."""
+    # Build format dict with derived values
+    fmt = dict(params)
+    # Add percentage versions of efficiencies
+    if "eta_s" in params:
+        fmt["eta_s_pct"] = round(params["eta_s"] * 100, 1)
+    if "eta_nozzle" in params:
+        fmt["eta_nozzle_pct"] = round(params["eta_nozzle"] * 100, 1)
+
+    # Select template phrasing deterministically
+    idx = hash(frozenset(params.items())) % len(template.question_templates)
+    templates = template.question_templates
+    text = None
+    for i in range(len(templates)):
+        tmpl = templates[(idx + i) % len(templates)]
+        try:
+            text = tmpl.format(**fmt)
+            break
+        except (KeyError, ValueError, IndexError):
+            continue
+
+    if text is None:
+        text = templates[0]
+        for k, v in fmt.items():
+            text = text.replace("{" + k + "}", str(v))
+
+    # Append answer format hints
+    step_ids = [s["id"] for s in template.steps]
+    hints = [TIER2_ANSWER_HINTS[sid] for sid in step_ids if sid in TIER2_ANSWER_HINTS]
+    if hints:
+        text += "\n\nPresent your final answers in the following format:\n" + "\n".join(hints)
+
+    return text
+
+
+def _compute_tier2_ground_truth(template: ComponentTemplate, params: dict):
+    """Compute ground truth for a Tier 2 question using state_generator."""
+    from generation.state_generator import (
+        generate_turbine_state, generate_compressor_state, generate_pump_state,
+        generate_hx_state, generate_boiler_state, generate_mixer_state,
+        generate_nozzle_state,
+    )
+
+    comp = template.component
+    depth = template.depth
+    fluid = template.fluid
+
+    if comp == "turbine":
+        return generate_turbine_state(
+            params["T1_C"], params["P1_MPa"], params["P2_MPa"],
+            params["eta_s"], fluid, depth,
+        )
+    elif comp == "compressor":
+        return generate_compressor_state(
+            params["T1_C"], params["P1_MPa"], params["P2_MPa"],
+            params["eta_s"], fluid, depth,
+        )
+    elif comp == "pump":
+        return generate_pump_state(
+            params["T1_C"], params["P1_MPa"], params["P2_MPa"],
+            params["eta_s"], depth,
+        )
+    elif comp == "heat_exchanger":
+        fluid_hot = "Water"
+        fluid_cold = "R134a" if "R" in template.template_id else "Water"
+        return generate_hx_state(
+            params["T_h_in"], params["T_h_out"], params["T_c_in"],
+            params["P_h_MPa"], params["P_c_MPa"],
+            params["m_h"], params["m_c"],
+            fluid_hot, fluid_cold, depth,
+        )
+    elif comp == "boiler":
+        return generate_boiler_state(
+            params["T_in_C"], params["P_MPa"], params["T_out_C"],
+            params["T_source_K"], depth,
+        )
+    elif comp == "mixing_chamber":
+        return generate_mixer_state(
+            params["T1_C"], params["T2_C"], params["P_MPa"],
+            params["m1"], params["m2"], depth,
+        )
+    elif comp == "nozzle":
+        return generate_nozzle_state(
+            params["T1_C"], params["P1_MPa"], params["P2_MPa"],
+            params["V1"], params["eta_nozzle"], fluid, depth,
+        )
+    else:
+        raise ValueError(f"Unknown component: {comp}")
+
+
+def generate_tier2_questions(output_dir: str, total_target: int = 100,
+                              seed: int = 42):
+    """
+    Generate all Tier 2 questions.
+
+    Returns (questions, warnings, metadata).
+    """
+    questions = []
+    component_counters = {}  # "TRB-W" -> int
+    warnings = []
+    coolprop_version = get_coolprop_version()
+    generated_at = datetime.now(timezone.utc).isoformat()
+
+    for template in TIER2_TEMPLATES:
+        count = TIER2_TEMPLATE_COUNTS.get(template.template_id, 0)
+        if count == 0:
+            continue
+
+        comp_code = COMPONENT_CODES[template.component]
+        fluid_code = FLUID_CODES.get(template.fluid, "W")
+        counter_key = f"{comp_code}-{template.depth}{fluid_code}"
+        if counter_key not in component_counters:
+            component_counters[counter_key] = 0
+
+        # Per-template seed for reproducibility
+        template_seed = seed + hash(template.template_id) % 10000
+        try:
+            param_sets = sample_tier2_params(
+                template.template_id, count, seed=template_seed
+            )
+        except Exception as e:
+            warnings.append(f"{template.template_id}: sampling failed: {e}")
+            continue
+
+        if len(param_sets) < count:
+            warnings.append(
+                f"{template.template_id}: requested {count}, got {len(param_sets)} params"
+            )
+
+        for params in param_sets:
+            component_counters[counter_key] += 1
+            num = component_counters[counter_key]
+            question_id = f"T2-{comp_code}-{template.depth}{fluid_code}-{num:03d}"
+
+            # Compute ground truth via state_generator
+            try:
+                state = _compute_tier2_ground_truth(template, params)
+            except Exception as e:
+                warnings.append(f"{question_id}: ground truth failed: {e}")
+                component_counters[counter_key] -= 1
+                continue
+
+            # Skip questions that failed validation
+            if state.warnings:
+                for w in state.warnings:
+                    warnings.append(f"{question_id}: {w}")
+                if not state.validated:
+                    component_counters[counter_key] -= 1
+                    continue
+
+            # Format question text
+            question_text = _format_tier2_question_text(template, params)
+
+            # Build expected dict (flat, keyed by step_id)
+            expected = {}
+            for step in state.steps:
+                expected[step.step_id] = {
+                    "value": step.value,
+                    "unit": step.unit,
+                    "tolerance_pct": step.tolerance_pct,
+                    "abs_tolerance": step.abs_tolerance,
+                }
+
+            # Build steps list (ordering + weights for scorer)
+            steps_list = [
+                {"id": step.step_id, "weight": step.weight, "unit": step.unit}
+                for step in state.steps
+            ]
+
+            # Build given dict
+            given = dict(params)
+            given["fluid"] = template.fluid
+
+            question = {
+                "id": question_id,
+                "tier": 2,
+                "component": template.component,
+                "depth": template.depth,
+                "fluid": template.fluid,
+                "difficulty": template.difficulty,
+                "question": question_text,
+                "given": given,
+                "expected": expected,
+                "steps": steps_list,
+                "metadata": {
+                    "template_id": template.template_id,
+                    "coolprop_version": coolprop_version,
+                    "generated_at": generated_at,
+                    "validated": state.validated,
+                },
+            }
+            questions.append(question)
+
+    # Write output
+    os.makedirs(output_dir, exist_ok=True)
+    jsonl_path = os.path.join(output_dir, "questions.jsonl")
+    with open(jsonl_path, "w") as f:
+        for q in questions:
+            f.write(json.dumps(q, ensure_ascii=False) + "\n")
+
+    # Build metadata
+    comp_dist = {}
+    for q in questions:
+        c = q["component"]
+        comp_dist[c] = comp_dist.get(c, 0) + 1
+
+    depth_dist = {}
+    for q in questions:
+        d = q["depth"]
+        depth_dist[d] = depth_dist.get(d, 0) + 1
+
+    fluid_dist = {}
+    for q in questions:
+        f = q["fluid"]
+        fluid_dist[f] = fluid_dist.get(f, 0) + 1
+
+    difficulty_dist = {}
+    for q in questions:
+        d = q["difficulty"]
+        difficulty_dist[d] = difficulty_dist.get(d, 0) + 1
+
+    metadata = {
+        "total_questions": len(questions),
+        "target": total_target,
+        "tier": 2,
+        "working_fluids": ["Water", "R134a", "Air"],
+        "coolprop_version": coolprop_version,
+        "generated_at": generated_at,
+        "seed": seed,
+        "component_distribution": comp_dist,
+        "depth_distribution": depth_dist,
+        "fluid_distribution": fluid_dist,
+        "difficulty_distribution": difficulty_dist,
+        "warnings": warnings,
+        "scoring": {
+            "type": "weighted_step",
+            "numerical_tolerance_pct": DEFAULT_TOLERANCE_PCT,
+            "absolute_tolerance": DEFAULT_ABS_TOLERANCE,
         },
     }
     meta_path = os.path.join(output_dir, "metadata.json")
