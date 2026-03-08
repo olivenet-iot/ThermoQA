@@ -164,12 +164,27 @@ def _build_entry(qid, q, resp_or_dict, extracted, result, model):
     }
 
 
+def _write_summary(all_entries, questions, provider_name, model_name, summary_path):
+    """Build and write summary.json from all entries."""
+    entry_list = list(all_entries.values()) if isinstance(all_entries, dict) else all_entries
+    if not entry_list:
+        return
+    errors = sum(1 for e in entry_list if e.get("error"))
+    summary = _build_tier2_summary(
+        entry_list, questions, provider_name, model_name, errors=errors,
+    )
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+    return summary
+
+
 def run_tier2_evaluation(provider, questions, output_dir, delay_s=1.0,
                          selected_ids=None):
-    """Run Tier 2 evaluation loop."""
+    """Run Tier 2 evaluation loop with incremental saves."""
     provider_dir = os.path.join(output_dir, provider.name)
     os.makedirs(provider_dir, exist_ok=True)
     responses_path = os.path.join(provider_dir, "responses.jsonl")
+    summary_path = os.path.join(provider_dir, "summary.json")
 
     # If specific IDs given, filter questions
     if selected_ids:
@@ -184,7 +199,7 @@ def run_tier2_evaluation(provider, questions, output_dir, delay_s=1.0,
     else:
         run_questions = questions
 
-    # Load existing entries for merge
+    # Load existing entries
     existing_entries = {}
     if os.path.exists(responses_path):
         with open(responses_path) as f:
@@ -194,9 +209,13 @@ def run_tier2_evaluation(provider, questions, output_dir, delay_s=1.0,
                     entry = json.loads(line)
                     existing_entries[entry["id"]] = entry
 
-    # Determine which questions still need answering
+    # If re-running specific IDs, remove them from file so we can append fresh
     if selected_ids:
-        # Re-run selected IDs regardless of existing
+        for qid in selected_ids:
+            existing_entries.pop(qid, None)
+        with open(responses_path, "w") as f:
+            for entry in existing_entries.values():
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         pending = run_questions
     else:
         completed = set(existing_entries.keys())
@@ -212,90 +231,94 @@ def run_tier2_evaluation(provider, questions, output_dir, delay_s=1.0,
 
     total_score = 0.0
     n_scored = 0
-    new_entries = {}
 
-    for i, q in enumerate(pending, 1):
-        qid = q["id"]
-        step_ids = [s["id"] for s in q["steps"]]
+    # Track all entries for summary (existing + new)
+    all_entries = dict(existing_entries)
 
-        sys.stdout.write(f"\r  [{done_count + i}/{total}] {qid} ...")
-        sys.stdout.flush()
+    try:
+        with open(responses_path, "a") as f_out:
+            for i, q in enumerate(pending, 1):
+                qid = q["id"]
+                step_ids = [s["id"] for s in q["steps"]]
 
-        try:
-            resp = provider.generate(SYSTEM_PROMPT, q["question"])
-        except Exception as exc:
-            print(f"\n  ERROR on {qid}: {exc}")
-            entry = {
-                "id": qid,
-                "question": q["question"],
-                "raw_response": "",
-                "response_text": "",
-                "thinking_text": None,
-                "extracted": {},
-                "scores": [],
-                "question_score": 0.0,
-                "steps": [],
-                "component": q.get("component", ""),
-                "depth": q.get("depth", ""),
-                "fluid": q.get("fluid", ""),
-                "model": provider.model,
-                "latency_s": 0.0,
-                "input_tokens": None,
-                "output_tokens": None,
-                "error": str(exc),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }
-            new_entries[qid] = entry
-            n_scored += 1
-            if delay_s > 0:
-                time.sleep(delay_s)
-            continue
+                sys.stdout.write(f"\r  [{done_count + i}/{total}] {qid} ...")
+                sys.stdout.flush()
 
-        # Extract and score
-        extraction_text = resp.text if resp.text.strip() else (resp.thinking_text or "")
-        extracted = extract_tier2_properties(extraction_text, step_ids)
-        result = score_tier2_question(q, extracted)
+                try:
+                    resp = provider.generate(SYSTEM_PROMPT, q["question"])
+                except Exception as exc:
+                    print(f"\n  ERROR on {qid}: {exc}")
+                    entry = {
+                        "id": qid,
+                        "question": q["question"],
+                        "raw_response": "",
+                        "response_text": "",
+                        "thinking_text": None,
+                        "extracted": {},
+                        "scores": [],
+                        "question_score": 0.0,
+                        "steps": [],
+                        "component": q.get("component", ""),
+                        "depth": q.get("depth", ""),
+                        "fluid": q.get("fluid", ""),
+                        "model": provider.model,
+                        "latency_s": 0.0,
+                        "input_tokens": None,
+                        "output_tokens": None,
+                        "error": str(exc),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                    f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                    f_out.flush()
+                    all_entries[qid] = entry
+                    n_scored += 1
+                    # Rebuild summary after each question
+                    _write_summary(all_entries, questions, provider.name, provider.model, summary_path)
+                    if delay_s > 0:
+                        time.sleep(delay_s)
+                    continue
 
-        entry = _build_entry(qid, q, resp, extracted, result, resp.model)
-        new_entries[qid] = entry
+                # Extract and score
+                extraction_text = resp.text if resp.text.strip() else (resp.thinking_text or "")
+                extracted = extract_tier2_properties(extraction_text, step_ids)
+                result = score_tier2_question(q, extracted)
 
-        n_scored += 1
-        total_score += result.weighted_score
-        running_score = total_score / n_scored if n_scored > 0 else 0.0
+                entry = _build_entry(qid, q, resp, extracted, result, resp.model)
 
-        bar_len = 30
-        filled = int(bar_len * (done_count + i) / total) if total > 0 else 0
-        bar = "#" * filled + "-" * (bar_len - filled)
-        sys.stdout.write(
-            f"\r[{bar}] {done_count + i}/{total} {qid} | Running score: {running_score:.1%}"
-        )
-        sys.stdout.flush()
+                # Write immediately and flush
+                f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                f_out.flush()
+                all_entries[qid] = entry
 
-        if delay_s > 0 and i < len(pending):
-            time.sleep(delay_s)
+                n_scored += 1
+                total_score += result.weighted_score
+                running_score = total_score / n_scored if n_scored > 0 else 0.0
 
-    print()  # newline after progress
+                bar_len = 30
+                filled = int(bar_len * (done_count + i) / total) if total > 0 else 0
+                bar = "#" * filled + "-" * (bar_len - filled)
+                sys.stdout.write(
+                    f"\r[{bar}] {done_count + i}/{total} {qid} | Running score: {running_score:.1%}"
+                )
+                sys.stdout.flush()
 
-    # Merge new entries into existing
-    for qid, entry in new_entries.items():
-        existing_entries[qid] = entry
+                # Rebuild summary after each question
+                _write_summary(all_entries, questions, provider.name, provider.model, summary_path)
 
-    # Write all entries
-    with open(responses_path, "w") as f:
-        for entry in existing_entries.values():
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    print(f"Wrote {len(existing_entries)} responses to {responses_path}")
+                if delay_s > 0 and i < len(pending):
+                    time.sleep(delay_s)
 
-    # Build and write summary
-    errors = sum(1 for e in existing_entries.values() if e.get("error"))
-    summary = _build_tier2_summary(
-        list(existing_entries.values()), questions,
-        provider.name, provider.model, errors=errors,
-    )
-    summary_path = os.path.join(provider_dir, "summary.json")
-    with open(summary_path, "w") as f:
-        json.dump(summary, f, indent=2, ensure_ascii=False)
+        print()  # newline after progress
 
+    except KeyboardInterrupt:
+        print("\n\nInterrupted! Partial results saved.")
+
+    # Final summary (covers normal completion and interrupt)
+    summary = _write_summary(all_entries, questions, provider.name, provider.model, summary_path)
+    if summary is None:
+        return
+
+    print(f"Wrote {len(all_entries)} responses to {responses_path}")
     print(f"Wrote summary to {summary_path}")
     print(f"\n=== Results ===")
     print(f"  Questions:    {summary['total_questions']}")
