@@ -276,6 +276,135 @@ def score_dataset(
     )
 
 
+CATEGORY_CODE_MAP = {
+    "SL": "subcooled_liquid",
+    "SF": "saturated_liquid",
+    "WS": "wet_steam",
+    "SV": "saturated_vapor",
+    "SH": "superheated_vapor",
+    "SC": "supercritical",
+    "PD": "phase_determination",
+    "IL": "inverse_lookups",
+}
+
+
+def build_summary_from_entries(entries: list[dict], questions: list[dict]) -> dict:
+    """
+    Build summary stats directly from pre-scored entry dicts.
+
+    Reads question_score and scores fields from each entry instead of
+    re-extracting/re-scoring from response text. This ensures summaries
+    reflect the actual stored scores (e.g. from LLM extraction).
+
+    Args:
+        entries: List of response dicts with question_score, scores fields.
+        questions: List of question dicts (for difficulty lookup).
+
+    Returns:
+        Dict with summary stats: total_questions, total_properties,
+        total_correct_properties, mean_question_score, property_accuracy,
+        per_category, per_difficulty, per_property_key.
+    """
+    questions_by_id = {q["id"]: q for q in questions}
+
+    total_properties = 0
+    total_correct = 0
+    score_sum = 0.0
+    per_category: dict = {}
+    per_difficulty: dict = {}
+    per_property_key: dict = {}
+
+    for entry in entries:
+        qid = entry["id"]
+        q_score = entry.get("question_score", 0.0)
+        scores = entry.get("scores", [])
+        score_sum += q_score
+
+        # Derive category from question ID prefix (T1-XX-NNN -> XX)
+        parts = qid.split("-")
+        code = parts[1] if len(parts) >= 3 else "??"
+        category = CATEGORY_CODE_MAP.get(code, code)
+
+        # Difficulty from questions list
+        q = questions_by_id.get(qid)
+        difficulty = q.get("difficulty", "") if q else ""
+
+        n_props = len(scores) if scores else 0
+        n_correct = sum(1 for s in scores if s.get("passed"))
+        total_properties += n_props
+        total_correct += n_correct
+
+        # Per-category
+        if category not in per_category:
+            per_category[category] = {
+                "n_questions": 0,
+                "total_score": 0.0,
+                "n_props": 0,
+                "n_correct": 0,
+            }
+        per_category[category]["n_questions"] += 1
+        per_category[category]["total_score"] += q_score
+        per_category[category]["n_props"] += n_props
+        per_category[category]["n_correct"] += n_correct
+
+        # Per-difficulty
+        if difficulty not in per_difficulty:
+            per_difficulty[difficulty] = {"n_questions": 0, "total_score": 0.0}
+        per_difficulty[difficulty]["n_questions"] += 1
+        per_difficulty[difficulty]["total_score"] += q_score
+
+        # Per-property key
+        for s in scores:
+            k = s.get("key", "unknown")
+            if k not in per_property_key:
+                per_property_key[k] = {
+                    "n_total": 0,
+                    "n_correct": 0,
+                    "n_missing": 0,
+                    "error_pcts": [],
+                }
+            per_property_key[k]["n_total"] += 1
+            if s.get("passed"):
+                per_property_key[k]["n_correct"] += 1
+            if s.get("error_type") == "missing":
+                per_property_key[k]["n_missing"] += 1
+            err = s.get("error_pct")
+            if err is not None and err != float("inf"):
+                per_property_key[k]["error_pcts"].append(err)
+
+    total_questions = len(entries)
+    mean_score = score_sum / total_questions if total_questions > 0 else 0.0
+    prop_accuracy = total_correct / total_properties if total_properties > 0 else 0.0
+
+    # Finalize per-category
+    for d in per_category.values():
+        d["mean_score"] = d["total_score"] / d["n_questions"] if d["n_questions"] else 0
+        d["accuracy"] = d["n_correct"] / d["n_props"] if d["n_props"] else 0
+        del d["total_score"]
+
+    # Finalize per-difficulty
+    for d in per_difficulty.values():
+        d["mean_score"] = d["total_score"] / d["n_questions"] if d["n_questions"] else 0
+        del d["total_score"]
+
+    # Finalize per-property key
+    for d in per_property_key.values():
+        d["accuracy"] = d["n_correct"] / d["n_total"] if d["n_total"] else 0
+        errs = d.pop("error_pcts")
+        d["mean_error_pct"] = sum(errs) / len(errs) if errs else None
+
+    return {
+        "total_questions": total_questions,
+        "total_properties": total_properties,
+        "total_correct_properties": total_correct,
+        "mean_question_score": mean_score,
+        "property_accuracy": prop_accuracy,
+        "per_category": per_category,
+        "per_difficulty": per_difficulty,
+        "per_property_key": per_property_key,
+    }
+
+
 def load_questions(path: str) -> list[dict]:
     """Load questions from a JSONL file."""
     questions = []

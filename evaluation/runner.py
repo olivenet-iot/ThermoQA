@@ -17,8 +17,8 @@ from evaluation.extractor import extract_properties, strip_thinking_tags
 from evaluation.scorer import (
     DatasetResults,
     QuestionResult,
+    build_summary_from_entries,
     load_questions,
-    score_dataset,
     score_question,
 )
 
@@ -525,9 +525,9 @@ def run_evaluation(
 
 def _build_summary(questions: list[dict], responses_path: str,
                    provider: BaseProvider) -> dict:
-    """Build summary.json from responses."""
-    # Load responses
-    responses = {}
+    """Build summary.json from pre-scored response entries."""
+    # Load entries
+    all_entries = []
     latencies = []
     input_tokens_list = []
     output_tokens_list = []
@@ -542,35 +542,33 @@ def _build_summary(questions: list[dict], responses_path: str,
                 entry = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            qid = entry["id"]
+            all_entries.append(entry)
             if entry.get("error"):
                 errors += 1
-            responses[qid] = entry.get("response_text", "")
             latencies.append(entry.get("latency_s", 0))
             if entry.get("input_tokens") is not None:
                 input_tokens_list.append(entry["input_tokens"])
             if entry.get("output_tokens") is not None:
                 output_tokens_list.append(entry["output_tokens"])
 
-    # Score via scorer
-    ds = score_dataset(questions, responses)
+    stats = build_summary_from_entries(all_entries, questions)
 
     summary = {
         "provider": provider.name,
         "model": provider.model,
-        "total_questions": ds.total_questions,
-        "total_responses": len(responses),
-        "total_properties": ds.total_properties,
-        "total_correct_properties": ds.total_correct_properties,
-        "property_accuracy": round(ds.property_accuracy, 4),
-        "mean_question_score": round(ds.mean_question_score, 4),
+        "total_questions": stats["total_questions"],
+        "total_responses": len(all_entries),
+        "total_properties": stats["total_properties"],
+        "total_correct_properties": stats["total_correct_properties"],
+        "property_accuracy": round(stats["property_accuracy"], 4),
+        "mean_question_score": round(stats["mean_question_score"], 4),
         "per_category": {
             cat: {k: round(v, 4) if isinstance(v, float) else v for k, v in d.items()}
-            for cat, d in ds.per_category.items()
+            for cat, d in stats["per_category"].items()
         },
         "per_difficulty": {
             diff: {k: round(v, 4) if isinstance(v, float) else v for k, v in d.items()}
-            for diff, d in ds.per_difficulty.items()
+            for diff, d in stats["per_difficulty"].items()
         },
         "errors": errors,
         "timing": {
