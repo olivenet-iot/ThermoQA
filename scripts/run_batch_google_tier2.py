@@ -145,7 +145,10 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
     client = genai.Client(api_key=api_key)
 
     # Upload batch input file
-    uploaded_file = client.files.upload(file=batch_input_path, mime_type="application/jsonl")
+    uploaded_file = client.files.upload(
+        file=batch_input_path,
+        config={"mime_type": "application/jsonl"},
+    )
     print(f"Uploaded input file: {uploaded_file.name}")
 
     # Create batch job
