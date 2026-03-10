@@ -8,12 +8,15 @@ Usage:
     python scripts/run_batch_google_tier3.py --submit
     python scripts/run_batch_google_tier3.py --status
     python scripts/run_batch_google_tier3.py --collect
+    python scripts/run_batch_google_tier3.py --poll          # submit + poll + collect
+    python scripts/run_batch_google_tier3.py --poll --test   # dry-run with 1 question
 """
 
 import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -111,6 +114,7 @@ def _build_tier3_summary(entries, questions, provider_name, model_name,
 def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | None = None):
     """Build and submit a batch of requests to the Google Gemini Batch API."""
     from google import genai
+    from google.genai import types
     from google.genai.types import CreateBatchJobConfig
 
     api_key = os.environ.get("GOOGLE_API_KEY")
@@ -138,14 +142,13 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
             request = {
                 "key": q["id"],
                 "request": {
-                    "model": f"models/{model}",
                     "contents": [
                         {"role": "user", "parts": [{"text": q["question"]}]},
                     ],
-                    "systemInstruction": {
+                    "system_instruction": {
                         "parts": [{"text": SYSTEM_PROMPT}],
                     },
-                    "generationConfig": {
+                    "generation_config": {
                         "thinking_config": {"thinking_level": "HIGH"},
                     },
                 },
@@ -158,7 +161,10 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
 
     uploaded_file = client.files.upload(
         file=batch_input_path,
-        config={"mime_type": "application/jsonl"},
+        config=types.UploadFileConfig(
+            mime_type='jsonl',
+            display_name='thermoqa-tier3-batch',
+        ),
     )
     print(f"Uploaded input file: {uploaded_file.name}")
 
@@ -174,7 +180,7 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
 
     print(f"Batch submitted successfully!")
     print(f"  Job name: {batch_job.name}")
-    print(f"  State:    {batch_job.state}")
+    print(f"  State:    {batch_job.state.name}")
     if batch_job.completion_stats:
         stats = batch_job.completion_stats
         print(f"  Stats:    success={getattr(stats, 'success_count', 0)}, "
@@ -219,15 +225,26 @@ def collect(questions_path: str, output_dir: str, model: str):
     client = genai.Client(api_key=api_key)
 
     batch_job = client.batches.get(name=job_name)
-    terminal_states = {"JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED"}
-    state_str = str(batch_job.state)
-    if state_str not in terminal_states and not any(s in state_str for s in terminal_states):
-        print(f"Batch is not yet complete (state: {batch_job.state})")
+    state_name = batch_job.state.name
+    success_states = {"JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED"}
+    failure_states = {"JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED"}
+
+    if state_name in failure_states:
+        print(f"Batch FAILED (state: {state_name})")
+        if hasattr(batch_job, 'error') and batch_job.error:
+            print(f"  Error: {batch_job.error}")
+        sys.exit(1)
+
+    if state_name not in success_states:
+        print(f"Batch not yet complete (state: {state_name})")
         if batch_job.completion_stats:
             stats = batch_job.completion_stats
             print(f"  success={getattr(stats, 'success_count', 0)}, "
                   f"failed={getattr(stats, 'failure_count', 0)}")
         sys.exit(1)
+
+    if state_name == "JOB_STATE_PARTIALLY_SUCCEEDED":
+        print("WARNING: Batch partially succeeded. Some requests may have failed.")
 
     print(f"Collecting results for batch {job_name}...")
     dest_file = batch_job.dest.file_name
@@ -385,6 +402,48 @@ def collect(questions_path: str, output_dir: str, model: str):
               f"{summary['tokens']['total_output']} out")
 
 
+def poll(questions_path: str, output_dir: str, model: str,
+         ids: list[str] | None = None, test: bool = False):
+    """Submit, poll until complete, and collect in one step."""
+    from google import genai
+
+    # Submit
+    submit(questions_path, output_dir, model, ids)
+
+    api_key = os.environ["GOOGLE_API_KEY"]
+    client = genai.Client(api_key=api_key)
+    job_name = _read_batch_id(output_dir)
+
+    success_states = {"JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED"}
+    failure_states = {"JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_EXPIRED"}
+    terminal_states = success_states | failure_states
+
+    print(f"\nPolling batch {job_name} every 30s...")
+    while True:
+        batch_job = client.batches.get(name=job_name)
+        state_name = batch_job.state.name
+        stats = batch_job.completion_stats
+        stats_str = ""
+        if stats:
+            stats_str = (f" (success={getattr(stats, 'success_count', 0)}, "
+                         f"failed={getattr(stats, 'failure_count', 0)})")
+        print(f"  [{datetime.now(timezone.utc).strftime('%H:%M:%S')}] {state_name}{stats_str}")
+
+        if state_name in terminal_states:
+            break
+        time.sleep(30)
+
+    if state_name in failure_states:
+        print(f"\nBatch FAILED (state: {state_name})")
+        if hasattr(batch_job, 'error') and batch_job.error:
+            print(f"  Error: {batch_job.error}")
+        sys.exit(1)
+
+    # Collect
+    print()
+    collect(questions_path, output_dir, model)
+
+
 def _read_batch_id(output_dir: str) -> str:
     path = os.path.join(output_dir, BATCH_ID_FILE)
     if not os.path.exists(path):
@@ -407,6 +466,8 @@ def main():
     mode.add_argument("--submit", action="store_true", help="Submit batch to Google Gemini Batch API")
     mode.add_argument("--status", action="store_true", help="Check batch processing status")
     mode.add_argument("--collect", action="store_true", help="Collect results from completed batch")
+    mode.add_argument("--poll", action="store_true",
+                       help="Submit, poll until complete, and collect in one step")
 
     parser.add_argument(
         "--questions", default=DEFAULT_QUESTIONS,
@@ -424,14 +485,27 @@ def main():
         "--ids", nargs="+",
         help="Only submit these question IDs (for re-running specific questions)",
     )
+    parser.add_argument(
+        "--test", action="store_true",
+        help="Dry-run: submit only 1 question",
+    )
     args = parser.parse_args()
 
+    # --test: override to submit only the first question
+    ids = args.ids
+    if args.test and (args.submit or args.poll):
+        questions = load_questions(args.questions)
+        ids = [questions[0]["id"]]
+        print(f"TEST MODE: submitting only 1 question ({ids[0]})")
+
     if args.submit:
-        submit(args.questions, args.output, args.model, args.ids)
+        submit(args.questions, args.output, args.model, ids)
     elif args.status:
         status(args.output)
     elif args.collect:
         collect(args.questions, args.output, args.model)
+    elif args.poll:
+        poll(args.questions, args.output, args.model, ids, test=args.test)
 
 
 if __name__ == "__main__":
