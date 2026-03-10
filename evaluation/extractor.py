@@ -118,6 +118,9 @@ PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
 
 def _preprocess(text: str) -> str:
     """Clean up markdown formatting and number separators."""
+    # Normalize Unicode subscript digits to ASCII (fixes mixed notation like h₂s)
+    _SUBSCRIPT_DIGITS = str.maketrans('₀₁₂₃₄₅₆₇₈₉', '0123456789')
+    text = text.translate(_SUBSCRIPT_DIGITS)
     # Normalize LaTeX subscript braces only around known symbols
     # T_{sat} -> T_sat, h_{fg} -> h_fg, s_{fg} -> s_fg, P_{sat} -> P_sat, etc.
     text = re.sub(r'([A-Za-z])_\{([A-Za-z0-9]+)\}', r'\1_\2', text)

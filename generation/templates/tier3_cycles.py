@@ -293,12 +293,11 @@ _BRYRG_C = [
 
 # ── VCR-A (Actual VCR, R-134a, 4+1s states) ─────────────
 
+# NOTE: R-134a absolute h/s/ef values are NOT scored because they depend on
+# the reference state (IIR vs ASHRAE). Only difference-based quantities
+# (work, heat, COP, entropy generation, exergy destruction) are scored.
+# The question text still asks for state properties — we just don't grade them.
 _VCRA_A = [
-    {"id": "h1", "formula": "CoolProp(Q=1, T=T_evap)", "unit": "kJ/kg", "weight": 1},
-    {"id": "h2s", "formula": "CoolProp(s=s1, P=P_cond)", "unit": "kJ/kg", "weight": 1},
-    {"id": "h2", "formula": "h1 + (h2s-h1)/eta_comp", "unit": "kJ/kg", "weight": 1},
-    {"id": "h3", "formula": "CoolProp(Q=0, T=T_cond)", "unit": "kJ/kg", "weight": 1},
-    {"id": "h4", "formula": "h3 (isenthalpic throttle)", "unit": "kJ/kg", "weight": 1},
     {"id": "w_comp", "formula": "h2 - h1", "unit": "kJ/kg", "weight": 2},
     {"id": "q_L", "formula": "h1 - h4", "unit": "kJ/kg", "weight": 2},
     {"id": "q_H", "formula": "h2 - h3", "unit": "kJ/kg", "weight": 2},
@@ -308,10 +307,6 @@ _VCRA_A = [
     {"id": "Q_dot_L", "formula": "m_dot * q_L", "unit": "kW", "weight": 3},
 ]
 _VCRA_B = [
-    {"id": "s1", "formula": "CoolProp(Q=1, T=T_evap)", "unit": "kJ/(kg·K)", "weight": 1},
-    {"id": "s2", "formula": "CoolProp(h=h2, P=P_cond)", "unit": "kJ/(kg·K)", "weight": 1},
-    {"id": "s3", "formula": "CoolProp(Q=0, T=T_cond)", "unit": "kJ/(kg·K)", "weight": 1},
-    {"id": "s4", "formula": "CoolProp(h=h4, P=P_evap)", "unit": "kJ/(kg·K)", "weight": 1},
     {"id": "s_gen_comp", "formula": "s2 - s1", "unit": "kJ/(kg·K)", "weight": 2},
     {"id": "s_gen_cond", "formula": "(s3-s2) + q_H/T_H", "unit": "kJ/(kg·K)", "weight": 2},
     {"id": "s_gen_throttle", "formula": "s4 - s3", "unit": "kJ/(kg·K)", "weight": 2},
@@ -319,10 +314,6 @@ _VCRA_B = [
     {"id": "s_gen_total", "formula": "sum of all s_gen", "unit": "kJ/(kg·K)", "weight": 3},
 ]
 _VCRA_C = [
-    {"id": "ef1", "formula": "(h1-h0) - T0*(s1-s0)", "unit": "kJ/kg", "weight": 1},
-    {"id": "ef2", "formula": "(h2-h0) - T0*(s2-s0)", "unit": "kJ/kg", "weight": 1},
-    {"id": "ef3", "formula": "(h3-h0) - T0*(s3-s0)", "unit": "kJ/kg", "weight": 1},
-    {"id": "ef4", "formula": "(h4-h0) - T0*(s4-s0)", "unit": "kJ/kg", "weight": 1},
     {"id": "x_dest_comp", "formula": "T0 * s_gen_comp", "unit": "kJ/kg", "weight": 2},
     {"id": "x_dest_cond", "formula": "T0 * s_gen_cond", "unit": "kJ/kg", "weight": 2},
     {"id": "x_dest_throttle", "formula": "T0 * s_gen_throttle", "unit": "kJ/kg", "weight": 2},
