@@ -1,12 +1,15 @@
 # ThermoQA — A Benchmark for Evaluating Thermodynamic Reasoning in Large Language Models
 
-ThermoQA evaluates how well large language models can solve 
-engineering thermodynamics problems — from steam table property 
-lookups to multi-step exergy analysis. Ground truth is computed 
-with CoolProp (IAPWS-IF97), the international standard for 
-water and steam properties.
+ThermoQA evaluates how well large language models can solve
+engineering thermodynamics problems — from steam table property
+lookups to multi-step component analysis with exergy destruction.
+**211 questions** across two tiers, all grounded in CoolProp 7.2.0
+(IAPWS-IF97 + Helmholtz EOS). No other benchmark covers applied
+engineering thermodynamics at this depth.
 
-## Leaderboard — Tier 1: Property Lookups (v0.1)
+## Leaderboard (v0.2)
+
+### Tier 1: Property Lookups
 
 110 questions · Water/steam only · CoolProp 7.2.0 ground truth (IAPWS-IF97) · ±2% tolerance
 
@@ -18,7 +21,7 @@ water and steam properties.
 | 4 | DeepSeek-R1 | DeepSeek | **89.5%** | 97.4% | 96.1% | 67.6% |
 | 5 | MiniMax M2.5 | MiniMax | **84.5%** | 90.1% | 78.9% | 70.8% |
 
-### Per-Category Breakdown
+#### Per-Category Breakdown
 
 | Category | Questions | Gemini | GPT-5.4 | Opus 4.6 | DeepSeek | MiniMax |
 |----------|-----------|--------|---------|----------|----------|---------|
@@ -31,33 +34,111 @@ water and steam properties.
 | Phase Determination | 15 | 100% | 100% | 93.3% | 86.7% | 100% |
 | Inverse Lookups | 15 | 100% | 88.3% | 96.7% | 95.0% | 63.3% |
 
+### Tier 2: Component Analysis
+
+101 questions · 7 components · 3 fluids (Water, Air, R-134a) · 3 analysis depths · Weighted step-level scoring
+
+| Rank | Model | Provider | Score | Water | Air | R-134a | Tok/Q |
+|------|-------|----------|-------|-------|-----|--------|-------|
+| 🥇 | Claude Opus 4.6 | Anthropic | **92.0%** | 96.5% | 95.6% | 53.0% | 30,371 |
+| 🥈 | GPT-5.4 | OpenAI | **91.0%** | 95.2% | 95.8% | 52.0% | 8,986 |
+| 🥉 | Gemini 3.1 Pro | Google | **89.5%** | 97.4% | 81.3% | 44.6% | 1,310 |
+| 4 | DeepSeek-R1 | DeepSeek | **86.9%** | 89.6% | 92.4% | 57.6% | 14,053 |
+| 5 | MiniMax M2.5 | MiniMax | **73.4%** | 71.2% | 97.2% | 49.5% | 11,659 |
+
+### Tier 1 → Tier 2 Degradation
+
+Multi-step reasoning imposes a penalty on every model. The ranking reshuffles.
+
+| Model | Tier 1 | Tier 2 | Drop | Rank Change |
+|-------|--------|--------|------|-------------|
+| Claude Opus 4.6 | 95.6% | 92.0% | −3.6 pp | #3 → **#1** |
+| GPT-5.4 | 96.9% | 91.0% | −5.9 pp | #2 → #2 |
+| Gemini 3.1 Pro | 97.3% | 89.5% | −7.8 pp | #1 → **#3** |
+| DeepSeek-R1 | 89.5% | 86.9% | −2.6 pp | #4 → #4 |
+| MiniMax M2.5 | 84.5% | 73.4% | −11.1 pp | #5 → #5 |
+
 ## Key Findings
 
-### 1. Supercritical is the discriminator
+### Tier 1 Findings
+
+#### 1. Supercritical is the discriminator
 
 All models struggle above the critical point (T > 373.95°C, P > 22.064 MPa). The best score is GPT-5.4 at 86.7%. Why? LLMs memorize steam table values from textbooks (Çengel & Boles, Moran & Shapiro) but don't know the IAPWS-IF97 equations of state. Near the critical point, properties change extremely nonlinearly — linear interpolation from memorized table entries produces large errors.
 
 Example: At 402°C and 25.3 MPa, Claude Opus interpolated from memorized values and reported h = 1887 kJ/kg. The IAPWS-IF97 equation gives h = 2585.77 kJ/kg — a 27% error. The same model with Python code execution (CoolProp) gets the exact answer.
 
-### 2. Reasoning mode is critical
+#### 2. Reasoning mode is critical
 
 GPT-5.4 without reasoning: 81.0%. With reasoning: 96.9%. A 16-point jump from enabling chain-of-thought. Reasoning enables cross-checking, self-correction, and more careful interpolation. All models in the leaderboard use their best available reasoning mode.
 
-### 3. Efficiency ≠ accuracy
+#### 3. Efficiency ≠ accuracy
 
 Gemini scored #1 with 525 tokens/question average. Claude Opus used 12,981 tokens (25×) and scored lower. More thinking does not necessarily produce better answers for well-defined property lookups.
 
-### 4. No model is perfect everywhere
+#### 4. No model is perfect everywhere
 
 Each model has unique weaknesses: GPT-5.4 struggles on inverse lookups (88.3%), Opus on supercritical (48.3%), MiniMax on inverse lookups (63.3%), DeepSeek on hard problems (67.6%). The benchmark discriminates.
 
-### 5. Tool use changes everything
+#### 5. Tool use changes everything
 
 The same model that scores 48% on supercritical questions without tools scores 100% with Python code execution (CoolProp/IAPWS). The gap isn't knowledge — it's methodology. LLMs know they need equation-of-state solvers but can't run them without tool access.
 
+### Tier 2 Findings
+
+#### 6. Rankings reshuffle under multi-step reasoning
+
+Gemini (#1 on Tier 1) drops to #3 on Tier 2 (−7.8 pp). Opus (#3 on Tier 1) climbs to #1 (−3.6 pp). Property lookup accuracy does not predict component analysis performance. Multi-step thermodynamic reasoning is a distinct capability.
+
+#### 7. R-134a is the Tier 2 discriminator
+
+Analogous to supercritical for Tier 1. All models collapse on refrigerant properties (44–58%). Even Gemini (97.4% on water) drops to 44.6% on R-134a. Training data is overwhelmingly water/steam. R-134a exposes genuine equation-of-state reasoning gaps vs. table memorization.
+
+#### 8. Compressor is the hardest component
+
+All models score 50–76% on compressors vs. 90–100% on turbines. The work input formula w_in = (h₂s − h₁) / η requires dividing by isentropic efficiency, not multiplying. Models frequently reverse this — a conceptual error, not a lookup failure.
+
+| Component | Opus | GPT-5.4 | Gemini | DeepSeek | MiniMax |
+|-----------|------|---------|--------|----------|---------|
+| Turbine | 96.9% | 91.2% | 93.5% | 93.0% | 69.6% |
+| **Compressor** | **76.3%** | **73.4%** | **58.5%** | **62.2%** | **50.7%** |
+| Pump | 100% | 100% | 100% | 97.0% | 88.5% |
+| Heat Exchanger | 88.7% | 84.9% | 88.5% | 89.9% | 84.1% |
+| Boiler | 98.2% | 97.1% | 100% | 93.5% | 74.8% |
+| Mixing Chamber | 92.0% | 98.6% | 97.8% | 95.7% | 80.6% |
+| Nozzle | 94.1% | 97.9% | 91.4% | 78.5% | 68.1% |
+
+#### 9. Deeper analysis ≠ harder (for frontier models)
+
+Counter-intuitive: top models score higher on Depth C (full exergy analysis) than Depth A (energy balance only). Opus: 90.2% → 94.8%. GPT-5.4: 89.8% → 94.7%. The structured framework of second-law analysis (entropy generation → exergy destruction → η_II) may scaffold reasoning better than open-ended energy balance.
+
+| Depth | Description | Opus | GPT-5.4 | Gemini | DeepSeek | MiniMax |
+|-------|-------------|------|---------|--------|----------|---------|
+| A | Energy balance | 90.2% | 89.8% | 87.9% | 81.3% | 71.8% |
+| B | + Entropy generation | 91.5% | 89.2% | 88.8% | 87.9% | 76.0% |
+| C | + Exergy analysis | 94.8% | 94.7% | 92.2% | 92.4% | 72.3% |
+
+#### 10. Boiler Carnot factor is NOT a discriminator
+
+Top 3 models all score 97–100% on boilers. The Carnot factor calculation (1 − T₀/T_mean) is conceptually simple and well-represented in textbooks. It does not separate frontier models.
+
+#### 11. Token efficiency varies 23×
+
+Gemini uses 1,310 tokens/question; Opus uses 30,371 (23× more) for only 2.5 pp higher score. GPT-5.4 finds the sweet spot: 8,986 tokens for 91.0%. Three efficiency tiers emerge: lean (Gemini), balanced (GPT-5.4), and exhaustive (Opus, DeepSeek).
+
+#### 12. Pump is solved
+
+All top-3 models score 100% on pump calculations. Pumps have the simplest thermodynamics (incompressible liquid, small enthalpy change) and are no longer discriminating.
+
+#### 13. Three performance tiers emerge
+
+- **Tier A (90%+):** Opus (92.0%), GPT-5.4 (91.0%) — reliable for engineering calculations
+- **Tier B (85–90%):** Gemini (89.5%), DeepSeek (86.9%) — competitive but with blind spots
+- **Tier C (<75%):** MiniMax (73.4%) — not ready for unsupervised thermo work
+
 ## Dataset
 
-### Question Format
+### Tier 1: Property Lookups (110 questions)
 
 ```json
 {
@@ -75,8 +156,6 @@ The same model that scores 48% on supercritical questions without tools scores 1
 }
 ```
 
-### Distribution
-
 | Category | Code | Count | Difficulty |
 |----------|------|-------|------------|
 | Subcooled Liquid | SL | 10 | easy |
@@ -90,9 +169,24 @@ The same model that scores 48% on supercritical questions without tools scores 1
 
 **Total:** 110 questions (52 easy, 30 medium, 28 hard)
 
+### Tier 2: Component Analysis (101 questions)
+
+Multi-step thermodynamic analysis of individual components. Each question requires computing inlet/outlet properties, energy balance, and (at higher depths) entropy generation and exergy destruction.
+
+**Components:** Turbine (18), Heat Exchanger (19), Compressor (14), Boiler (14), Nozzle (14), Mixing Chamber (12), Pump (10)
+
+**Analysis Depths:**
+- **Depth A (36 q):** Energy balance — compute work/heat output from inlet/outlet states
+- **Depth B (35 q):** + Entropy generation — add s₂ and S_gen calculations
+- **Depth C (30 q):** + Exergy analysis — add exergy destruction and second-law efficiency (η_II)
+
+**Fluids:** Water (74), Air (17), R-134a (10)
+
+**Difficulty:** Easy (34), Medium (37), Hard (30)
+
 ### Ground Truth
 
-All reference values computed with CoolProp 7.2.0 using the IAPWS-IF97 equation of state — the international standard for water and steam properties. CoolProp validated against NIST reference data with maximum deviation of 0.037%.
+All reference values computed with CoolProp 7.2.0. Tier 1 uses IAPWS-IF97 (water/steam). Tier 2 uses IAPWS-IF97 for water and Helmholtz EOS for air and R-134a. CoolProp validated against NIST reference data with maximum deviation of 0.037%.
 
 ## Quick Start
 
@@ -103,9 +197,12 @@ git clone https://github.com/olivenet-iot/ThermoQA
 cd ThermoQA
 pip install -r requirements.txt
 
-# Run evaluation (choose your provider)
+# Tier 1: Property lookups
 export OPENAI_API_KEY=xxx
 python scripts/run_evaluation.py --provider openai --model gpt-5.4 --output results/
+
+# Tier 2: Component analysis
+python scripts/run_evaluation_tier2.py --provider openai --output results_tier2/
 
 # Or with other providers
 python scripts/run_evaluation.py --provider anthropic --output results/
@@ -120,15 +217,25 @@ python scripts/run_evaluation.py --report results/
 ### Batch evaluation (50% cheaper)
 
 ```bash
-# Anthropic batch
+# Anthropic batch (Tier 1)
 python scripts/run_batch_anthropic.py --submit
 python scripts/run_batch_anthropic.py --status
 python scripts/run_batch_anthropic.py --collect
 
-# OpenAI batch
+# Anthropic batch (Tier 2)
+python scripts/run_batch_anthropic_tier2.py --submit
+python scripts/run_batch_anthropic_tier2.py --status
+python scripts/run_batch_anthropic_tier2.py --collect
+
+# OpenAI batch (Tier 1)
 python scripts/run_batch_openai.py --submit
 python scripts/run_batch_openai.py --status
 python scripts/run_batch_openai.py --collect
+
+# OpenAI batch (Tier 2)
+python scripts/run_batch_openai_tier2.py --submit
+python scripts/run_batch_openai_tier2.py --status
+python scripts/run_batch_openai_tier2.py --collect
 ```
 
 ### LLM-based extraction (recommended)
@@ -137,14 +244,19 @@ After running evaluation, re-extract answers using Sonnet 4.6 for robust parsing
 
 ```bash
 export ANTHROPIC_API_KEY=xxx
+# Tier 1
 python scripts/reextract.py --provider openai --dry-run  # preview changes
 python scripts/reextract.py --provider openai             # apply
 python scripts/reextract.py --all                          # all providers
+
+# Tier 2
+python scripts/reextract_tier2.py --provider openai
+python scripts/reextract_tier2.py --all
 ```
 
 ## Methodology
 
-### Evaluation Pipeline
+### Tier 1 Pipeline
 
 ```
 Question (JSONL) → LLM API call → Raw response → LLM Extractor (Sonnet 4.6) → Scorer → Results
@@ -155,6 +267,15 @@ Question (JSONL) → LLM API call → Raw response → LLM Extractor (Sonnet 4.6
 3. **Extraction:** LLM-based extractor (Claude Sonnet 4.6, temperature=0) parses the final answer values from the full response including thinking text. This eliminates model-specific regex issues.
 4. **Scoring:** Per-property scoring with ±2% relative tolerance OR ±0.5 absolute tolerance (whichever is more lenient). Quality (x): absolute tolerance 0.03. Phase: exact match with alias list.
 
+### Tier 2 Pipeline
+
+Same extraction pipeline as Tier 1, with weighted step-level scoring:
+
+1. **Questions:** Each problem specifies a component (turbine, compressor, etc.), operating conditions, and an analysis depth (A/B/C). Multiple output properties are requested, each with a weight reflecting engineering importance.
+2. **Weighted scoring:** Each step (h₁, s₁, w_out, S_gen, x_dest, η_II, ...) has an assigned weight. The question score is the weighted sum of correct steps. Final answers (work output, exergy destruction) carry higher weights (0.20–0.30) than intermediate properties (0.10–0.15).
+3. **Anchor-derive pattern:** Inlet properties anchor the calculation. Subsequent steps derive from anchors via energy/entropy/exergy balances. Error in an anchor propagates downstream — this tests multi-step reasoning fidelity.
+4. **Dead state:** T₀ = 25°C (298.15 K), P₀ = 0.1 MPa (101.325 kPa) for all exergy calculations.
+
 ### Why LLM extraction?
 
 Initial regex-based extraction had ~5-15% failure rate depending on model output format (LaTeX subscripts, prose answers, thinking block contamination). LLM extraction reduced this to ~0% while being model-agnostic. We test thermodynamic knowledge, not output formatting.
@@ -162,7 +283,7 @@ Initial regex-based extraction had ~5-15% failure rate depending on model output
 ### Scoring
 
 - **Property accuracy:** fraction of correctly extracted properties within tolerance
-- **Question score:** fraction of correct properties per question
+- **Question score:** (Tier 1) fraction of correct properties; (Tier 2) weighted sum of correct steps
 - **Mean question score:** average across all questions (reported as "Score" in leaderboard)
 
 ## Supported Providers
@@ -178,8 +299,8 @@ Initial regex-based extraction had ~5-15% failure rate depending on model output
 
 ## Roadmap
 
-- [x] **Tier 1 — Property Lookups** (v0.1, 110 questions) ← current
-- [ ] **Tier 2 — Component Analysis** (80-100 questions): Single equipment, exergy destruction, entropy generation, second-law efficiency
+- [x] **Tier 1 — Property Lookups** (v0.1, 110 questions)
+- [x] **Tier 2 — Component Analysis** (v0.2, 101 questions) ← current
 - [ ] **Tier 3 — Cycle Analysis** (60-80 questions): Rankine, Brayton, VCR, cogeneration — full cycle calculations
 - [ ] **Tier 4 — Industrial Scenarios** (20-30 questions): Under-specified, judgment-required problems
 - [ ] **Multi-run consistency analysis** (3 runs, mean ± std)
@@ -210,9 +331,9 @@ Only two dedicated thermodynamics benchmarks exist in the LLM evaluation literat
 |-----------|------|--------|----------|
 | UTQA (Geißler et al., 2025) | 50 | MCQ | Physical chemistry thermo |
 | Loubet et al. (2025) | 22 | Calculation | Ideal gas only |
-| **ThermoQA (ours)** | **110+** | **Open calculation** | **Engineering thermo, real fluids** |
+| **ThermoQA (ours)** | **211** | **Open calculation** | **Engineering thermo, real fluids, component analysis** |
 
-ThermoQA is the first benchmark covering applied engineering thermodynamics: steam tables, real fluid properties, supercritical states, and (upcoming) component/cycle analysis.
+ThermoQA is the first benchmark covering applied engineering thermodynamics: steam tables, real fluid properties, supercritical states, multi-step component analysis with exergy destruction, and three working fluids.
 
 ## License
 
