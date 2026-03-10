@@ -1,0 +1,161 @@
+# ThermoQA Tier 3 — Cycle Analysis Taxonomy
+# 7 cycles × 3 depths = 21 template types, ~95 questions
+
+metadata:
+  tier: 3
+  name: "Cycle Analysis"
+  version: "0.3"
+  description: "Complete thermodynamic cycle analysis — multi-state, energy/entropy/exergy closure"
+  dead_state:
+    T0_K: 298.15
+    T0_C: 25.0
+    P0_kPa: 100.0
+    P0_MPa: 0.1
+
+fluids:
+  Water:
+    code: WA
+    backend: CoolProp
+    coolprop_name: Water
+  Air:
+    code: AR
+    backend: ideal_gas
+    cp: 1.005        # kJ/(kg·K)
+    cv: 0.718        # kJ/(kg·K)
+    k: 1.4
+    R: 0.287         # kJ/(kg·K)
+  R-134a:
+    code: RF
+    backend: CoolProp
+    coolprop_name: R134a
+
+cycles:
+  RNK-I:
+    name: "Ideal Rankine Cycle"
+    fluid: Water
+    type: power
+    states: 4
+    components: [pump, boiler, turbine, condenser]
+    question_count: {A: 5, B: 5, C: 5}
+    parameters:
+      P_cond_kPa: {min: 5, max: 50}
+      P_boiler_MPa: {min: 2, max: 15}
+      T3_C: {min: 350, max: 600}     # turbine inlet, must be > T_sat(P_boiler) + 20
+      m_dot_kgs: {min: 5, max: 100}
+    notes: "Ideal — no isentropic efficiencies. Pump work via CoolProp exact."
+
+  RNK-A:
+    name: "Actual Rankine Cycle"
+    fluid: Water
+    type: power
+    states: 4   # +2 ideal states (2s, 4s) tracked internally
+    components: [pump, boiler, turbine, condenser]
+    question_count: {A: 5, B: 5, C: 5}
+    parameters:
+      P_cond_kPa: {min: 5, max: 50}
+      P_boiler_MPa: {min: 2, max: 15}
+      T3_C: {min: 350, max: 600}
+      eta_pump: {min: 0.75, max: 0.90}
+      eta_turb: {min: 0.80, max: 0.92}
+      m_dot_kgs: {min: 5, max: 100}
+
+  RNK-RH:
+    name: "Reheat Rankine Cycle"
+    fluid: Water
+    type: power
+    states: 6
+    components: [pump, boiler, HPT, reheater, LPT, condenser]
+    question_count: {A: 4, B: 3, C: 3}
+    parameters:
+      P_cond_kPa: {min: 5, max: 50}
+      P_boiler_MPa: {min: 6, max: 15}
+      P_reheat_MPa: {min: 0.5, max: 3}  # between P_cond and P_boiler
+      T3_C: {min: 400, max: 600}         # HPT inlet
+      T5_C: {min: 400, max: 600}         # LPT inlet (reheat temp)
+      eta_pump: {min: 0.75, max: 0.90}
+      eta_HPT: {min: 0.80, max: 0.92}
+      eta_LPT: {min: 0.80, max: 0.92}
+      m_dot_kgs: {min: 10, max: 100}
+
+  BRY-I:
+    name: "Ideal Brayton Cycle"
+    fluid: Air
+    type: power
+    states: 4
+    components: [compressor, combustion_chamber, turbine, heat_rejection]
+    question_count: {A: 5, B: 5, C: 5}
+    parameters:
+      T1_K: {min: 290, max: 310}
+      P1_kPa: {min: 95, max: 105}
+      r_p: {min: 6, max: 18}            # pressure ratio
+      T3_K: {min: 1100, max: 1600}      # turbine inlet temperature
+      m_dot_kgs: {min: 10, max: 200}
+
+  BRY-A:
+    name: "Actual Brayton Cycle"
+    fluid: Air
+    type: power
+    states: 4
+    components: [compressor, combustion_chamber, turbine, heat_rejection]
+    question_count: {A: 5, B: 5, C: 5}
+    parameters:
+      T1_K: {min: 290, max: 310}
+      P1_kPa: {min: 95, max: 105}
+      r_p: {min: 6, max: 18}
+      T3_K: {min: 1100, max: 1600}
+      eta_comp: {min: 0.78, max: 0.88}
+      eta_turb: {min: 0.82, max: 0.92}
+      m_dot_kgs: {min: 10, max: 200}
+
+  BRY-RG:
+    name: "Regenerative Brayton Cycle"
+    fluid: Air
+    type: power
+    states: 6
+    components: [compressor, regenerator, combustion_chamber, turbine, regenerator_hot, heat_rejection]
+    question_count: {A: 4, B: 3, C: 3}
+    parameters:
+      T1_K: {min: 290, max: 310}
+      P1_kPa: {min: 95, max: 105}
+      r_p: {min: 6, max: 14}            # lower r_p for regen to make sense (T5 > T2)
+      T4_K: {min: 1100, max: 1600}      # note: state 4 is turbine inlet for regen
+      eta_comp: {min: 0.78, max: 0.88}
+      eta_turb: {min: 0.82, max: 0.92}
+      epsilon_regen: {min: 0.70, max: 0.90}
+      m_dot_kgs: {min: 10, max: 200}
+    notes: "States: 1-comp inlet, 2-comp exit, 3-regen cold exit/CC inlet, 4-CC exit/turb inlet, 5-turb exit, 6-regen hot exit"
+
+  VCR-A:
+    name: "Actual Vapor-Compression Refrigeration Cycle"
+    fluid: R-134a
+    type: refrigeration
+    states: 4
+    components: [compressor, condenser, throttle, evaporator]
+    question_count: {A: 5, B: 5, C: 5}
+    parameters:
+      T_evap_C: {min: -25, max: 5}
+      T_cond_C: {min: 30, max: 50}
+      eta_comp: {min: 0.75, max: 0.88}
+      m_dot_kgs: {min: 0.01, max: 0.5}
+    notes: "R-134a — hardest cycle. Throttle is isenthalpic (h4=h3). Conservative pressures."
+
+# Step definitions per depth per cycle type
+# Weight 1: state properties, Weight 2: component-level, Weight 3: cycle-level, Weight 4: critical discriminator
+
+step_weights:
+  state_property: 1      # h, s, ef at individual state points
+  component_quantity: 2   # w_pump, q_in, s_gen_turb, x_dest_boiler
+  cycle_result: 3         # eta_th, COP, w_net, s_gen_total, x_dest_total, eta_II
+  critical: 4             # x4 in VCR (quality after throttle)
+
+# Heat source/sink temperature ranges for entropy/exergy analysis
+external_temperatures:
+  rankine:
+    T_source_offset_K: {min: 50, max: 200}    # T_source = T3(K) + offset
+    T_sink_offset_K: {min: 5, max: 15}        # T_sink = T_sat(P_cond) + offset
+  brayton:
+    T_source_offset_K: {min: 100, max: 300}   # T_source = T3(K) + offset
+    T_sink_offset_K: {min: 5, max: 15}        # T_sink = T1 + offset (ambient-ish)
+  vcr:
+    T_H_offset_K: {min: 5, max: 15}           # T_H = T_cond(K) - offset (environment cooler than condenser)
+    T_L_offset_K: {min: 5, max: 10}           # T_L = T_evap(K) + offset (cold space warmer than evaporator)

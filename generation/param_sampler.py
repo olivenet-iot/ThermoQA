@@ -857,3 +857,269 @@ def sample_tier2_params(template_id: str, count: int,
         raise ValueError(f"No Tier 2 sampler for template: {template_id}")
     raw = sampler(count + 5, rng)
     return raw[:count]
+
+
+# ══════════════════════════════════════════════════════════
+# TIER 3 SAMPLERS — Cycle Analysis
+# ══════════════════════════════════════════════════════════
+
+def _sample_rankine_ideal(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Ideal Rankine Cycle."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    P_cond_vals = _stratified_sample(rng, 5, 50, count + 10, decimals=0)
+    for P_cond in P_cond_vals:
+        P_boiler = _round_mpa(rng.uniform(2, 15), 1)
+        try:
+            T_sat = _t_sat_c_mpa(P_boiler)
+        except Exception:
+            continue
+        T3 = round(rng.uniform(max(350, T_sat + 30), 600))
+        if T3 <= T_sat + 20:
+            continue
+        m_dot = round(rng.uniform(5, 100), 1)
+        params = {"P_cond_kPa": float(P_cond), "P_boiler_MPa": float(P_boiler),
+                  "T3_C": float(T3), "m_dot_kgs": float(m_dot)}
+        if depth in ("B", "C"):
+            T3_K = T3 + 273.15
+            T_sat_cond_K = PropsSI("T", "Q", 0, "P", P_cond * 1000, "Water")
+            params["T_source_K"] = round(T3_K + rng.uniform(50, 200), 1)
+            params["T_sink_K"] = round(T_sat_cond_K - rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("RNK-I", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_rankine_actual(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Actual Rankine Cycle."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    P_cond_vals = _stratified_sample(rng, 5, 50, count + 10, decimals=0)
+    for P_cond in P_cond_vals:
+        P_boiler = _round_mpa(rng.uniform(2, 15), 1)
+        try:
+            T_sat = _t_sat_c_mpa(P_boiler)
+        except Exception:
+            continue
+        T3 = round(rng.uniform(max(350, T_sat + 30), 600))
+        if T3 <= T_sat + 20:
+            continue
+        eta_pump = round(rng.uniform(0.75, 0.90), 2)
+        eta_turb = round(rng.uniform(0.80, 0.92), 2)
+        m_dot = round(rng.uniform(5, 100), 1)
+        params = {"P_cond_kPa": float(P_cond), "P_boiler_MPa": float(P_boiler),
+                  "T3_C": float(T3), "eta_pump": float(eta_pump),
+                  "eta_turb": float(eta_turb), "m_dot_kgs": float(m_dot)}
+        if depth in ("B", "C"):
+            T3_K = T3 + 273.15
+            T_sat_cond_K = PropsSI("T", "Q", 0, "P", P_cond * 1000, "Water")
+            params["T_source_K"] = round(T3_K + rng.uniform(50, 200), 1)
+            params["T_sink_K"] = round(T_sat_cond_K - rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("RNK-A", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_rankine_reheat(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Reheat Rankine Cycle."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    for _ in range(count + 30):
+        P_cond = float(round(rng.uniform(5, 50)))
+        P_boiler = _round_mpa(rng.uniform(6, 15), 1)
+        P_reheat = _round_mpa(rng.uniform(0.5, 3), 1)
+        # Ensure P_cond < P_reheat < P_boiler
+        if P_reheat * 1000 <= P_cond or P_reheat >= P_boiler:
+            continue
+        try:
+            T_sat_boiler = _t_sat_c_mpa(P_boiler)
+            T_sat_reheat = _t_sat_c_mpa(P_reheat)
+        except Exception:
+            continue
+        T3 = round(rng.uniform(max(400, T_sat_boiler + 30), 600))
+        T5 = round(rng.uniform(max(400, T_sat_reheat + 30), 600))
+        eta_pump = round(rng.uniform(0.75, 0.90), 2)
+        eta_HPT = round(rng.uniform(0.80, 0.92), 2)
+        eta_LPT = round(rng.uniform(0.80, 0.92), 2)
+        m_dot = round(rng.uniform(10, 100), 1)
+        params = {
+            "P_cond_kPa": float(P_cond), "P_boiler_MPa": float(P_boiler),
+            "P_reheat_MPa": float(P_reheat), "T3_C": float(T3), "T5_C": float(T5),
+            "eta_pump": float(eta_pump), "eta_HPT": float(eta_HPT),
+            "eta_LPT": float(eta_LPT), "m_dot_kgs": float(m_dot),
+        }
+        if depth in ("B", "C"):
+            T3_K = T3 + 273.15
+            T_sat_cond_K = PropsSI("T", "Q", 0, "P", P_cond * 1000, "Water")
+            params["T_source_K"] = round(T3_K + rng.uniform(50, 200), 1)
+            params["T_sink_K"] = round(T_sat_cond_K - rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("RNK-RH", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_brayton_ideal(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Ideal Brayton Cycle."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    T1_vals = _stratified_sample(rng, 290, 310, count + 5, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = round(rng.uniform(95, 105))
+        r_p = round(rng.uniform(6, 18))
+        T3 = round(rng.uniform(1100, 1600))
+        m_dot = round(rng.uniform(10, 200), 1)
+        params = {"T1_K": float(T1), "P1_kPa": float(P1), "r_p": float(r_p),
+                  "T3_K": float(T3), "m_dot_kgs": float(m_dot)}
+        if depth in ("B", "C"):
+            params["T_source_K"] = round(T3 + rng.uniform(100, 300), 1)
+            params["T_sink_K"] = round(T1 + rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("BRY-I", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_brayton_actual(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Actual Brayton Cycle."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    T1_vals = _stratified_sample(rng, 290, 310, count + 5, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = round(rng.uniform(95, 105))
+        r_p = round(rng.uniform(6, 18))
+        T3 = round(rng.uniform(1100, 1600))
+        eta_comp = round(rng.uniform(0.78, 0.88), 2)
+        eta_turb = round(rng.uniform(0.82, 0.92), 2)
+        m_dot = round(rng.uniform(10, 200), 1)
+        params = {"T1_K": float(T1), "P1_kPa": float(P1), "r_p": float(r_p),
+                  "T3_K": float(T3), "eta_comp": float(eta_comp),
+                  "eta_turb": float(eta_turb), "m_dot_kgs": float(m_dot)}
+        if depth in ("B", "C"):
+            params["T_source_K"] = round(T3 + rng.uniform(100, 300), 1)
+            params["T_sink_K"] = round(T1 + rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("BRY-A", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_brayton_regenerative(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Regenerative Brayton Cycle."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    for _ in range(count + 30):
+        T1 = round(rng.uniform(290, 310))
+        P1 = round(rng.uniform(95, 105))
+        r_p = round(rng.uniform(6, 14))
+        T4 = round(rng.uniform(1100, 1600))
+        eta_comp = round(rng.uniform(0.78, 0.88), 2)
+        eta_turb = round(rng.uniform(0.82, 0.92), 2)
+        epsilon_regen = round(rng.uniform(0.70, 0.90), 2)
+        m_dot = round(rng.uniform(10, 200), 1)
+        params = {
+            "T1_K": float(T1), "P1_kPa": float(P1), "r_p": float(r_p),
+            "T4_K": float(T4), "eta_comp": float(eta_comp),
+            "eta_turb": float(eta_turb), "epsilon_regen": float(epsilon_regen),
+            "m_dot_kgs": float(m_dot),
+        }
+        if depth in ("B", "C"):
+            params["T_source_K"] = round(T4 + rng.uniform(100, 300), 1)
+            params["T_sink_K"] = round(T1 + rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("BRY-RG", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_vcr_actual(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Actual VCR Cycle (R-134a)."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    T_evap_vals = _stratified_sample(rng, -25, 5, count + 10, decimals=0)
+    for T_evap in T_evap_vals:
+        T_evap = round(T_evap)
+        T_cond = round(rng.uniform(30, 50))
+        if T_cond - T_evap < 20:
+            continue
+        eta_comp = round(rng.uniform(0.75, 0.88), 2)
+        m_dot = round(rng.uniform(0.01, 0.5), 3)
+        params = {"T_evap_C": float(T_evap), "T_cond_C": float(T_cond),
+                  "eta_comp": float(eta_comp), "m_dot_kgs": float(m_dot)}
+        if depth in ("B", "C"):
+            T_cond_K = T_cond + 273.15
+            T_evap_K = T_evap + 273.15
+            params["T_H_K"] = round(T_cond_K - rng.uniform(5, 15), 1)
+            params["T_L_K"] = round(T_evap_K + rng.uniform(5, 10), 1)
+        try:
+            result = generate_cycle("VCR-A", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+_TIER3_SAMPLERS = {
+    "RNK-I": _sample_rankine_ideal,
+    "RNK-A": _sample_rankine_actual,
+    "RNK-RH": _sample_rankine_reheat,
+    "BRY-I": _sample_brayton_ideal,
+    "BRY-A": _sample_brayton_actual,
+    "BRY-RG": _sample_brayton_regenerative,
+    "VCR-A": _sample_vcr_actual,
+}
+
+
+def sample_tier3_params(template_id: str, count: int,
+                         seed: int = 42) -> list[dict]:
+    """
+    Generate `count` physically valid parameter sets for a Tier 3 template.
+
+    Template IDs: "RNK-I-A", "RNK-RH-B", "VCR-A-C" etc.
+    """
+    # Parse: last char is depth, everything before is cycle_type
+    depth = template_id[-1]
+    cycle_type = template_id[:-2]  # "RNK-I-A" -> "RNK-I"
+    rng = np.random.default_rng(seed)
+    sampler = _TIER3_SAMPLERS.get(cycle_type)
+    if sampler is None:
+        raise ValueError(f"No Tier 3 sampler for cycle: {cycle_type} (template: {template_id})")
+    raw = sampler(count + 5, rng, depth)
+    return raw[:count]

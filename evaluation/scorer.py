@@ -506,12 +506,94 @@ def score_tier2_question(question: dict, extracted: dict) -> Tier2QuestionResult
     )
 
 
+@dataclass
+class Tier3QuestionResult:
+    question_id: str
+    cycle_type: str
+    depth: str
+    fluid: str
+    difficulty: str
+    n_steps: int
+    n_correct: int
+    weighted_score: float
+    step_results: list[StepScoreResult]
+
+
+def score_tier3_question(question: dict, extracted: dict) -> Tier3QuestionResult:
+    """Score a Tier 3 question with weighted step-level scoring."""
+    expected = question["expected"]
+    steps = question.get("steps", [])
+    weight_map = {s["id"]: s["weight"] for s in steps}
+
+    step_results = []
+    total_weight = 0.0
+    weighted_sum = 0.0
+    n_correct = 0
+
+    for step_id, spec in expected.items():
+        weight = weight_map.get(step_id, 1.0)
+        total_weight += weight
+        ext_val = extracted.get(step_id)
+        exp_val = spec["value"]
+        tol_pct = spec.get("tolerance_pct", 2.0)
+        abs_tol = spec.get("abs_tolerance", 0.5)
+
+        if ext_val is None:
+            step_results.append(StepScoreResult(
+                step_id=step_id, expected=exp_val, extracted=None,
+                weight=weight, passed=False, error_pct=None,
+                error_type="missing",
+            ))
+        else:
+            passed, error_pct = check_numeric(exp_val, ext_val, tol_pct, abs_tol)
+            step_results.append(StepScoreResult(
+                step_id=step_id, expected=exp_val, extracted=ext_val,
+                weight=weight, passed=passed, error_pct=error_pct,
+                error_type="correct" if passed else "wrong",
+            ))
+            if passed:
+                n_correct += 1
+                weighted_sum += weight
+
+    weighted_score = weighted_sum / total_weight if total_weight > 0 else 0.0
+
+    return Tier3QuestionResult(
+        question_id=question["id"],
+        cycle_type=question.get("cycle_type", ""),
+        depth=question.get("depth", ""),
+        fluid=question.get("fluid", ""),
+        difficulty=question.get("difficulty", ""),
+        n_steps=len(expected),
+        n_correct=n_correct,
+        weighted_score=weighted_score,
+        step_results=step_results,
+    )
+
+
 def score_question_auto(question: dict, extracted: dict):
-    """Route to Tier 1 or Tier 2 scorer based on question tier."""
+    """Route to Tier 1, 2, or 3 scorer based on question tier."""
     tier = question.get("tier", 1)
-    if tier == 2:
+    if tier == 3:
+        result = score_tier3_question(question, extracted)
+        return QuestionResult(
+            question_id=result.question_id,
+            category=result.cycle_type,
+            subcategory=result.depth,
+            difficulty=result.difficulty,
+            n_properties=result.n_steps,
+            n_correct=result.n_correct,
+            score=result.weighted_score,
+            property_results=[
+                PropertyResult(
+                    prop_key=sr.step_id, expected=sr.expected,
+                    extracted=sr.extracted, passed=sr.passed,
+                    error_pct=sr.error_pct, error_type=sr.error_type,
+                )
+                for sr in result.step_results
+            ],
+        )
+    elif tier == 2:
         result = score_tier2_question(question, extracted)
-        # Return a QuestionResult-compatible object for unified reporting
         return QuestionResult(
             question_id=result.question_id,
             category=result.component,
@@ -522,12 +604,9 @@ def score_question_auto(question: dict, extracted: dict):
             score=result.weighted_score,
             property_results=[
                 PropertyResult(
-                    prop_key=sr.step_id,
-                    expected=sr.expected,
-                    extracted=sr.extracted,
-                    passed=sr.passed,
-                    error_pct=sr.error_pct,
-                    error_type=sr.error_type,
+                    prop_key=sr.step_id, expected=sr.expected,
+                    extracted=sr.extracted, passed=sr.passed,
+                    error_pct=sr.error_pct, error_type=sr.error_type,
                 )
                 for sr in result.step_results
             ],

@@ -148,6 +148,80 @@ class LLMExtractor:
                 logger.warning(f"Anthropic API error: {e}")
                 return {}
 
+    def extract_tier3(
+        self,
+        response_text: str,
+        expected_step_ids: list[str],
+        question_text: str = "",
+    ) -> dict[str, float | None]:
+        """Extract Tier 3 cycle analysis step values using Sonnet."""
+        keys_str = ", ".join(f'"{k}"' for k in expected_step_ids)
+
+        unit_hints = {
+            "h1": "kJ/kg", "h2": "kJ/kg", "h3": "kJ/kg", "h4": "kJ/kg",
+            "h5": "kJ/kg", "h6": "kJ/kg",
+            "h2s": "kJ/kg", "h4s": "kJ/kg", "h5s": "kJ/kg",
+            "s1": "kJ/(kg·K)", "s2": "kJ/(kg·K)", "s3": "kJ/(kg·K)",
+            "s4": "kJ/(kg·K)", "s5": "kJ/(kg·K)", "s6": "kJ/(kg·K)",
+            "ef1": "kJ/kg", "ef2": "kJ/kg", "ef3": "kJ/kg",
+            "ef4": "kJ/kg", "ef5": "kJ/kg", "ef6": "kJ/kg",
+            "w_pump": "kJ/kg", "w_comp": "kJ/kg", "w_turb": "kJ/kg",
+            "w_HPT": "kJ/kg", "w_LPT": "kJ/kg", "w_net": "kJ/kg",
+            "q_in": "kJ/kg", "q_L": "kJ/kg", "q_H": "kJ/kg",
+            "eta_th": "dimensionless (0-1)", "COP_R": "dimensionless (>1)",
+            "COP_Carnot": "dimensionless (>1)", "eta_II": "dimensionless (0-1)",
+            "x4": "dimensionless (0-1)",
+            "W_dot_net": "kW", "W_dot_comp": "kW", "Q_dot_L": "kW",
+        }
+        # s_gen and x_dest component patterns
+        for comp in ["pump", "boiler", "turb", "cond", "HPT", "LPT", "reheater",
+                      "comp", "cc", "hr", "regen", "throttle", "evap", "total"]:
+            unit_hints[f"s_gen_{comp}"] = "kJ/(kg·K)"
+            unit_hints[f"x_dest_{comp}"] = "kJ/kg"
+
+        hints = [f'  "{k}": {unit_hints.get(k, "numeric")}' for k in expected_step_ids]
+
+        user_prompt = (
+            f"QUESTION:\n{question_text}\n\n"
+            f"FULL RESPONSE:\n{response_text}\n\n"
+            f"Extract the FINAL answer values for these step variables:\n"
+            + "\n".join(hints) + "\n\n"
+            f"Rules:\n"
+            f"- Return a JSON object with keys: [{keys_str}]\n"
+            f"- All values should be numbers (float)\n"
+            f"- Use null if not found\n"
+            f"- Extract ONLY final answers, ignore intermediate calculations\n"
+            f"- eta_th and eta_II should be fractions (0-1), not percentages\n"
+            f"- COP values are typically > 1\n"
+            f"- Return ONLY the JSON object"
+        )
+
+        for attempt in range(2):
+            try:
+                msg = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=1000,
+                    temperature=0,
+                    system=SYSTEM_PROMPT,
+                    messages=[{"role": "user", "content": user_prompt}],
+                )
+                text = msg.content[0].text.strip()
+                if text.startswith("```"):
+                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                    if text.endswith("```"):
+                        text = text[:-3]
+                    text = text.strip()
+                return json.loads(text)
+            except (json.JSONDecodeError, IndexError) as e:
+                if attempt == 0:
+                    logger.debug(f"JSON parse failed, retrying: {e}")
+                    continue
+                logger.warning(f"LLM Tier 3 extraction failed: {e}")
+                return {}
+            except anthropic.APIError as e:
+                logger.warning(f"Anthropic API error: {e}")
+                return {}
+
     def extract_batch(
         self, items: list[dict]
     ) -> list[dict[str, float | str | None]]:

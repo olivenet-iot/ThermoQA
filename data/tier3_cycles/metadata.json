@@ -1,0 +1,43 @@
+{
+  "total_questions": 95,
+  "target": 95,
+  "tier": 3,
+  "working_fluids": [
+    "Water",
+    "Air",
+    "R-134a"
+  ],
+  "coolprop_version": "7.2.0",
+  "generated_at": "2026-03-10T11:02:25.758400+00:00",
+  "seed": 42,
+  "cycle_distribution": {
+    "RNK-I": 15,
+    "RNK-A": 15,
+    "RNK-RH": 10,
+    "BRY-I": 15,
+    "BRY-A": 15,
+    "BRY-RG": 10,
+    "VCR-A": 15
+  },
+  "depth_distribution": {
+    "A": 33,
+    "B": 31,
+    "C": 31
+  },
+  "fluid_distribution": {
+    "Water": 40,
+    "Air": 40,
+    "R-134a": 15
+  },
+  "difficulty_distribution": {
+    "easy": 25,
+    "medium": 33,
+    "hard": 37
+  },
+  "warnings": [],
+  "scoring": {
+    "type": "weighted_step",
+    "numerical_tolerance_pct": 2.0,
+    "absolute_tolerance": 0.5
+  }
+}

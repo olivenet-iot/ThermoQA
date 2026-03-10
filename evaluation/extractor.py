@@ -400,6 +400,216 @@ def _auto_convert_tier2(key: str, value: float) -> float:
     return value
 
 
+
+# ══════════════════════════════════════════════════════════
+# TIER 3: Cycle Analysis Extraction
+# ══════════════════════════════════════════════════════════
+
+def _build_state_patterns(prefix: str, max_n: int = 6) -> dict[str, list[tuple[str, float]]]:
+    """Build extraction patterns for state-point properties h1-h6, s1-s6, ef1-ef6."""
+    subscripts = {1: "₁", 2: "₂", 3: "₃", 4: "₄", 5: "₅", 6: "₆"}
+    result = {}
+    for n in range(1, max_n + 1):
+        key = f"{prefix}{n}"
+        sub = subscripts[n]
+        result[key] = [
+            (r"\b" + prefix + r"[_\s]?" + str(n) + r"\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+            (prefix + sub + r"\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        ]
+    return result
+
+def _build_component_patterns(prefix: str, components: list[str]) -> dict[str, list[tuple[str, float]]]:
+    """Build patterns for component-level quantities like s_gen_pump, x_dest_boiler."""
+    result = {}
+    for comp in components:
+        key = f"{prefix}_{comp}"
+        # e.g., s_gen,pump or s_gen_pump or s_gen pump
+        result[key] = [
+            (r"\b" + prefix.replace("_", r"[_,\s]?") + r"[_,\s]?" + comp + r"\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        ]
+    return result
+
+_TIER3_COMPONENTS = [
+    "pump", "boiler", "turb", "cond", "HPT", "LPT", "reheater",
+    "comp", "cc", "hr", "regen", "throttle", "evap", "total",
+]
+
+TIER3_PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
+    # Reuse Tier 2 patterns for h1, h2, h2s, s1, s2, s3, h3
+    **{k: v for k, v in TIER2_PROPERTY_PATTERNS.items()},
+    # Additional state properties
+    "h4": [
+        (r"\bh[_\s]?4\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₄\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h5": [
+        (r"\bh[_\s]?5\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₅\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h6": [
+        (r"\bh[_\s]?6\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₆\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h4s": [
+        (r"\bh[_\s]?4s\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₄ₛ\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h[_\s]?4,?s\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "h5s": [
+        (r"\bh[_\s]?5s\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h₅ₛ\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"h[_\s]?5,?s\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s4": [
+        (r"\bs[_\s]?4\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"s₄\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s5": [
+        (r"\bs[_\s]?5\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"s₅\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    "s6": [
+        (r"\bs[_\s]?6\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"s₆\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+    ],
+    # Flow exergies
+    **_build_state_patterns("ef"),
+    # Component works
+    "w_pump": [
+        (r"\bw[_\s]?pump\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"pump\s+work\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "w_comp": [
+        (r"\bw[_\s]?comp\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"compressor\s+work\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "w_turb": [
+        (r"\bw[_\s]?turb\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"turbine\s+work\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "w_HPT": [
+        (r"\bw[_\s]?HPT\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"HPT\s+work\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "w_LPT": [
+        (r"\bw[_\s]?LPT\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"LPT\s+work\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "w_net": [
+        (r"\bw[_\s]?net\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"net\s+work\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Heat transfers
+    "q_L": [
+        (r"\bq[_\s]?L\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"cooling\s+effect\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "q_H": [
+        (r"\bq[_\s]?H\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"heat\s+rejection\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Cycle metrics
+    "eta_th": [
+        (r"η[_\s]?th\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"eta[_\s]?th\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"thermal\s+efficiency\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "COP_R": [
+        (r"\bCOP[_\s]?R?\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"coefficient\s+of\s+performance\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "COP_Carnot": [
+        (r"\bCOP[_\s]?Carnot\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Carnot\s+COP\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "x4": [
+        (r"\bx[_\s]?4\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"x₄\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"quality\s+(?:after|at)\s+(?:the\s+)?throttle\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Rate quantities
+    "W_dot_net": [
+        (r"[WẆ][_\s]?(?:dot[_\s]?)?net\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Ẇ[_\s]?net\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"net\s+power\s*(?:output)?\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "W_dot_comp": [
+        (r"[WẆ][_\s]?(?:dot[_\s]?)?comp\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Ẇ[_\s]?comp\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"compressor\s+power\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    "Q_dot_L": [
+        (r"[QQ̇][_\s]?(?:dot[_\s]?)?L\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"Q̇[_\s]?L\s*[=:≈~]\s*" + _NUMCAP, 1.0),
+        (r"cooling\s+capacity\s*[=:≈~is]*\s*(?:approximately\s+)?" + _NUMCAP, 1.0),
+    ],
+    # Entropy generation per component
+    **_build_component_patterns("s_gen", _TIER3_COMPONENTS),
+    # Exergy destruction per component
+    **_build_component_patterns("x_dest", _TIER3_COMPONENTS),
+}
+
+
+def _auto_convert_tier3(key: str, value: float) -> float:
+    """Apply unit auto-conversion heuristics for Tier 3 step values."""
+    # Enthalpy: > 10000 likely J/kg -> kJ/kg
+    if key.startswith("h") or key.startswith("ef") or key.startswith("w_") or key.startswith("q_") or key.startswith("x_dest"):
+        if abs(value) > 10000:
+            value /= 1000.0
+
+    # Entropy: > 100 likely J/(kg·K) -> kJ/(kg·K)
+    if key.startswith("s") and not key.startswith("s_gen"):
+        if abs(value) > 100:
+            value /= 1000.0
+
+    # eta_th, eta_II: > 1 likely percentage -> fraction
+    if key in ("eta_th", "eta_II"):
+        if value > 1.0 and value <= 100.0:
+            value /= 100.0
+
+    # x4: > 1 likely percentage -> fraction
+    if key == "x4":
+        if value > 1.0 and value <= 100.0:
+            value /= 100.0
+
+    return value
+
+
+def extract_tier3_properties(
+    response_text: str, expected_step_ids: list[str]
+) -> dict[str, float | None]:
+    """Extract Tier 3 step values from an LLM response."""
+    text = strip_thinking_tags(response_text)
+    text = _preprocess(text)
+    result: dict[str, float | None] = {}
+
+    for key in expected_step_ids:
+        patterns = TIER3_PROPERTY_PATTERNS.get(key)
+        if patterns is None:
+            patterns = TIER2_PROPERTY_PATTERNS.get(key, [])
+
+        best_value = None
+        best_pos = -1
+        for pattern, factor in patterns:
+            for m in re.finditer(pattern, text, re.IGNORECASE):
+                pos = m.start()
+                raw = m.group(1).replace(",", "")
+                try:
+                    val = float(raw) * factor
+                except ValueError:
+                    continue
+                if pos >= best_pos:
+                    best_pos = pos
+                    best_value = val
+
+        if best_value is not None:
+            best_value = _auto_convert_tier3(key, best_value)
+
+        result[key] = best_value
+
+    return result
+
+
 def extract_tier2_properties(
     response_text: str, expected_step_ids: list[str]
 ) -> dict[str, float | None]:
