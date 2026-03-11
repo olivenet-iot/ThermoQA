@@ -605,6 +605,33 @@ TIER3_ANSWER_HINTS = {
     "x_dest_hr": "x_dest,hr = ___ kJ/kg", "x_dest_regen": "x_dest,regen = ___ kJ/kg",
     "x_dest_throttle": "x_dest,throttle = ___ kJ/kg",
     "x_dest_evap": "x_dest,evap = ___ kJ/kg", "x_dest_total": "x_dest,total = ___ kJ/kg",
+    # Variable cp temperatures
+    "T2": "T₂ = ___ K", "T4": "T₄ = ___ K", "T5": "T₅ = ___ K",
+    # States 7-9 for CCGT
+    "h7": "h₇ = ___ kJ/kg", "h7s": "h₇s = ___ kJ/kg",
+    "h8": "h₈ = ___ kJ/kg", "h9": "h₉ = ___ kJ/kg", "h9s": "h₉s = ___ kJ/kg",
+    "s7": "s₇ = ___ kJ/(kg·K)", "s8": "s₈ = ___ kJ/(kg·K)", "s9": "s₉ = ___ kJ/(kg·K)",
+    "ef7": "ef₇ = ___ kJ/kg", "ef8": "ef₈ = ___ kJ/kg", "ef9": "ef₉ = ___ kJ/kg",
+    # CCGT-specific
+    "m_dot_steam": "ṁ_steam = ___ kg/s",
+    "w_gas_turb": "w_gas_turb = ___ kJ/kg", "w_steam_turb": "w_steam_turb = ___ kJ/kg",
+    "q_combustion": "q_combustion = ___ kJ/kg",
+    "W_net_combined": "W_net_combined = ___ kW",
+    "eta_combined": "η_combined = ___",
+    "eta_II_combined": "η_II_combined = ___",
+    # CCGT s_gen
+    "s_gen_gas_turb": "s_gen,gas_turb = ___ kJ/(kg·K)",
+    "s_gen_steam_turb": "s_gen,steam_turb = ___ kJ/(kg·K)",
+    "s_gen_HRSG": "s_gen,HRSG = ___ kJ/(kg·K)",
+    # CCGT x_dest
+    "x_dest_gas_turb": "x_dest,gas_turb = ___ kJ/kg",
+    "x_dest_steam_turb": "x_dest,steam_turb = ___ kJ/kg",
+    "x_dest_HRSG": "x_dest,HRSG = ___ kJ/kg",
+    # Consistency
+    "energy_balance_error": "energy_balance_error = ___",
+    "energy_balance_error_gas": "energy_balance_error_gas = ___",
+    "energy_balance_error_steam": "energy_balance_error_steam = ___",
+    "hrsg_balance_error": "hrsg_balance_error = ___",
 }
 
 
@@ -623,8 +650,13 @@ def _extract_tier3_steps(template: CycleTemplate, result: dict) -> dict:
             val = states.get(int(sid[1:]), {}).get("s")
         elif sid.startswith("ef") and sid[2:].isdigit():
             val = states.get(int(sid[2:]), {}).get("ef")
-        elif sid in ("h2s", "h4s", "h5s"):
+        elif sid in ("h2s", "h4s", "h5s", "h6s", "h7s", "h9s"):
             val = states.get(sid[1:], {}).get("h")
+        elif sid.startswith("T") and sid[1:].isdigit():
+            state_num = int(sid[1:])
+            val = derived.get(f"T{state_num}_K")
+            if val is None:
+                val = states.get(state_num, {}).get("T_K")
         else:
             val = derived.get(sid)
 
@@ -637,7 +669,7 @@ def _extract_tier3_steps(template: CycleTemplate, result: dict) -> dict:
 def _format_tier3_question_text(template: CycleTemplate, params: dict) -> str:
     """Format a Tier 3 question with parameter substitution and answer hints."""
     fmt = dict(params)
-    for key in ("eta_pump", "eta_turb", "eta_comp", "eta_HPT", "eta_LPT"):
+    for key in ("eta_pump", "eta_turb", "eta_comp", "eta_HPT", "eta_LPT", "eta_gas_turb", "eta_steam_turb"):
         if key in params:
             fmt[f"{key}_pct"] = round(params[key] * 100, 1)
     if "epsilon_regen" in params:
@@ -670,7 +702,7 @@ def _format_tier3_question_text(template: CycleTemplate, params: dict) -> str:
     return text
 
 
-def generate_tier3_questions(output_dir: str, total_target: int = 95,
+def generate_tier3_questions(output_dir: str, total_target: int = 82,
                               seed: int = 42, cycle_filter: str | None = None):
     """Generate all Tier 3 questions. Returns (questions, warnings, metadata)."""
     from generation.cycle_state_generator import generate_cycle
@@ -726,15 +758,25 @@ def generate_tier3_questions(output_dir: str, total_target: int = 95,
             question_text = _format_tier3_question_text(template, params)
 
             expected = {}
+            consistency_steps = {"energy_balance_error", "energy_balance_error_gas",
+                                 "energy_balance_error_steam", "hrsg_balance_error"}
             for step in template.steps:
                 sid = step["id"]
                 if sid in step_values:
-                    expected[sid] = {
-                        "value": step_values[sid],
-                        "unit": step["unit"],
-                        "tolerance_pct": DEFAULT_TOLERANCE_PCT,
-                        "abs_tolerance": 0.03 if sid == "x4" else DEFAULT_ABS_TOLERANCE,
-                    }
+                    if sid in consistency_steps:
+                        expected[sid] = {
+                            "value": step_values[sid],
+                            "unit": step["unit"],
+                            "tolerance_pct": DEFAULT_TOLERANCE_PCT,
+                            "abs_tolerance": 0.01,
+                        }
+                    else:
+                        expected[sid] = {
+                            "value": step_values[sid],
+                            "unit": step["unit"],
+                            "tolerance_pct": DEFAULT_TOLERANCE_PCT,
+                            "abs_tolerance": 0.03 if sid == "x4" else DEFAULT_ABS_TOLERANCE,
+                        }
 
             steps_list = [
                 {"id": step["id"], "weight": step["weight"], "unit": step["unit"]}
@@ -743,6 +785,9 @@ def generate_tier3_questions(output_dir: str, total_target: int = 95,
 
             given = dict(params)
             given["fluid"] = template.fluid
+            if template.fluid == "Air+Water":
+                given["fluid_gas"] = "Air"
+                given["fluid_steam"] = "Water"
 
             questions.append({
                 "id": qid, "tier": 3,

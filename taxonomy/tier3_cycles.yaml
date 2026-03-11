@@ -1,10 +1,10 @@
 # ThermoQA Tier 3 — Cycle Analysis Taxonomy
-# 7 cycles × 3 depths = 21 template types, ~95 questions
+# 10 cycles × 3 depths = 30 template types, ~82 questions (V2)
 
 metadata:
   tier: 3
   name: "Cycle Analysis"
-  version: "0.3"
+  version: "0.4"
   description: "Complete thermodynamic cycle analysis — multi-state, energy/entropy/exergy closure"
   dead_state:
     T0_K: 298.15
@@ -24,10 +24,20 @@ fluids:
     cv: 0.718        # kJ/(kg·K)
     k: 1.4
     R: 0.287         # kJ/(kg·K)
+  Air_variable:
+    code: AR
+    backend: CoolProp
+    coolprop_name: Air
+    notes: "Variable specific heats — temperature-dependent cp, cv, k via CoolProp pseudo-pure Air"
   R-134a:
     code: RF
     backend: CoolProp
     coolprop_name: R134a
+    reference_state: "IIR: h=200.0 kJ/kg, s=1.0000 kJ/(kg·K) for saturated liquid at 0°C"
+  Air+Water:
+    code: MX
+    backend: CoolProp
+    notes: "Combined cycle — Air (variable cp) for gas turbine, Water for steam Rankine"
 
 cycles:
   RNK-I:
@@ -36,19 +46,19 @@ cycles:
     type: power
     states: 4
     components: [pump, boiler, turbine, condenser]
-    question_count: {A: 5, B: 5, C: 5}
+    question_count: {A: 1, B: 0, C: 1}
     parameters:
       P_cond_kPa: {min: 5, max: 50}
       P_boiler_MPa: {min: 2, max: 15}
-      T3_C: {min: 350, max: 600}     # turbine inlet, must be > T_sat(P_boiler) + 20
+      T3_C: {min: 350, max: 600}
       m_dot_kgs: {min: 5, max: 100}
-    notes: "Ideal — no isentropic efficiencies. Pump work via CoolProp exact."
+    notes: "Ideal — no isentropic efficiencies. Reduced in V2 (too easy for frontier models)."
 
   RNK-A:
     name: "Actual Rankine Cycle"
     fluid: Water
     type: power
-    states: 4   # +2 ideal states (2s, 4s) tracked internally
+    states: 4
     components: [pump, boiler, turbine, condenser]
     question_count: {A: 5, B: 5, C: 5}
     parameters:
@@ -69,9 +79,9 @@ cycles:
     parameters:
       P_cond_kPa: {min: 5, max: 50}
       P_boiler_MPa: {min: 6, max: 15}
-      P_reheat_MPa: {min: 0.5, max: 3}  # between P_cond and P_boiler
-      T3_C: {min: 400, max: 600}         # HPT inlet
-      T5_C: {min: 400, max: 600}         # LPT inlet (reheat temp)
+      P_reheat_MPa: {min: 0.5, max: 3}
+      T3_C: {min: 400, max: 600}
+      T5_C: {min: 400, max: 600}
       eta_pump: {min: 0.75, max: 0.90}
       eta_HPT: {min: 0.80, max: 0.92}
       eta_LPT: {min: 0.80, max: 0.92}
@@ -83,21 +93,22 @@ cycles:
     type: power
     states: 4
     components: [compressor, combustion_chamber, turbine, heat_rejection]
-    question_count: {A: 5, B: 5, C: 5}
+    question_count: {A: 1, B: 1, C: 1}
     parameters:
       T1_K: {min: 290, max: 310}
       P1_kPa: {min: 95, max: 105}
-      r_p: {min: 6, max: 18}            # pressure ratio
-      T3_K: {min: 1100, max: 1600}      # turbine inlet temperature
+      r_p: {min: 6, max: 18}
+      T3_K: {min: 1100, max: 1600}
       m_dot_kgs: {min: 10, max: 200}
+    notes: "Ideal — constant cp. Reduced in V2 (too easy for frontier models)."
 
   BRY-A:
-    name: "Actual Brayton Cycle"
+    name: "Actual Brayton Cycle (constant cp)"
     fluid: Air
     type: power
     states: 4
     components: [compressor, combustion_chamber, turbine, heat_rejection]
-    question_count: {A: 5, B: 5, C: 5}
+    question_count: {A: 3, B: 3, C: 3}
     parameters:
       T1_K: {min: 290, max: 310}
       P1_kPa: {min: 95, max: 105}
@@ -106,24 +117,65 @@ cycles:
       eta_comp: {min: 0.78, max: 0.88}
       eta_turb: {min: 0.82, max: 0.92}
       m_dot_kgs: {min: 10, max: 200}
+    notes: "Constant cp=1.005 kJ/(kg·K), k=1.4. Reduced from 5/5/5 in V2."
+
+  BRY-AV:
+    name: "Actual Brayton Cycle (variable cp)"
+    fluid: Air_variable
+    type: power
+    states: 4
+    components: [compressor, combustion_chamber, turbine, heat_rejection]
+    question_count: {A: 2, B: 2, C: 2}
+    parameters:
+      T1_K: {min: 290, max: 310}
+      P1_kPa: {min: 95, max: 105}
+      r_p: {min: 6, max: 18}
+      T3_K: {min: 1100, max: 1600}
+      eta_comp: {min: 0.78, max: 0.88}
+      eta_turb: {min: 0.82, max: 0.92}
+      m_dot_kgs: {min: 10, max: 200}
+    notes: |
+      NEW in V2. CoolProp pseudo-pure Air for temperature-dependent properties.
+      η_th typically 3-5pp lower than constant cp at same conditions.
+      Additional scored steps: T2, T4 (meaningful with variable cp).
 
   BRY-RG:
-    name: "Regenerative Brayton Cycle"
+    name: "Regenerative Brayton Cycle (constant cp)"
     fluid: Air
     type: power
     states: 6
     components: [compressor, regenerator, combustion_chamber, turbine, regenerator_hot, heat_rejection]
-    question_count: {A: 4, B: 3, C: 3}
+    question_count: {A: 2, B: 2, C: 2}
     parameters:
       T1_K: {min: 290, max: 310}
       P1_kPa: {min: 95, max: 105}
-      r_p: {min: 6, max: 14}            # lower r_p for regen to make sense (T5 > T2)
-      T4_K: {min: 1100, max: 1600}      # note: state 4 is turbine inlet for regen
+      r_p: {min: 6, max: 14}
+      T4_K: {min: 1100, max: 1600}
       eta_comp: {min: 0.78, max: 0.88}
       eta_turb: {min: 0.82, max: 0.92}
       epsilon_regen: {min: 0.70, max: 0.90}
       m_dot_kgs: {min: 10, max: 200}
-    notes: "States: 1-comp inlet, 2-comp exit, 3-regen cold exit/CC inlet, 4-CC exit/turb inlet, 5-turb exit, 6-regen hot exit"
+    notes: "States: 1-comp inlet, 2-comp exit, 3-regen cold exit/CC inlet, 4-CC exit/turb inlet, 5-turb exit, 6-regen hot exit. Reduced from 4/3/3 in V2."
+
+  BRY-RV:
+    name: "Regenerative Brayton Cycle (variable cp)"
+    fluid: Air_variable
+    type: power
+    states: 6
+    components: [compressor, regenerator, combustion_chamber, turbine, regenerator_hot, heat_rejection]
+    question_count: {A: 2, B: 1, C: 1}
+    parameters:
+      T1_K: {min: 290, max: 310}
+      P1_kPa: {min: 95, max: 105}
+      r_p: {min: 6, max: 14}
+      T4_K: {min: 1100, max: 1600}
+      eta_comp: {min: 0.78, max: 0.88}
+      eta_turb: {min: 0.82, max: 0.92}
+      epsilon_regen: {min: 0.70, max: 0.90}
+      m_dot_kgs: {min: 10, max: 200}
+    notes: |
+      NEW in V2. CoolProp pseudo-pure Air. 6 states + temperature-based regenerator.
+      Additional scored steps: T2-T6 (meaningful with variable cp).
 
   VCR-A:
     name: "Actual Vapor-Compression Refrigeration Cycle"
@@ -137,25 +189,92 @@ cycles:
       T_cond_C: {min: 30, max: 50}
       eta_comp: {min: 0.75, max: 0.88}
       m_dot_kgs: {min: 0.01, max: 0.5}
-    notes: "R-134a — hardest cycle. Throttle is isenthalpic (h4=h3). Conservative pressures."
+    notes: |
+      R-134a with IIR reference state. Throttle is isenthalpic (h4=h3).
+      V2: restored absolute property steps (h1-h4, s1-s4, ef1-ef4).
+      V2: question text specifies IIR reference state explicitly.
 
-# Step definitions per depth per cycle type
-# Weight 1: state properties, Weight 2: component-level, Weight 3: cycle-level, Weight 4: critical discriminator
+  CCGT:
+    name: "Combined Cycle Gas Turbine"
+    fluid: Air+Water
+    type: power
+    states: 9
+    components: [compressor, combustion_chamber, gas_turbine, HRSG, pump, steam_turbine, condenser]
+    question_count: {A: 4, B: 4, C: 4}
+    parameters:
+      T1_K: {min: 290, max: 310}
+      P1_kPa: {min: 95, max: 105}
+      r_p: {min: 8, max: 18}
+      T3_K: {min: 1200, max: 1600}
+      eta_comp: {min: 0.80, max: 0.88}
+      eta_gas_turb: {min: 0.85, max: 0.92}
+      P_cond_kPa: {min: 5, max: 15}
+      P_steam_MPa: {min: 4, max: 12}
+      T8_superheat_C: {min: 350, max: 550}
+      eta_pump: {min: 0.80, max: 0.90}
+      eta_steam_turb: {min: 0.82, max: 0.92}
+      T5_stack_C: {min: 120, max: 200}
+      m_dot_air_kgs: {min: 50, max: 200}
+    notes: |
+      NEW in V2. Dual-fluid combined cycle.
+      Gas side: Air (variable cp, CoolProp) — states 1-5
+      Steam side: Water (CoolProp) — states 6-9
+      Coupling: HRSG energy balance ṁ_air(h₄-h₅) = ṁ_steam(h₈-h₇)
+      Dual dead states for exergy: Air_var for gas, Water for steam.
+      Validation: η_combined ∈ (0.30, 0.65), ṁ_steam > 0, T8 < T4-20K, T5 > T7+10K
 
+# Step weight tiers (V2 — 6-tier system)
 step_weights:
-  state_property: 1      # h, s, ef at individual state points
-  component_quantity: 2   # w_pump, q_in, s_gen_turb, x_dest_boiler
-  cycle_result: 3         # eta_th, COP, w_net, s_gen_total, x_dest_total, eta_II
+  state_h_s: 1           # h1, s1, h2s, etc. — intermediate state properties
+  flow_exergy: 2         # ef1, ef2, etc. — exergy at state points
+  component_quantity: 3   # w_pump, q_in, s_gen_turb, x_dest_boiler
   critical: 4             # x4 in VCR (quality after throttle)
+  cycle_result: 5         # eta_th, COP_R, w_net, W_dot_net, Q_dot_L, s_gen_total, x_dest_total
+  second_law: 6           # eta_II — second-law efficiency (hardest single step)
+
+# Consistency scoring (V2)
+consistency:
+  description: "Energy balance closure computed from model's own reported values"
+  applies_to: [RNK-A, RNK-RH, BRY-A, BRY-AV, BRY-RG, BRY-RV, VCR-A, CCGT]
+  steps:
+    energy_balance_error:
+      formula_power: "|q_in - w_net - q_out| / q_in"
+      formula_vcr: "|q_H - w_comp - q_L| / q_H"
+      ground_truth: 0.0
+      abs_tolerance: 0.01
+      weight: 3
+    energy_balance_error_gas:
+      applies_to: [CCGT]
+      formula: "|q_combustion - w_gas_net - q_hrsg| / q_combustion"
+      weight: 3
+    energy_balance_error_steam:
+      applies_to: [CCGT]
+      formula: "|q_hrsg_steam - w_steam_net - q_condenser| / q_hrsg_steam"
+      weight: 3
+    hrsg_balance_error:
+      applies_to: [CCGT]
+      formula: "|m_air*(h4-h5) - m_steam*(h8-h7)| / m_air*(h4-h5)"
+      weight: 3
 
 # Heat source/sink temperature ranges for entropy/exergy analysis
 external_temperatures:
   rankine:
-    T_source_offset_K: {min: 50, max: 200}    # T_source = T3(K) + offset
-    T_sink_offset_K: {min: 5, max: 15}        # T_sink = T_sat(P_cond) + offset
+    T_source_offset_K: {min: 50, max: 200}
+    T_sink_offset_K: {min: 5, max: 15}
   brayton:
-    T_source_offset_K: {min: 100, max: 300}   # T_source = T3(K) + offset
-    T_sink_offset_K: {min: 5, max: 15}        # T_sink = T1 + offset (ambient-ish)
+    T_source_offset_K: {min: 100, max: 300}
+    T_sink_offset_K: {min: 5, max: 15}
   vcr:
-    T_H_offset_K: {min: 5, max: 15}           # T_H = T_cond(K) - offset (environment cooler than condenser)
-    T_L_offset_K: {min: 5, max: 10}           # T_L = T_evap(K) + offset (cold space warmer than evaporator)
+    T_H_offset_K: {min: 5, max: 15}
+    T_L_offset_K: {min: 5, max: 10}
+
+# V2 summary
+# Total questions: 82 (was 95 in V1)
+# Depth A: 29, Depth B: 26, Depth C: 27
+# Changes from V1:
+#   1. Ideal cycles reduced from 30 to 5 (too easy)
+#   2. Variable cp Brayton added (BRY-AV, BRY-RV) — CoolProp Air
+#   3. VCR absolute properties restored + IIR reference state
+#   4. 6-tier weight rebalancing (was 4-tier)
+#   5. Combined cycle CCGT added — dual fluid, 9 states, 7 components
+#   6. Consistency scoring — energy balance closure from model's own values

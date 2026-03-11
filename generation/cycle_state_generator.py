@@ -44,6 +44,10 @@ def get_dead_state(fluid: str) -> dict:
         h0 = AIR_CP * T0_K  # kJ/kg
         s0 = 0.0  # reference
         return {"h0": h0, "s0": s0, "T0_K": T0_K, "P0_kPa": P0_kPa}
+    elif fluid == "Air_var":
+        h0 = CP.PropsSI("H", "T", T0_K, "P", P0_Pa, "Air") / 1000  # kJ/kg
+        s0 = CP.PropsSI("S", "T", T0_K, "P", P0_Pa, "Air") / 1000  # kJ/(kg·K)
+        return {"h0": h0, "s0": s0, "T0_K": T0_K, "P0_kPa": P0_kPa}
     elif fluid == "R-134a":
         h0 = CP.PropsSI("H", "T", T0_K, "P", P0_Pa, "R134a") / 1000
         s0 = CP.PropsSI("S", "T", T0_K, "P", P0_Pa, "R134a") / 1000
@@ -168,6 +172,14 @@ def air_state(T_K, P_kPa):
     h = AIR_CP * T_K  # kJ/kg
     # s = cp*ln(T/T_ref) - R*ln(P/P_ref), using T_ref=T0, P_ref=P0
     s = AIR_CP * math.log(T_K / T0_K) - AIR_R * math.log(P_kPa / P0_kPa)
+    return {"T_K": T_K, "T_C": T_K - 273.15, "P_kPa": P_kPa, "h": h, "s": s}
+
+
+def air_state_variable(T_K, P_kPa):
+    """Air state from T and P using CoolProp (variable specific heats)."""
+    P_Pa = P_kPa * 1000
+    h = CP.PropsSI("H", "T", T_K, "P", P_Pa, "Air") / 1000  # kJ/kg
+    s = CP.PropsSI("S", "T", T_K, "P", P_Pa, "Air") / 1000  # kJ/(kg·K)
     return {"T_K": T_K, "T_C": T_K - 273.15, "P_kPa": P_kPa, "h": h, "s": s}
 
 
@@ -343,6 +355,8 @@ def generate_rankine_actual(params: dict) -> dict:
     Q_dot_in = m_dot * q_in
     Q_dot_out = m_dot * q_out
     
+    energy_balance_error = abs(q_in - w_net - q_out) / q_in if q_in > 0 else 0.0
+
     states = {1: s1, "2s": s2s, 2: s2, 3: s3, "4s": s4s, 4: s4}
     derived = {
         "w_pump": w_pump, "w_pump_s": w_pump_s,
@@ -350,8 +364,9 @@ def generate_rankine_actual(params: dict) -> dict:
         "q_out": q_out, "w_net": w_net, "eta_th": eta_th, "bwr": bwr,
         "W_dot_net": W_dot_net, "Q_dot_in": Q_dot_in, "Q_dot_out": Q_dot_out,
         "h2s": s2s["h"], "h4s": s4s["h"],
+        "energy_balance_error": energy_balance_error,
     }
-    
+
     # Entropy/exergy analysis
     if "T_source_K" in params:
         T_src = params["T_source_K"]
@@ -481,7 +496,9 @@ def generate_rankine_reheat(params: dict) -> dict:
     
     W_dot_net = m_dot * w_net
     Q_dot_in = m_dot * q_in
-    
+
+    energy_balance_error = abs(q_in - w_net - q_out) / q_in if q_in > 0 else 0.0
+
     states = {1: s1, "2s": s2s, 2: s2, 3: s3, "4s": s4s, 4: s4,
               5: s5, "6s": s6s, 6: s6}
     derived = {
@@ -490,8 +507,9 @@ def generate_rankine_reheat(params: dict) -> dict:
         "q_out": q_out, "w_net": w_net, "eta_th": eta_th,
         "W_dot_net": W_dot_net, "Q_dot_in": Q_dot_in,
         "h2s": s2s["h"], "h4s": s4s["h"], "h6s": s6s["h"],
+        "energy_balance_error": energy_balance_error,
     }
-    
+
     # Entropy/exergy
     if "T_source_K" in params:
         T_src = params["T_source_K"]
@@ -738,7 +756,9 @@ def generate_brayton_actual(params: dict) -> dict:
     
     W_dot_net = m_dot * w_net
     Q_dot_in = m_dot * q_in
-    
+
+    energy_balance_error = abs(q_in - w_net - q_out) / q_in if q_in > 0 else 0.0
+
     states = {1: s1_d, "2s": s2s_d, 2: s2_d, 3: s3_d, "4s": s4s_d, 4: s4_d}
     derived = {
         "w_comp": w_comp, "w_comp_s": w_comp_s,
@@ -747,8 +767,9 @@ def generate_brayton_actual(params: dict) -> dict:
         "W_dot_net": W_dot_net, "Q_dot_in": Q_dot_in,
         "P2_kPa": P2, "T2s_K": T2s, "T2_K": T2, "T4s_K": T4s, "T4_K": T4,
         "h2s": s2s_d["h"], "h4s": s4s_d["h"],
+        "energy_balance_error": energy_balance_error,
     }
-    
+
     # Entropy/exergy
     if "T_source_K" in params:
         T_src = params["T_source_K"]
@@ -874,7 +895,9 @@ def generate_brayton_regenerative(params: dict) -> dict:
     
     W_dot_net = m_dot * w_net
     Q_dot_in = m_dot * q_in
-    
+
+    energy_balance_error = abs(q_in - w_net - q_out) / q_in if q_in > 0 else 0.0
+
     states = {1: s1_d, "2s": s2s_d, 2: s2_d, 3: s3_d, 4: s4_d,
               "5s": s5s_d, 5: s5_d, 6: s6_d}
     derived = {
@@ -885,6 +908,7 @@ def generate_brayton_regenerative(params: dict) -> dict:
         "P2_kPa": P2, "T2s_K": T2s, "T2_K": T2, "T3_K": T3,
         "T5s_K": T5s, "T5_K": T5, "T6_K": T6,
         "h2s": s2s_d["h"], "h5s": s5s_d["h"],
+        "energy_balance_error": energy_balance_error,
     }
     
     # Entropy/exergy
@@ -1010,7 +1034,9 @@ def generate_vcr_actual(params: dict) -> dict:
     W_dot_comp = m_dot * w_comp      # kW
     Q_dot_L = m_dot * q_L            # kW
     Q_dot_H = m_dot * q_H            # kW
-    
+
+    energy_balance_error = abs(q_H - w_comp - q_L) / q_H if q_H > 0 else 0.0
+
     states = {1: s1, "2s": s2s, 2: s2, 3: s3, 4: s4}
     derived = {
         "P_evap_kPa": P_evap, "P_cond_kPa": P_cond,
@@ -1019,6 +1045,7 @@ def generate_vcr_actual(params: dict) -> dict:
         "COP_R": COP_R,
         "W_dot_comp": W_dot_comp, "Q_dot_L": Q_dot_L, "Q_dot_H": Q_dot_H,
         "h2s": s2s["h"],
+        "energy_balance_error": energy_balance_error,
     }
     
     # Entropy/exergy
@@ -1089,6 +1116,560 @@ def generate_vcr_actual(params: dict) -> dict:
 
 
 # =============================================================================
+# BRAYTON CYCLES — VARIABLE SPECIFIC HEATS (CoolProp Air)
+# =============================================================================
+
+def generate_brayton_actual_variable(params: dict) -> dict:
+    """
+    Actual Brayton Cycle with variable specific heats (CoolProp Air).
+
+    params: T1_K, P1_kPa, r_p, T3_K, eta_comp, eta_turb, m_dot_kgs
+    Optional: T_source_K, T_sink_K
+    """
+    T1 = params["T1_K"]
+    P1 = params["P1_kPa"]
+    r_p = params["r_p"]
+    T3 = params["T3_K"]
+    eta_c = params["eta_comp"]
+    eta_t = params["eta_turb"]
+    m_dot = params["m_dot_kgs"]
+
+    P2 = P1 * r_p
+
+    # State 1: compressor inlet
+    s1_d = air_state_variable(T1, P1)
+    s1_d["state"] = 1
+
+    # State 2s: isentropic compression via CoolProp (S, P) lookup
+    h2s = CP.PropsSI("H", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air") / 1000
+    T2s = CP.PropsSI("T", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air")
+    s2s_d = air_state_variable(T2s, P2)
+    s2s_d["state"] = "2s"
+
+    # State 2: actual compressor exit
+    h2 = s1_d["h"] + (h2s - s1_d["h"]) / eta_c
+    T2 = CP.PropsSI("T", "H", h2 * 1000, "P", P2 * 1000, "Air")
+    s2_d = air_state_variable(T2, P2)
+    s2_d["state"] = 2
+
+    # State 3: turbine inlet (after combustion)
+    s3_d = air_state_variable(T3, P2)
+    s3_d["state"] = 3
+
+    # State 4s: isentropic expansion via CoolProp (S, P) lookup
+    h4s = CP.PropsSI("H", "S", s3_d["s"] * 1000, "P", P1 * 1000, "Air") / 1000
+    T4s = CP.PropsSI("T", "S", s3_d["s"] * 1000, "P", P1 * 1000, "Air")
+    s4s_d = air_state_variable(T4s, P1)
+    s4s_d["state"] = "4s"
+
+    # State 4: actual turbine exit
+    h4 = s3_d["h"] - eta_t * (s3_d["h"] - h4s)
+    T4 = CP.PropsSI("T", "H", h4 * 1000, "P", P1 * 1000, "Air")
+    s4_d = air_state_variable(T4, P1)
+    s4_d["state"] = 4
+
+    # Derived
+    w_comp = s2_d["h"] - s1_d["h"]
+    w_comp_s = h2s - s1_d["h"]
+    q_in = s3_d["h"] - s2_d["h"]
+    w_turb = s3_d["h"] - s4_d["h"]
+    w_turb_s = s3_d["h"] - h4s
+    q_out = s4_d["h"] - s1_d["h"]
+    w_net = w_turb - w_comp
+    eta_th = w_net / q_in if q_in > 0 else 0
+    bwr = w_comp / w_turb if w_turb > 0 else 0
+
+    W_dot_net = m_dot * w_net
+    Q_dot_in = m_dot * q_in
+
+    energy_balance_error = abs(q_in - w_net - q_out) / q_in if q_in > 0 else 0.0
+
+    states = {1: s1_d, "2s": s2s_d, 2: s2_d, 3: s3_d, "4s": s4s_d, 4: s4_d}
+    derived = {
+        "w_comp": w_comp, "w_comp_s": w_comp_s,
+        "q_in": q_in, "w_turb": w_turb, "w_turb_s": w_turb_s,
+        "q_out": q_out, "w_net": w_net, "eta_th": eta_th, "bwr": bwr,
+        "W_dot_net": W_dot_net, "Q_dot_in": Q_dot_in,
+        "P2_kPa": P2, "T2s_K": T2s, "T2_K": T2, "T4s_K": T4s, "T4_K": T4,
+        "h2s": h2s, "h4s": h4s,
+        "energy_balance_error": energy_balance_error,
+    }
+
+    # Entropy/exergy
+    if "T_source_K" in params:
+        T_src = params["T_source_K"]
+        T_sink = params.get("T_sink_K", T1 + 10)
+
+        s_gen_comp = s2_d["s"] - s1_d["s"]  # >0 for actual
+        s_gen_cc = (s3_d["s"] - s2_d["s"]) - q_in / T_src
+        s_gen_turb = s4_d["s"] - s3_d["s"]  # >0 for actual
+        s_gen_hr = (s1_d["s"] - s4_d["s"]) + q_out / T_sink
+        s_gen_total = s_gen_comp + s_gen_cc + s_gen_turb + s_gen_hr
+
+        derived.update({
+            "s_gen_comp": s_gen_comp, "s_gen_cc": s_gen_cc,
+            "s_gen_turb": s_gen_turb, "s_gen_hr": s_gen_hr,
+            "s_gen_total": s_gen_total,
+            "T_source_K": T_src, "T_sink_K": T_sink,
+        })
+
+        ds = get_dead_state("Air_var")
+        for st_key, st in states.items():
+            st["ef"] = flow_exergy(st["h"], st["s"], ds["h0"], ds["s0"])
+
+        x_dest_comp = T0_K * s_gen_comp
+        x_dest_cc = T0_K * s_gen_cc
+        x_dest_turb = T0_K * s_gen_turb
+        x_dest_hr = T0_K * s_gen_hr
+        x_dest_total = T0_K * s_gen_total
+
+        X_in = Q_dot_in * (1 - T0_K / T_src)
+        eta_II = W_dot_net / X_in if X_in > 0 else 0
+
+        derived.update({
+            "x_dest_comp": x_dest_comp, "x_dest_cc": x_dest_cc,
+            "x_dest_turb": x_dest_turb, "x_dest_hr": x_dest_hr,
+            "x_dest_total": x_dest_total, "eta_II": eta_II,
+            "X_dot_in": X_in,
+        })
+
+    notes = []
+    if T3 <= T2:
+        notes.append(f"T3={T3}K <= T2={T2:.1f}K")
+    if w_net <= 0:
+        notes.append("w_net <= 0 — turbine work doesn't exceed compressor work")
+
+    return {
+        "states": states, "params": params, "derived": derived,
+        "meta": {
+            "cycle_type": "BRY-AV", "fluid": "Air",
+            "is_valid": len(notes) == 0, "validation_notes": notes,
+        }
+    }
+
+
+def generate_brayton_regenerative_variable(params: dict) -> dict:
+    """
+    Regenerative Brayton Cycle with variable specific heats (CoolProp Air).
+    States: 1-comp inlet, 2-comp exit, 3-regen cold exit, 4-turb inlet, 5-turb exit, 6-regen hot exit
+
+    params: T1_K, P1_kPa, r_p, T4_K, eta_comp, eta_turb, epsilon_regen, m_dot_kgs
+    Optional: T_source_K, T_sink_K
+    """
+    T1 = params["T1_K"]
+    P1 = params["P1_kPa"]
+    r_p = params["r_p"]
+    T4 = params["T4_K"]      # turbine inlet temp (state 4 in regen numbering)
+    eta_c = params["eta_comp"]
+    eta_t = params["eta_turb"]
+    eps = params["epsilon_regen"]
+    m_dot = params["m_dot_kgs"]
+
+    P2 = P1 * r_p
+
+    # State 1: compressor inlet
+    s1_d = air_state_variable(T1, P1)
+    s1_d["state"] = 1
+
+    # State 2s: isentropic compressor via CoolProp (S, P) lookup
+    h2s = CP.PropsSI("H", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air") / 1000
+    T2s = CP.PropsSI("T", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air")
+    s2s_d = air_state_variable(T2s, P2)
+    s2s_d["state"] = "2s"
+
+    # State 2: actual compressor exit
+    h2 = s1_d["h"] + (h2s - s1_d["h"]) / eta_c
+    T2 = CP.PropsSI("T", "H", h2 * 1000, "P", P2 * 1000, "Air")
+    s2_d = air_state_variable(T2, P2)
+    s2_d["state"] = 2
+
+    # State 4: turbine inlet (CC exit)
+    s4_d = air_state_variable(T4, P2)
+    s4_d["state"] = 4
+
+    # State 5s: isentropic turbine via CoolProp (S, P) lookup
+    h5s = CP.PropsSI("H", "S", s4_d["s"] * 1000, "P", P1 * 1000, "Air") / 1000
+    T5s = CP.PropsSI("T", "S", s4_d["s"] * 1000, "P", P1 * 1000, "Air")
+    s5s_d = air_state_variable(T5s, P1)
+    s5s_d["state"] = "5s"
+
+    # State 5: actual turbine exit
+    h5 = s4_d["h"] - eta_t * (s4_d["h"] - h5s)
+    T5 = CP.PropsSI("T", "H", h5 * 1000, "P", P1 * 1000, "Air")
+    s5_d = air_state_variable(T5, P1)
+    s5_d["state"] = 5
+
+    # State 3: regenerator cold exit (preheated air to CC)
+    # epsilon = (T3 - T2) / (T5 - T2)  (temperature-based, consistent with textbooks)
+    T3 = T2 + eps * (T5 - T2)
+    s3_d = air_state_variable(T3, P2)
+    s3_d["state"] = 3
+
+    # State 6: regenerator hot exit (cooled exhaust)
+    # Energy balance: h6 = h5 - (h3 - h2)
+    h6 = s5_d["h"] - (s3_d["h"] - s2_d["h"])
+    T6 = CP.PropsSI("T", "H", h6 * 1000, "P", P1 * 1000, "Air")
+    s6_d = air_state_variable(T6, P1)
+    s6_d["state"] = 6
+
+    # Derived
+    w_comp = s2_d["h"] - s1_d["h"]
+    q_in = s4_d["h"] - s3_d["h"]      # CC heat input (reduced by regen)
+    q_regen = s3_d["h"] - s2_d["h"]   # heat recovered in regen
+    w_turb = s4_d["h"] - s5_d["h"]
+    q_out = s6_d["h"] - s1_d["h"]     # heat rejection (reduced by regen)
+    w_net = w_turb - w_comp
+    eta_th = w_net / q_in if q_in > 0 else 0
+    bwr = w_comp / w_turb if w_turb > 0 else 0
+
+    W_dot_net = m_dot * w_net
+    Q_dot_in = m_dot * q_in
+
+    energy_balance_error = abs(q_in - w_net - q_out) / q_in if q_in > 0 else 0.0
+
+    states = {1: s1_d, "2s": s2s_d, 2: s2_d, 3: s3_d, 4: s4_d,
+              "5s": s5s_d, 5: s5_d, 6: s6_d}
+    derived = {
+        "w_comp": w_comp, "q_in": q_in, "q_regen": q_regen,
+        "w_turb": w_turb, "q_out": q_out, "w_net": w_net,
+        "eta_th": eta_th, "bwr": bwr,
+        "W_dot_net": W_dot_net, "Q_dot_in": Q_dot_in,
+        "P2_kPa": P2, "T2s_K": T2s, "T2_K": T2, "T3_K": T3,
+        "T5s_K": T5s, "T5_K": T5, "T6_K": T6,
+        "h2s": h2s, "h5s": h5s,
+        "energy_balance_error": energy_balance_error,
+    }
+
+    # Entropy/exergy
+    if "T_source_K" in params:
+        T_src = params["T_source_K"]
+        T_sink = params.get("T_sink_K", T1 + 10)
+
+        s_gen_comp = s2_d["s"] - s1_d["s"]
+        s_gen_regen = (s3_d["s"] - s2_d["s"]) + (s6_d["s"] - s5_d["s"])  # both sides
+        s_gen_cc = (s4_d["s"] - s3_d["s"]) - q_in / T_src
+        s_gen_turb = s5_d["s"] - s4_d["s"]
+        s_gen_hr = (s1_d["s"] - s6_d["s"]) + q_out / T_sink
+        s_gen_total = s_gen_comp + s_gen_regen + s_gen_cc + s_gen_turb + s_gen_hr
+
+        derived.update({
+            "s_gen_comp": s_gen_comp, "s_gen_regen": s_gen_regen,
+            "s_gen_cc": s_gen_cc, "s_gen_turb": s_gen_turb,
+            "s_gen_hr": s_gen_hr, "s_gen_total": s_gen_total,
+            "T_source_K": T_src, "T_sink_K": T_sink,
+        })
+
+        ds = get_dead_state("Air_var")
+        for st_key, st in states.items():
+            st["ef"] = flow_exergy(st["h"], st["s"], ds["h0"], ds["s0"])
+
+        x_dest_comp = T0_K * s_gen_comp
+        x_dest_regen = T0_K * s_gen_regen
+        x_dest_cc = T0_K * s_gen_cc
+        x_dest_turb = T0_K * s_gen_turb
+        x_dest_hr = T0_K * s_gen_hr
+        x_dest_total = T0_K * s_gen_total
+
+        X_in = Q_dot_in * (1 - T0_K / T_src)
+        eta_II = W_dot_net / X_in if X_in > 0 else 0
+
+        derived.update({
+            "x_dest_comp": x_dest_comp, "x_dest_regen": x_dest_regen,
+            "x_dest_cc": x_dest_cc, "x_dest_turb": x_dest_turb,
+            "x_dest_hr": x_dest_hr, "x_dest_total": x_dest_total,
+            "eta_II": eta_II, "X_dot_in": X_in,
+        })
+
+    notes = []
+    if T5 <= T2:
+        notes.append(f"T5={T5:.1f}K <= T2={T2:.1f}K — regenerator impossible (exhaust cooler than compressor exit)")
+    if T3 > T5:
+        notes.append(f"T3={T3:.1f}K > T5={T5:.1f}K — violates second law")
+    if T6 < T2:
+        notes.append(f"T6={T6:.1f}K < T2={T2:.1f}K — violates energy balance")
+    if T6 < T1:
+        notes.append(f"T6={T6:.1f}K < T1={T1}K — exhaust below ambient")
+    if w_net <= 0:
+        notes.append("w_net <= 0")
+
+    return {
+        "states": states, "params": params, "derived": derived,
+        "meta": {
+            "cycle_type": "BRY-RV", "fluid": "Air",
+            "is_valid": len(notes) == 0, "validation_notes": notes,
+        }
+    }
+
+
+# =============================================================================
+# COMBINED CYCLE (CCGT)
+# =============================================================================
+
+def generate_combined_cycle(params: dict) -> dict:
+    """
+    Combined Cycle Gas Turbine (CCGT) — gas side (CoolProp Air, variable cp)
+    coupled to steam side (CoolProp Water) via HRSG.
+
+    Gas side states: 1 (comp in), 2 (comp out), 3 (turb in/CC out), 4 (turb out), 5 (HRSG hot out/stack)
+    Steam side states: 6 (pump in/cond out), 7 (pump out), 8 (HRSG cold out/turb in), 9 (turb out/cond in)
+    Isentropic refs: 2s, 4s, 7s, 9s
+
+    params: T1_K, P1_kPa, r_p, T3_K, eta_comp, eta_gas_turb,
+            P_cond_kPa, P_steam_MPa, T8_superheat_C, eta_pump, eta_steam_turb,
+            T5_stack_C, m_dot_air_kgs
+    Optional for depth B/C: T_source_K, T_sink_K
+    """
+    T1 = params["T1_K"]
+    P1 = params["P1_kPa"]
+    r_p = params["r_p"]
+    T3 = params["T3_K"]
+    eta_c = params["eta_comp"]
+    eta_gt = params["eta_gas_turb"]
+    P_cond = params["P_cond_kPa"]
+    P_steam_MPa = params["P_steam_MPa"]
+    T8_superheat_C = params["T8_superheat_C"]
+    eta_p = params["eta_pump"]
+    eta_st = params["eta_steam_turb"]
+    T5_stack_C = params["T5_stack_C"]
+    m_dot_air = params["m_dot_air_kgs"]
+
+    P2 = P1 * r_p
+    P_steam_kPa = P_steam_MPa * 1000
+
+    # =========================================================================
+    # GAS SIDE (CoolProp Air, variable cp)
+    # =========================================================================
+
+    # State 1: compressor inlet
+    s1 = air_state_variable(T1, P1)
+    s1["state"] = 1
+
+    # State 2s: isentropic compression
+    h2s = CP.PropsSI("H", "S", s1["s"] * 1000, "P", P2 * 1000, "Air") / 1000
+    T2s = CP.PropsSI("T", "S", s1["s"] * 1000, "P", P2 * 1000, "Air")
+    s2s_d = air_state_variable(T2s, P2)
+    s2s_d["state"] = "2s"
+
+    # State 2: actual compressor exit
+    h2 = s1["h"] + (h2s - s1["h"]) / eta_c
+    T2 = CP.PropsSI("T", "H", h2 * 1000, "P", P2 * 1000, "Air")
+    s2 = air_state_variable(T2, P2)
+    s2["state"] = 2
+
+    # State 3: turbine inlet (after combustion chamber)
+    s3 = air_state_variable(T3, P2)
+    s3["state"] = 3
+
+    # State 4s: isentropic expansion
+    h4s = CP.PropsSI("H", "S", s3["s"] * 1000, "P", P1 * 1000, "Air") / 1000
+    T4s = CP.PropsSI("T", "S", s3["s"] * 1000, "P", P1 * 1000, "Air")
+    s4s_d = air_state_variable(T4s, P1)
+    s4s_d["state"] = "4s"
+
+    # State 4: actual gas turbine exit
+    h4 = s3["h"] - eta_gt * (s3["h"] - h4s)
+    T4 = CP.PropsSI("T", "H", h4 * 1000, "P", P1 * 1000, "Air")
+    s4 = air_state_variable(T4, P1)
+    s4["state"] = 4
+
+    # State 5: HRSG hot exit / stack
+    T5_K = T5_stack_C + 273.15
+    s5 = air_state_variable(T5_K, P1)
+    s5["state"] = 5
+
+    # HRSG coupling: heat released by gas side per kg of air
+    q_hrsg_air = s4["h"] - s5["h"]  # kJ/kg air
+
+    # =========================================================================
+    # STEAM SIDE (CoolProp Water)
+    # =========================================================================
+
+    # Saturation temperature at steam boiler pressure
+    T_sat_steam = CP.PropsSI("T", "Q", 0, "P", P_steam_kPa * 1000, "Water") - 273.15
+    T8_C = T_sat_steam + T8_superheat_C
+
+    # State 6: saturated liquid at condenser pressure
+    s6 = water_props(Q=0, P_kPa=P_cond)
+    s6["state"] = 6
+
+    # State 7s: isentropic pump exit
+    s7s = water_props(s_kJkgK=s6["s"], P_kPa=P_steam_kPa)
+    s7s["state"] = "7s"
+
+    # State 7: actual pump exit
+    h7 = s6["h"] + (s7s["h"] - s6["h"]) / eta_p
+    s7 = water_props(h_kJkg=h7, P_kPa=P_steam_kPa)
+    s7["state"] = 7
+
+    # State 8: superheated steam at HRSG exit / steam turbine inlet
+    s8 = water_props(T_C=T8_C, P_kPa=P_steam_kPa)
+    s8["state"] = 8
+
+    # State 9s: isentropic steam turbine exit
+    s9s = water_props(s_kJkgK=s8["s"], P_kPa=P_cond)
+    s9s["state"] = "9s"
+
+    # State 9: actual steam turbine exit
+    h9 = s8["h"] - eta_st * (s8["h"] - s9s["h"])
+    s9 = water_props(h_kJkg=h9, P_kPa=P_cond)
+    s9["state"] = 9
+
+    # =========================================================================
+    # MASS FLOW COUPLING
+    # =========================================================================
+
+    q_steam = s8["h"] - s7["h"]  # kJ/kg steam (heat absorbed in HRSG)
+    m_dot_steam = m_dot_air * q_hrsg_air / q_steam  # kg/s
+
+    # =========================================================================
+    # DERIVED QUANTITIES
+    # =========================================================================
+
+    # Gas side per-unit-mass quantities
+    w_comp = s2["h"] - s1["h"]           # kJ/kg air
+    q_combustion = s3["h"] - s2["h"]     # kJ/kg air
+    w_gas_turb = s3["h"] - s4["h"]       # kJ/kg air
+    q_out_gas = s4["h"] - s5["h"]        # = q_hrsg_air (kJ/kg air)
+
+    # Steam side per-unit-mass quantities
+    w_pump = s7["h"] - s6["h"]           # kJ/kg steam
+    w_steam_turb = s8["h"] - s9["h"]     # kJ/kg steam
+    q_cond = s9["h"] - s6["h"]           # kJ/kg steam (heat rejection)
+
+    # Power outputs
+    W_net_gas = m_dot_air * (w_gas_turb - w_comp)       # kW
+    W_net_steam = m_dot_steam * (w_steam_turb - w_pump)  # kW
+    W_net_combined = W_net_gas + W_net_steam              # kW
+    Q_combustion = m_dot_air * q_combustion               # kW
+    eta_combined = W_net_combined / Q_combustion if Q_combustion > 0 else 0
+
+    # Energy balance errors
+    # Gas side is an open path 1->2->3->4->5: q_combustion = (w_gas_turb - w_comp) + q_hrsg_air + q_stack_loss
+    q_stack_loss = s5["h"] - s1["h"]
+    energy_balance_error_gas = abs(q_combustion - (w_gas_turb - w_comp) - q_hrsg_air - q_stack_loss) / q_combustion if q_combustion > 0 else 0.0
+    energy_balance_error_steam = abs((s8["h"] - s7["h"]) - (w_steam_turb - w_pump) - q_cond) / (s8["h"] - s7["h"]) if (s8["h"] - s7["h"]) > 0 else 0.0
+    hrsg_balance_error = abs(m_dot_air * q_hrsg_air - m_dot_steam * (s8["h"] - s7["h"])) / (m_dot_air * q_hrsg_air) if (m_dot_air * q_hrsg_air) > 0 else 0.0
+
+    states = {
+        1: s1, "2s": s2s_d, 2: s2, 3: s3, "4s": s4s_d, 4: s4, 5: s5,
+        6: s6, "7s": s7s, 7: s7, 8: s8, "9s": s9s, 9: s9,
+    }
+    derived = {
+        # Gas side
+        "w_comp": w_comp, "q_combustion": q_combustion,
+        "w_gas_turb": w_gas_turb, "q_hrsg_air": q_hrsg_air, "q_stack_loss": q_stack_loss,
+        # Steam side
+        "w_pump": w_pump, "q_steam": q_steam,
+        "w_steam_turb": w_steam_turb, "q_cond": q_cond,
+        # Combined
+        "W_net_gas": W_net_gas, "W_net_steam": W_net_steam,
+        "W_net_combined": W_net_combined, "Q_combustion": Q_combustion,
+        "eta_combined": eta_combined,
+        "m_dot_steam": m_dot_steam,
+        # Isentropic refs
+        "h2s": h2s, "h4s": h4s, "h7s": s7s["h"], "h9s": s9s["h"],
+        "P2_kPa": P2, "T2_K": T2, "T4_K": T4,
+        "T_sat_steam_C": T_sat_steam, "T8_C": T8_C,
+        # Energy balance errors
+        "energy_balance_error_gas": energy_balance_error_gas,
+        "energy_balance_error_steam": energy_balance_error_steam,
+        "hrsg_balance_error": hrsg_balance_error,
+    }
+
+    # =========================================================================
+    # ENTROPY / EXERGY (Depth B/C)
+    # =========================================================================
+
+    if "T_source_K" in params:
+        T_src = params["T_source_K"]
+        T_sink = params.get("T_sink_K", s6["T_K"] - 10)
+
+        # Entropy generation per component (all per kg of air basis)
+        s_gen_comp = s2["s"] - s1["s"]  # per kg air
+        s_gen_cc = (s3["s"] - s2["s"]) - q_combustion / T_src  # per kg air
+        s_gen_gas_turb = s4["s"] - s3["s"]  # per kg air
+        # HRSG: both gas and steam sides (per kg air)
+        s_gen_HRSG = (s5["s"] - s4["s"]) + (m_dot_steam / m_dot_air) * (s8["s"] - s7["s"])
+        # Pump: per kg air
+        s_gen_pump = (m_dot_steam / m_dot_air) * (s7["s"] - s6["s"])
+        # Steam turbine: per kg air
+        s_gen_steam_turb = (m_dot_steam / m_dot_air) * (s9["s"] - s8["s"])
+        # Condenser: per kg air
+        s_gen_cond = (m_dot_steam / m_dot_air) * ((s6["s"] - s9["s"]) + q_cond / T_sink)
+        s_gen_total = (s_gen_comp + s_gen_cc + s_gen_gas_turb + s_gen_HRSG +
+                       s_gen_pump + s_gen_steam_turb + s_gen_cond)
+
+        derived.update({
+            "s_gen_comp": s_gen_comp, "s_gen_cc": s_gen_cc,
+            "s_gen_gas_turb": s_gen_gas_turb, "s_gen_HRSG": s_gen_HRSG,
+            "s_gen_pump": s_gen_pump, "s_gen_steam_turb": s_gen_steam_turb,
+            "s_gen_cond": s_gen_cond, "s_gen_total": s_gen_total,
+            "T_source_K": T_src, "T_sink_K": T_sink,
+        })
+
+        # Exergy — dual dead states
+        ds_air = get_dead_state("Air_var")   # for gas states 1-5
+        ds_water = get_dead_state("Water")   # for steam states 6-9
+
+        for st_key in [1, "2s", 2, 3, "4s", 4, 5]:
+            states[st_key]["ef"] = flow_exergy(
+                states[st_key]["h"], states[st_key]["s"],
+                ds_air["h0"], ds_air["s0"])
+        for st_key in [6, "7s", 7, 8, "9s", 9]:
+            states[st_key]["ef"] = flow_exergy(
+                states[st_key]["h"], states[st_key]["s"],
+                ds_water["h0"], ds_water["s0"])
+
+        # Exergy destruction per component (all per kg air basis)
+        x_dest_comp = T0_K * s_gen_comp
+        x_dest_cc = T0_K * s_gen_cc
+        x_dest_gas_turb = T0_K * s_gen_gas_turb
+        x_dest_HRSG = T0_K * s_gen_HRSG
+        x_dest_pump = T0_K * s_gen_pump
+        x_dest_steam_turb = T0_K * s_gen_steam_turb
+        x_dest_cond = T0_K * s_gen_cond
+        x_dest_total = T0_K * s_gen_total
+
+        X_in = Q_combustion * (1 - T0_K / T_src)  # total exergy of fuel heat (kW)
+        eta_II_combined = W_net_combined / X_in if X_in > 0 else 0
+
+        derived.update({
+            "x_dest_comp": x_dest_comp, "x_dest_cc": x_dest_cc,
+            "x_dest_gas_turb": x_dest_gas_turb, "x_dest_HRSG": x_dest_HRSG,
+            "x_dest_pump": x_dest_pump, "x_dest_steam_turb": x_dest_steam_turb,
+            "x_dest_cond": x_dest_cond, "x_dest_total": x_dest_total,
+            "X_dot_in": X_in, "eta_II": eta_II_combined,
+            "X_dot_dest_total": m_dot_air * x_dest_total,
+        })
+
+    # =========================================================================
+    # VALIDATION
+    # =========================================================================
+
+    notes = []
+    # Heat transfer feasibility: steam temp must be less than gas turbine exhaust
+    if T8_C > s4["T_C"] - 20:
+        notes.append(f"T8={T8_C:.1f}°C > T4-20={s4['T_C']-20:.1f}°C — steam hotter than gas turbine exhaust")
+    # Pinch point: stack temp must exceed pump exit temp
+    if T5_K < s7["T_K"] + 10:
+        notes.append(f"T5_stack={T5_stack_C}°C too low — below pump exit T7={s7['T_K']-273.15:.1f}°C + 10K pinch")
+    if m_dot_steam <= 0:
+        notes.append("m_dot_steam <= 0 — HRSG energy balance failed")
+    if eta_combined < 0.30 or eta_combined > 0.65:
+        notes.append(f"eta_combined={eta_combined:.4f} outside (0.30, 0.65)")
+    if W_net_combined <= 0:
+        notes.append("W_net_combined <= 0 — no net power output")
+
+    return {
+        "states": states, "params": params, "derived": derived,
+        "meta": {
+            "cycle_type": "CCGT", "fluid": "Air+Water",
+            "is_valid": len(notes) == 0, "validation_notes": notes,
+        }
+    }
+
+
+# =============================================================================
 # DISPATCH
 # =============================================================================
 
@@ -1099,7 +1680,10 @@ CYCLE_GENERATORS = {
     "BRY-I": generate_brayton_ideal,
     "BRY-A": generate_brayton_actual,
     "BRY-RG": generate_brayton_regenerative,
+    "BRY-AV": generate_brayton_actual_variable,
+    "BRY-RV": generate_brayton_regenerative_variable,
     "VCR-A": generate_vcr_actual,
+    "CCGT": generate_combined_cycle,
 }
 
 

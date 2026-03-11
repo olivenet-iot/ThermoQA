@@ -408,9 +408,9 @@ def _auto_convert_tier2(key: str, value: float) -> float:
 # TIER 3: Cycle Analysis Extraction
 # ══════════════════════════════════════════════════════════
 
-def _build_state_patterns(prefix: str, max_n: int = 6) -> dict[str, list[tuple[str, float]]]:
-    """Build extraction patterns for state-point properties h1-h6, s1-s6, ef1-ef6."""
-    subscripts = {1: "₁", 2: "₂", 3: "₃", 4: "₄", 5: "₅", 6: "₆"}
+def _build_state_patterns(prefix: str, max_n: int = 9) -> dict[str, list[tuple[str, float]]]:
+    """Build extraction patterns for state-point properties h1-h9, s1-s9, ef1-ef9."""
+    subscripts = {1: "₁", 2: "₂", 3: "₃", 4: "₄", 5: "₅", 6: "₆", 7: "₇", 8: "₈", 9: "₉"}
     result = {}
     for n in range(1, max_n + 1):
         key = f"{prefix}{n}"
@@ -435,6 +435,7 @@ def _build_component_patterns(prefix: str, components: list[str]) -> dict[str, l
 _TIER3_COMPONENTS = [
     "pump", "boiler", "turb", "cond", "HPT", "LPT", "reheater",
     "comp", "cc", "hr", "regen", "throttle", "evap", "total",
+    "gas_turb", "steam_turb", "HRSG",
 ]
 
 TIER3_PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
@@ -550,6 +551,29 @@ TIER3_PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
     **_build_component_patterns("s_gen", _TIER3_COMPONENTS),
     # Exergy destruction per component
     **_build_component_patterns("x_dest", _TIER3_COMPONENTS),
+    # States 7-9 for CCGT
+    "h7": [(r"\bh[_\s]?7\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h₇\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "h8": [(r"\bh[_\s]?8\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h₈\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "h9": [(r"\bh[_\s]?9\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h₉\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "h7s": [(r"\bh[_\s]?7s\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h₇ₛ\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h[_\s]?7,?s\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "h9s": [(r"\bh[_\s]?9s\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h₉ₛ\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"h[_\s]?9,?s\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "s7": [(r"\bs[_\s]?7\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"s₇\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "s8": [(r"\bs[_\s]?8\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"s₈\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "s9": [(r"\bs[_\s]?9\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"s₉\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "T2": [(r"\bT[_\s]?2\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"T₂\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "T4": [(r"\bT[_\s]?4\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"T₄\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "T5": [(r"\bT[_\s]?5\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"T₅\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "m_dot_steam": [(r"[mṁ][_\s]?(?:dot[_\s]?)?steam\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"ṁ[_\s]?steam\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "w_gas_turb": [(r"\bw[_\s]?gas[_\s]?turb\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"gas\s+turbine\s+work\s*[=:≈~is]*\s*" + _NUMCAP, 1.0)],
+    "w_steam_turb": [(r"\bw[_\s]?steam[_\s]?turb\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"steam\s+turbine\s+work\s*[=:≈~is]*\s*" + _NUMCAP, 1.0)],
+    "q_combustion": [(r"\bq[_\s]?combustion\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"combustion\s+heat\s*[=:≈~is]*\s*" + _NUMCAP, 1.0)],
+    "W_net_combined": [(r"[WẆ][_\s]?(?:dot[_\s]?)?net[_\s]?combined\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"combined\s+net\s+power\s*[=:≈~is]*\s*" + _NUMCAP, 1.0)],
+    "eta_combined": [(r"η[_\s]?combined\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"eta[_\s]?combined\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"combined\s+(?:thermal\s+)?efficiency\s*[=:≈~is]*\s*" + _NUMCAP, 1.0)],
+    "eta_II_combined": [(r"η[_\s]?II[_\s]?combined\s*[=:≈~]\s*" + _NUMCAP, 1.0), (r"eta[_\s]?II[_\s]?combined\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "energy_balance_error": [(r"energy[_\s]?balance[_\s]?error\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "energy_balance_error_gas": [(r"energy[_\s]?balance[_\s]?error[_\s]?gas\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "energy_balance_error_steam": [(r"energy[_\s]?balance[_\s]?error[_\s]?steam\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
+    "hrsg_balance_error": [(r"hrsg[_\s]?balance[_\s]?error\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
 }
 
 
@@ -565,8 +589,8 @@ def _auto_convert_tier3(key: str, value: float) -> float:
         if abs(value) > 100:
             value /= 1000.0
 
-    # eta_th, eta_II: > 1 likely percentage -> fraction
-    if key in ("eta_th", "eta_II"):
+    # eta_th, eta_II, eta_combined, eta_II_combined: > 1 likely percentage -> fraction
+    if key in ("eta_th", "eta_II", "eta_combined", "eta_II_combined"):
         if value > 1.0 and value <= 100.0:
             value /= 100.0
 

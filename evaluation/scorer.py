@@ -519,11 +519,65 @@ class Tier3QuestionResult:
     step_results: list[StepScoreResult]
 
 
+def _compute_consistency(step_id: str, extracted: dict) -> float | None:
+    """Compute energy balance consistency from model's own extracted values.
+
+    Returns the computed error, or None if insufficient data.
+    """
+    if step_id == "energy_balance_error":
+        q_in = extracted.get("q_in")
+        w_net = extracted.get("w_net")
+        q_out = extracted.get("q_out")
+        # For VCR cycles, use different variables
+        if q_in is None and extracted.get("q_H") is not None:
+            q_H = extracted.get("q_H")
+            w_comp = extracted.get("w_comp")
+            q_L = extracted.get("q_L")
+            if q_H is not None and w_comp is not None and q_L is not None and q_H > 0:
+                return abs(q_H - w_comp - q_L) / q_H
+            return None
+        if q_in is not None and w_net is not None and q_out is not None and q_in > 0:
+            return abs(q_in - w_net - q_out) / q_in
+        return None
+    elif step_id == "energy_balance_error_gas":
+        q_cc = extracted.get("q_combustion")
+        w_gt = extracted.get("w_gas_turb")
+        w_c = extracted.get("w_comp")
+        h4 = extracted.get("h4")
+        h5 = extracted.get("h5")
+        if q_cc is not None and w_gt is not None and w_c is not None and h4 is not None and h5 is not None and q_cc > 0:
+            q_hrsg = h4 - h5
+            return abs(q_cc - (w_gt - w_c) - q_hrsg) / q_cc
+        return None
+    elif step_id == "energy_balance_error_steam":
+        h8 = extracted.get("h8")
+        h7 = extracted.get("h7")
+        w_st = extracted.get("w_steam_turb")
+        w_p = extracted.get("w_pump")
+        h9 = extracted.get("h9")
+        h6 = extracted.get("h6")
+        if all(v is not None for v in [h8, h7, w_st, w_p, h9, h6]):
+            q_hrsg_steam = h8 - h7
+            q_cond = h9 - h6
+            if q_hrsg_steam > 0:
+                return abs(q_hrsg_steam - (w_st - w_p) - q_cond) / q_hrsg_steam
+        return None
+    elif step_id == "hrsg_balance_error":
+        # This requires mass flow rates, which may not be easily computed
+        # from model values alone. Return None — ground truth is ~0.
+        return None
+    return None
+
+
 def score_tier3_question(question: dict, extracted: dict) -> Tier3QuestionResult:
     """Score a Tier 3 question with weighted step-level scoring."""
     expected = question["expected"]
     steps = question.get("steps", [])
     weight_map = {s["id"]: s["weight"] for s in steps}
+
+    # Consistency steps: compute from model's own values
+    consistency_steps = {"energy_balance_error", "energy_balance_error_gas",
+                         "energy_balance_error_steam", "hrsg_balance_error"}
 
     step_results = []
     total_weight = 0.0
@@ -533,7 +587,14 @@ def score_tier3_question(question: dict, extracted: dict) -> Tier3QuestionResult
     for step_id, spec in expected.items():
         weight = weight_map.get(step_id, 1.0)
         total_weight += weight
-        ext_val = extracted.get(step_id)
+
+        if step_id in consistency_steps:
+            # Override: compute from model's own values
+            computed = _compute_consistency(step_id, extracted)
+            ext_val = computed  # Use computed value, not extracted
+        else:
+            ext_val = extracted.get(step_id)
+
         exp_val = spec["value"]
         tol_pct = spec.get("tolerance_pct", 2.0)
         abs_tol = spec.get("abs_tolerance", 0.5)

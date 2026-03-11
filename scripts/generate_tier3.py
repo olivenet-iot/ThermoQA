@@ -3,7 +3,7 @@
 Generate ThermoQA Tier 3 cycle analysis questions.
 
 Usage:
-    python scripts/generate_tier3.py                    # generate all ~95
+    python scripts/generate_tier3.py                    # generate all ~82
     python scripts/generate_tier3.py --cycle RNK-A      # specific cycle
     python scripts/generate_tier3.py --validate-only     # validate existing
 """
@@ -71,6 +71,14 @@ def validate_questions(path: str):
         cop = expected.get("COP_R", {}).get("value")
         if cop is not None and (cop < 1.0 or cop > 12):
             errors.append(f"{qid}: COP_R = {cop:.4f} outside (1.0, 12)")
+
+        eta_combined = expected.get("eta_combined", {}).get("value")
+        if eta_combined is not None and (eta_combined < 0.30 or eta_combined > 0.65):
+            errors.append(f"{qid}: eta_combined = {eta_combined:.4f} outside (0.30, 0.65)")
+
+        m_dot_steam = expected.get("m_dot_steam", {}).get("value")
+        if m_dot_steam is not None and m_dot_steam <= 0:
+            errors.append(f"{qid}: m_dot_steam = {m_dot_steam:.4f} <= 0")
 
     if errors:
         print(f"\n{len(errors)} VALIDATION ERRORS:")

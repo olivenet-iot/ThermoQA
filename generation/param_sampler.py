@@ -1096,6 +1096,110 @@ def _sample_vcr_actual(count: int, rng: np.random.Generator, depth: str = "A") -
     return params_list[:count]
 
 
+def _sample_brayton_actual_variable(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Actual Brayton Cycle with variable specific heats."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    T1_vals = _stratified_sample(rng, 290, 310, count + 5, decimals=0)
+    for T1 in T1_vals:
+        T1 = round(T1)
+        P1 = round(rng.uniform(95, 105))
+        r_p = round(rng.uniform(6, 18))
+        T3 = round(rng.uniform(1100, 1600))
+        eta_comp = round(rng.uniform(0.78, 0.88), 2)
+        eta_turb = round(rng.uniform(0.82, 0.92), 2)
+        m_dot = round(rng.uniform(10, 200), 1)
+        params = {"T1_K": float(T1), "P1_kPa": float(P1), "r_p": float(r_p),
+                  "T3_K": float(T3), "eta_comp": float(eta_comp),
+                  "eta_turb": float(eta_turb), "m_dot_kgs": float(m_dot)}
+        if depth in ("B", "C"):
+            params["T_source_K"] = round(T3 + rng.uniform(100, 300), 1)
+            params["T_sink_K"] = round(T1 + rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("BRY-AV", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_brayton_regenerative_variable(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Regenerative Brayton Cycle with variable specific heats."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    for _ in range(count + 30):
+        T1 = round(rng.uniform(290, 310))
+        P1 = round(rng.uniform(95, 105))
+        r_p = round(rng.uniform(6, 14))
+        T4 = round(rng.uniform(1100, 1600))
+        eta_comp = round(rng.uniform(0.78, 0.88), 2)
+        eta_turb = round(rng.uniform(0.82, 0.92), 2)
+        epsilon_regen = round(rng.uniform(0.70, 0.90), 2)
+        m_dot = round(rng.uniform(10, 200), 1)
+        params = {
+            "T1_K": float(T1), "P1_kPa": float(P1), "r_p": float(r_p),
+            "T4_K": float(T4), "eta_comp": float(eta_comp),
+            "eta_turb": float(eta_turb), "epsilon_regen": float(epsilon_regen),
+            "m_dot_kgs": float(m_dot),
+        }
+        if depth in ("B", "C"):
+            params["T_source_K"] = round(T4 + rng.uniform(100, 300), 1)
+            params["T_sink_K"] = round(T1 + rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("BRY-RV", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
+def _sample_ccgt(count: int, rng: np.random.Generator, depth: str = "A") -> list[dict]:
+    """Sample parameters for Combined Cycle Gas Turbine."""
+    from generation.cycle_state_generator import generate_cycle
+    params_list = []
+    for _ in range(count + 50):
+        T1 = round(rng.uniform(290, 310))
+        P1 = round(rng.uniform(95, 105))
+        r_p = round(rng.uniform(10, 18))
+        T3 = round(rng.uniform(1200, 1500))
+        eta_comp = round(rng.uniform(0.82, 0.88), 2)
+        eta_gas_turb = round(rng.uniform(0.85, 0.92), 2)
+        P_cond = float(round(rng.uniform(10, 30)))
+        P_steam = round(rng.uniform(4, 12), 1)
+        T8_superheat = round(rng.uniform(30, 100))
+        eta_pump = round(rng.uniform(0.80, 0.90), 2)
+        eta_steam_turb = round(rng.uniform(0.82, 0.90), 2)
+        T5_stack = round(rng.uniform(100, 150))
+        m_dot_air = round(rng.uniform(50, 200), 1)
+        params = {
+            "T1_K": float(T1), "P1_kPa": float(P1), "r_p": float(r_p),
+            "T3_K": float(T3), "eta_comp": float(eta_comp),
+            "eta_gas_turb": float(eta_gas_turb),
+            "P_cond_kPa": P_cond, "P_steam_MPa": float(P_steam),
+            "T8_superheat_C": float(T8_superheat),
+            "eta_pump": float(eta_pump), "eta_steam_turb": float(eta_steam_turb),
+            "T5_stack_C": float(T5_stack), "m_dot_air_kgs": float(m_dot_air),
+        }
+        if depth in ("B", "C"):
+            params["T_source_K"] = round(T3 + rng.uniform(100, 300), 1)
+            params["T_sink_K"] = round(T1 + rng.uniform(5, 15), 1)
+        try:
+            result = generate_cycle("CCGT", params)
+            if result["meta"]["is_valid"]:
+                params_list.append(params)
+        except Exception:
+            continue
+        if len(params_list) >= count:
+            break
+    return params_list[:count]
+
+
 _TIER3_SAMPLERS = {
     "RNK-I": _sample_rankine_ideal,
     "RNK-A": _sample_rankine_actual,
@@ -1103,6 +1207,9 @@ _TIER3_SAMPLERS = {
     "BRY-I": _sample_brayton_ideal,
     "BRY-A": _sample_brayton_actual,
     "BRY-RG": _sample_brayton_regenerative,
+    "BRY-AV": _sample_brayton_actual_variable,
+    "BRY-RV": _sample_brayton_regenerative_variable,
+    "CCGT": _sample_ccgt,
     "VCR-A": _sample_vcr_actual,
 }
 

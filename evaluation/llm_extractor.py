@@ -172,10 +172,26 @@ class LLMExtractor:
             "COP_Carnot": "dimensionless (>1)", "eta_II": "dimensionless (0-1)",
             "x4": "dimensionless (0-1)",
             "W_dot_net": "kW", "W_dot_comp": "kW", "Q_dot_L": "kW",
+            "h7": "kJ/kg", "h8": "kJ/kg", "h9": "kJ/kg",
+            "h7s": "kJ/kg", "h9s": "kJ/kg",
+            "s7": "kJ/(kg·K)", "s8": "kJ/(kg·K)", "s9": "kJ/(kg·K)",
+            "ef7": "kJ/kg", "ef8": "kJ/kg", "ef9": "kJ/kg",
+            "T2": "K", "T4": "K", "T5": "K",
+            "m_dot_steam": "kg/s",
+            "w_gas_turb": "kJ/kg", "w_steam_turb": "kJ/kg",
+            "q_combustion": "kJ/kg",
+            "W_net_combined": "kW",
+            "eta_combined": "dimensionless (0-1)",
+            "eta_II_combined": "dimensionless (0-1)",
+            "energy_balance_error": "dimensionless (near 0)",
+            "energy_balance_error_gas": "dimensionless (near 0)",
+            "energy_balance_error_steam": "dimensionless (near 0)",
+            "hrsg_balance_error": "dimensionless (near 0)",
         }
         # s_gen and x_dest component patterns
         for comp in ["pump", "boiler", "turb", "cond", "HPT", "LPT", "reheater",
-                      "comp", "cc", "hr", "regen", "throttle", "evap", "total"]:
+                      "comp", "cc", "hr", "regen", "throttle", "evap", "total",
+                      "gas_turb", "steam_turb", "HRSG"]:
             unit_hints[f"s_gen_{comp}"] = "kJ/(kg·K)"
             unit_hints[f"x_dest_{comp}"] = "kJ/kg"
 
