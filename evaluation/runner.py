@@ -68,11 +68,12 @@ class BaseProvider(ABC):
     max_retries: int
 
     def __init__(self, model: str | None = None, timeout: float = 300.0,
-                 max_retries: int = 3):
+                 max_retries: int = 3, max_tokens: int | None = None):
         if model is not None:
             self.model = model
         self.timeout = timeout
         self.max_retries = max_retries
+        self.max_tokens = max_tokens
 
     def generate(self, system_prompt: str, user_prompt: str) -> ProviderResponse:
         """Call the API with retry and exponential backoff."""
@@ -117,7 +118,7 @@ class AnthropicProvider(BaseProvider):
         t0 = time.monotonic()
         message = self._client.messages.create(
             model=self.model,
-            max_tokens=64000,
+            max_tokens=self.max_tokens or 64000,
             thinking={"type": "adaptive"},
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
@@ -171,15 +172,18 @@ class OpenAICompatibleProvider(BaseProvider):
 
     def _call_api(self, system_prompt: str, user_prompt: str) -> ProviderResponse:
         t0 = time.monotonic()
-        response = self._client.chat.completions.create(
-            model=self.model,
-            max_completion_tokens=16000,
-            reasoning_effort="high",
-            messages=[
+        max_tok = self.max_tokens or (65536 if self.is_thinking else 16000)
+        create_kwargs = {
+            "model": self.model,
+            "max_completion_tokens": max_tok,
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-        )
+        }
+        if self.is_thinking:
+            create_kwargs["reasoning_effort"] = "high"
+        response = self._client.chat.completions.create(**create_kwargs)
         latency = time.monotonic() - t0
 
         choice = response.choices[0]
@@ -254,7 +258,7 @@ class GoogleProvider(BaseProvider):
             contents=user_prompt,
             config=self._genai.types.GenerateContentConfig(
                 system_instruction=system_prompt,
-                max_output_tokens=32000,
+                max_output_tokens=self.max_tokens or 32000,
                 thinking_config=self._genai.types.ThinkingConfig(
                     thinking_level="HIGH",
                     include_thoughts=True,

@@ -536,6 +536,14 @@ def _compute_consistency(step_id: str, extracted: dict) -> float | None:
             if q_H is not None and w_comp is not None and q_L is not None and q_H > 0:
                 return abs(q_H - w_comp - q_L) / q_H
             return None
+        # If q_out not directly extracted, compute from state points
+        if q_out is None:
+            h1 = extracted.get("h1")
+            # Regenerative cycles: q_out = h6 - h1 (after regenerator)
+            # Simple cycles: q_out = h4 - h1
+            h_exit = extracted.get("h6") or extracted.get("h4")
+            if h_exit is not None and h1 is not None:
+                q_out = abs(h_exit - h1)
         if q_in is not None and w_net is not None and q_out is not None and q_in > 0:
             return abs(q_in - w_net - q_out) / q_in
         return None

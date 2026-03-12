@@ -556,6 +556,10 @@ def main():
         help="API timeout in seconds (default: 300)",
     )
     parser.add_argument(
+        "--max-tokens", type=int, default=None,
+        help="Max completion tokens (default: 65536 for thinking models, 16000 otherwise)",
+    )
+    parser.add_argument(
         "--ids",
         help="Comma-separated question IDs to (re-)run",
     )
@@ -609,6 +613,8 @@ def main():
                 provider_kwargs = {"timeout": args.timeout}
                 if args.model:
                     provider_kwargs["model"] = args.model
+                if args.max_tokens:
+                    provider_kwargs["max_tokens"] = args.max_tokens
                 provider = get_provider(name, **provider_kwargs)
                 run_tier3_evaluation(provider, questions, args.output,
                                      delay_s=args.delay, selected_ids=selected_ids)
@@ -619,6 +625,8 @@ def main():
     provider_kwargs = {"timeout": args.timeout}
     if args.model:
         provider_kwargs["model"] = args.model
+    if args.max_tokens:
+        provider_kwargs["max_tokens"] = args.max_tokens
 
     try:
         provider = get_provider(args.provider, **provider_kwargs)

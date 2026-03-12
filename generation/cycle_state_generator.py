@@ -14,6 +14,7 @@ Each cycle generator returns a dict with:
 import CoolProp.CoolProp as CP
 import math
 from dataclasses import dataclass, field
+from scipy.optimize import brentq
 from typing import Optional
 
 # =============================================================================
@@ -181,6 +182,87 @@ def air_state_variable(T_K, P_kPa):
     h = CP.PropsSI("H", "T", T_K, "P", P_Pa, "Air") / 1000  # kJ/kg
     s = CP.PropsSI("S", "T", T_K, "P", P_Pa, "Air") / 1000  # kJ/(kg·K)
     return {"T_K": T_K, "T_C": T_K - 273.15, "P_kPa": P_kPa, "h": h, "s": s}
+
+
+# =============================================================================
+# Air (ideal gas, variable cp) — NASA 7-coeff polynomial (textbook-aligned)
+# =============================================================================
+# NASA/Burcat polynomial coefficients for dry air as ideal gas.
+# Anchored to Cengel Table A-17: h(300K)=300.19, s0(300K)=1.70203.
+# Matches textbook values to <0.15% for h, <0.001 kJ/(kg·K) for s.
+
+AIR_R_MASS = 8.314472 / 28.97  # 0.28700 kJ/(kg·K)
+
+_NASA_LO = (  # 200-1000 K
+    3.56839620e+00, -6.78729429e-04,  1.55371476e-06,
+   -3.29937060e-12, -4.66395387e-13, -1.06234659e+03,  3.71582927e+00,
+)
+_NASA_HI = (  # 1000-6000 K
+    3.08792717e+00,  1.24597184e-03, -4.23718945e-07,
+    6.74774789e-11, -3.97076972e-15, -9.95262755e+02,
+    5.959606894383,  # corrected from 6.17536217 for s0 continuity at 1000 K
+)
+
+
+def _nasa_coeffs(T):
+    """Return NASA coefficient tuple for temperature T [K]."""
+    return _NASA_LO if T <= 1000.0 else _NASA_HI
+
+
+def _h_nasa_raw(T):
+    """Raw NASA enthalpy [kJ/kg] before offset."""
+    a = _nasa_coeffs(T)
+    return AIR_R_MASS * (
+        a[0]*T + a[1]*T**2/2 + a[2]*T**3/3 + a[3]*T**4/4 + a[4]*T**5/5 + a[5]
+    )
+
+
+def _s0_nasa_raw(T):
+    """Raw NASA standard entropy [kJ/(kg·K)] before offset."""
+    a = _nasa_coeffs(T)
+    return AIR_R_MASS * (
+        a[0]*math.log(T) + a[1]*T + a[2]*T**2/2 + a[3]*T**3/3 + a[4]*T**4/4 + a[6]
+    )
+
+
+# Offsets anchored to Cengel Table A-17 at 300 K
+_H_OFFSET = 300.19 - _h_nasa_raw(300.0)
+_S0_OFFSET = 1.70203 - _s0_nasa_raw(300.0)
+
+
+def h_ideal_air(T_K):
+    """Ideal-gas air enthalpy [kJ/kg] from NASA polynomial, textbook-anchored."""
+    return _h_nasa_raw(T_K) + _H_OFFSET
+
+
+def s0_ideal_air(T_K):
+    """Ideal-gas air standard entropy s0(T) [kJ/(kg·K)], textbook-anchored."""
+    return _s0_nasa_raw(T_K) + _S0_OFFSET
+
+
+def s_ideal_air(T_K, P_kPa):
+    """Ideal-gas air entropy s(T,P) = s0(T) - R*ln(P/P_ref), P_ref=100 kPa."""
+    return s0_ideal_air(T_K) - AIR_R_MASS * math.log(P_kPa / 100.0)
+
+
+def air_state_ideal_table(T_K, P_kPa):
+    """Air state from T and P using ideal-gas NASA polynomials.
+
+    Returns same dict format as air_state_variable().
+    """
+    h = h_ideal_air(T_K)
+    s = s_ideal_air(T_K, P_kPa)
+    return {"T_K": T_K, "T_C": T_K - 273.15, "P_kPa": P_kPa, "h": h, "s": s}
+
+
+def _find_T_from_s0(s0_target, T_lo=200.0, T_hi=4000.0):
+    """Solve s0(T) = s0_target for T [K] via Brent's method."""
+    return brentq(lambda T: s0_ideal_air(T) - s0_target, T_lo, T_hi, xtol=1e-10)
+
+
+def _find_T_from_h(h_target, T_lo=200.0, T_hi=4000.0):
+    """Solve h(T) = h_target for T [K] via Brent's method."""
+    return brentq(lambda T: h_ideal_air(T) - h_target, T_lo, T_hi, xtol=1e-10)
 
 
 # =============================================================================
@@ -1116,12 +1198,15 @@ def generate_vcr_actual(params: dict) -> dict:
 
 
 # =============================================================================
-# BRAYTON CYCLES — VARIABLE SPECIFIC HEATS (CoolProp Air)
+# BRAYTON CYCLES — VARIABLE SPECIFIC HEATS (ideal gas, NASA polynomials)
 # =============================================================================
 
 def generate_brayton_actual_variable(params: dict) -> dict:
     """
-    Actual Brayton Cycle with variable specific heats (CoolProp Air).
+    Actual Brayton Cycle with variable specific heats (ideal gas air).
+
+    Uses NASA polynomial air tables (textbook-aligned) instead of CoolProp
+    real-gas mixture model, matching Cengel/Boles Pr-method approach.
 
     params: T1_K, P1_kPa, r_p, T3_K, eta_comp, eta_turb, m_dot_kgs
     Optional: T_source_K, T_sink_K
@@ -1137,35 +1222,39 @@ def generate_brayton_actual_variable(params: dict) -> dict:
     P2 = P1 * r_p
 
     # State 1: compressor inlet
-    s1_d = air_state_variable(T1, P1)
+    s1_d = air_state_ideal_table(T1, P1)
     s1_d["state"] = 1
 
-    # State 2s: isentropic compression via CoolProp (S, P) lookup
-    h2s = CP.PropsSI("H", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air") / 1000
-    T2s = CP.PropsSI("T", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air")
-    s2s_d = air_state_variable(T2s, P2)
+    # State 2s: isentropic compression
+    # s0(T2s) = s0(T1) + R*ln(P2/P1)
+    s0_2s = s0_ideal_air(T1) + AIR_R_MASS * math.log(P2 / P1)
+    T2s = _find_T_from_s0(s0_2s)
+    h2s = h_ideal_air(T2s)
+    s2s_d = air_state_ideal_table(T2s, P2)
     s2s_d["state"] = "2s"
 
     # State 2: actual compressor exit
     h2 = s1_d["h"] + (h2s - s1_d["h"]) / eta_c
-    T2 = CP.PropsSI("T", "H", h2 * 1000, "P", P2 * 1000, "Air")
-    s2_d = air_state_variable(T2, P2)
+    T2 = _find_T_from_h(h2)
+    s2_d = air_state_ideal_table(T2, P2)
     s2_d["state"] = 2
 
     # State 3: turbine inlet (after combustion)
-    s3_d = air_state_variable(T3, P2)
+    s3_d = air_state_ideal_table(T3, P2)
     s3_d["state"] = 3
 
-    # State 4s: isentropic expansion via CoolProp (S, P) lookup
-    h4s = CP.PropsSI("H", "S", s3_d["s"] * 1000, "P", P1 * 1000, "Air") / 1000
-    T4s = CP.PropsSI("T", "S", s3_d["s"] * 1000, "P", P1 * 1000, "Air")
-    s4s_d = air_state_variable(T4s, P1)
+    # State 4s: isentropic expansion
+    # s0(T4s) = s0(T3) + R*ln(P1/P2) = s0(T3) - R*ln(P2/P1)
+    s0_4s = s0_ideal_air(T3) - AIR_R_MASS * math.log(P2 / P1)
+    T4s = _find_T_from_s0(s0_4s)
+    h4s = h_ideal_air(T4s)
+    s4s_d = air_state_ideal_table(T4s, P1)
     s4s_d["state"] = "4s"
 
     # State 4: actual turbine exit
     h4 = s3_d["h"] - eta_t * (s3_d["h"] - h4s)
-    T4 = CP.PropsSI("T", "H", h4 * 1000, "P", P1 * 1000, "Air")
-    s4_d = air_state_variable(T4, P1)
+    T4 = _find_T_from_h(h4)
+    s4_d = air_state_ideal_table(T4, P1)
     s4_d["state"] = 4
 
     # Derived
@@ -1213,9 +1302,11 @@ def generate_brayton_actual_variable(params: dict) -> dict:
             "T_source_K": T_src, "T_sink_K": T_sink,
         })
 
-        ds = get_dead_state("Air_var")
+        # Dead state from ideal gas air
+        h0 = h_ideal_air(T0_K)
+        s0 = s_ideal_air(T0_K, P0_kPa)
         for st_key, st in states.items():
-            st["ef"] = flow_exergy(st["h"], st["s"], ds["h0"], ds["s0"])
+            st["ef"] = flow_exergy(st["h"], st["s"], h0, s0)
 
         x_dest_comp = T0_K * s_gen_comp
         x_dest_cc = T0_K * s_gen_cc
@@ -1250,8 +1341,11 @@ def generate_brayton_actual_variable(params: dict) -> dict:
 
 def generate_brayton_regenerative_variable(params: dict) -> dict:
     """
-    Regenerative Brayton Cycle with variable specific heats (CoolProp Air).
+    Regenerative Brayton Cycle with variable specific heats (ideal gas air).
     States: 1-comp inlet, 2-comp exit, 3-regen cold exit, 4-turb inlet, 5-turb exit, 6-regen hot exit
+
+    Uses NASA polynomial air tables (textbook-aligned) instead of CoolProp
+    real-gas mixture model, matching Cengel/Boles Pr-method approach.
 
     params: T1_K, P1_kPa, r_p, T4_K, eta_comp, eta_turb, epsilon_regen, m_dot_kgs
     Optional: T_source_K, T_sink_K
@@ -1268,48 +1362,50 @@ def generate_brayton_regenerative_variable(params: dict) -> dict:
     P2 = P1 * r_p
 
     # State 1: compressor inlet
-    s1_d = air_state_variable(T1, P1)
+    s1_d = air_state_ideal_table(T1, P1)
     s1_d["state"] = 1
 
-    # State 2s: isentropic compressor via CoolProp (S, P) lookup
-    h2s = CP.PropsSI("H", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air") / 1000
-    T2s = CP.PropsSI("T", "S", s1_d["s"] * 1000, "P", P2 * 1000, "Air")
-    s2s_d = air_state_variable(T2s, P2)
+    # State 2s: isentropic compression
+    s0_2s = s0_ideal_air(T1) + AIR_R_MASS * math.log(P2 / P1)
+    T2s = _find_T_from_s0(s0_2s)
+    h2s = h_ideal_air(T2s)
+    s2s_d = air_state_ideal_table(T2s, P2)
     s2s_d["state"] = "2s"
 
     # State 2: actual compressor exit
     h2 = s1_d["h"] + (h2s - s1_d["h"]) / eta_c
-    T2 = CP.PropsSI("T", "H", h2 * 1000, "P", P2 * 1000, "Air")
-    s2_d = air_state_variable(T2, P2)
+    T2 = _find_T_from_h(h2)
+    s2_d = air_state_ideal_table(T2, P2)
     s2_d["state"] = 2
 
     # State 4: turbine inlet (CC exit)
-    s4_d = air_state_variable(T4, P2)
+    s4_d = air_state_ideal_table(T4, P2)
     s4_d["state"] = 4
 
-    # State 5s: isentropic turbine via CoolProp (S, P) lookup
-    h5s = CP.PropsSI("H", "S", s4_d["s"] * 1000, "P", P1 * 1000, "Air") / 1000
-    T5s = CP.PropsSI("T", "S", s4_d["s"] * 1000, "P", P1 * 1000, "Air")
-    s5s_d = air_state_variable(T5s, P1)
+    # State 5s: isentropic turbine expansion
+    s0_5s = s0_ideal_air(T4) - AIR_R_MASS * math.log(P2 / P1)
+    T5s = _find_T_from_s0(s0_5s)
+    h5s = h_ideal_air(T5s)
+    s5s_d = air_state_ideal_table(T5s, P1)
     s5s_d["state"] = "5s"
 
     # State 5: actual turbine exit
     h5 = s4_d["h"] - eta_t * (s4_d["h"] - h5s)
-    T5 = CP.PropsSI("T", "H", h5 * 1000, "P", P1 * 1000, "Air")
-    s5_d = air_state_variable(T5, P1)
+    T5 = _find_T_from_h(h5)
+    s5_d = air_state_ideal_table(T5, P1)
     s5_d["state"] = 5
 
     # State 3: regenerator cold exit (preheated air to CC)
     # epsilon = (T3 - T2) / (T5 - T2)  (temperature-based, consistent with textbooks)
     T3 = T2 + eps * (T5 - T2)
-    s3_d = air_state_variable(T3, P2)
+    s3_d = air_state_ideal_table(T3, P2)
     s3_d["state"] = 3
 
     # State 6: regenerator hot exit (cooled exhaust)
     # Energy balance: h6 = h5 - (h3 - h2)
     h6 = s5_d["h"] - (s3_d["h"] - s2_d["h"])
-    T6 = CP.PropsSI("T", "H", h6 * 1000, "P", P1 * 1000, "Air")
-    s6_d = air_state_variable(T6, P1)
+    T6 = _find_T_from_h(h6)
+    s6_d = air_state_ideal_table(T6, P1)
     s6_d["state"] = 6
 
     # Derived
@@ -1359,9 +1455,11 @@ def generate_brayton_regenerative_variable(params: dict) -> dict:
             "T_source_K": T_src, "T_sink_K": T_sink,
         })
 
-        ds = get_dead_state("Air_var")
+        # Dead state from ideal gas air
+        h0 = h_ideal_air(T0_K)
+        s0 = s_ideal_air(T0_K, P0_kPa)
         for st_key, st in states.items():
-            st["ef"] = flow_exergy(st["h"], st["s"], ds["h0"], ds["s0"])
+            st["ef"] = flow_exergy(st["h"], st["s"], h0, s0)
 
         x_dest_comp = T0_K * s_gen_comp
         x_dest_regen = T0_K * s_gen_regen

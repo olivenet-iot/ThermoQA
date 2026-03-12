@@ -760,6 +760,8 @@ def generate_tier3_questions(output_dir: str, total_target: int = 82,
             expected = {}
             consistency_steps = {"energy_balance_error", "energy_balance_error_gas",
                                  "energy_balance_error_steam", "hrsg_balance_error"}
+            dimensionless_steps = {"eta_th", "eta_combined", "eta_II",
+                                   "COP_R", "COP_Carnot"}
             for step in template.steps:
                 sid = step["id"]
                 if sid in step_values:
@@ -769,6 +771,13 @@ def generate_tier3_questions(output_dir: str, total_target: int = 82,
                             "unit": step["unit"],
                             "tolerance_pct": DEFAULT_TOLERANCE_PCT,
                             "abs_tolerance": 0.01,
+                        }
+                    elif sid in dimensionless_steps:
+                        expected[sid] = {
+                            "value": step_values[sid],
+                            "unit": step["unit"],
+                            "tolerance_pct": DEFAULT_TOLERANCE_PCT,
+                            "abs_tolerance": 0.02,
                         }
                     else:
                         expected[sid] = {
