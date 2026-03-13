@@ -3,11 +3,11 @@
 ThermoQA evaluates how well large language models can solve
 engineering thermodynamics problems — from steam table property
 lookups to multi-step component analysis with exergy destruction.
-**211 questions** across two tiers, all grounded in CoolProp 7.2.0
+**293 questions** across three tiers, all grounded in CoolProp 7.2.0
 (IAPWS-IF97 + Helmholtz EOS). No other benchmark covers applied
 engineering thermodynamics at this depth.
 
-## Leaderboard (v0.2)
+## Leaderboard (v0.3)
 
 ### Tier 1: Property Lookups
 
@@ -46,17 +46,39 @@ engineering thermodynamics at this depth.
 | 4 | DeepSeek-R1 | DeepSeek | **86.9%** | 89.6% | 92.4% | 57.6% | 14,053 |
 | 5 | MiniMax M2.5 | MiniMax | **73.4%** | 71.2% | 97.2% | 49.5% | 11,659 |
 
-### Tier 1 → Tier 2 Degradation
+### Tier 3: Cycle Analysis
 
-Multi-step reasoning imposes a penalty on every model. The ranking reshuffles.
+82 questions · 10 cycle types · 4 fluids (Water, Air, R-134a, Air+Water) · 3 analysis depths · Weighted step-level scoring
 
-| Model | Tier 1 | Tier 2 | Drop | Rank Change |
-|-------|--------|--------|------|-------------|
-| Claude Opus 4.6 | 95.6% | 92.0% | −3.6 pp | #3 → **#1** |
-| GPT-5.4 | 96.9% | 91.0% | −5.9 pp | #2 → #2 |
-| Gemini 3.1 Pro | 97.3% | 89.5% | −7.8 pp | #1 → **#3** |
-| DeepSeek-R1 | 89.5% | 86.9% | −2.6 pp | #4 → #4 |
-| MiniMax M2.5 | 84.5% | 73.4% | −11.1 pp | #5 → #5 |
+| Rank | Model | Provider | Score | Water | Air | R-134a | Air+Water |
+|------|-------|----------|-------|-------|-----|--------|-----------|
+| 🥇 | Claude Opus 4.6 | Anthropic | **91.0%** | 97.9% | 99.5% | 75.1% | 75.9% |
+| 🥈 | GPT-5.4 | OpenAI | **88.1%** | 91.5% | 97.4% | 79.2% | 70.3% |
+| 🥉 | Gemini 3.1 Pro | Google | **83.9%** | 93.9% | 81.3% | 88.6% | 61.7% |
+| 4 | DeepSeek-R1 | DeepSeek | **81.1%** | 89.0% | 90.4% | 63.7% | 63.1% |
+| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 11.8% |
+
+#### Per-Cycle-Type Breakdown
+
+| Model | RNK-I | RNK-A | RNK-RH | BRY-I | BRY-A | BRY-AV | BRY-RG | BRY-RV | VCR-A | CCGT |
+|-------|-------|-------|--------|-------|-------|--------|--------|--------|-------|------|
+| Opus 4.6 | 98.0% | 99.8% | 95.0% | 100% | 99.7% | 98.8% | 99.7% | 99.5% | 75.1% | 75.9% |
+| GPT-5.4 | 98.0% | 96.7% | 82.3% | 100% | 100% | 95.2% | 100% | 88.7% | 79.2% | 70.3% |
+| Gemini 3.1 | 100% | 99.8% | 83.9% | 97.3% | 97.0% | 63.3% | 96.7% | 37.6% | 88.6% | 61.7% |
+| DeepSeek-R1 | 94.6% | 94.0% | 80.3% | 100% | 99.2% | 88.5% | 100% | 52.1% | 63.7% | 63.1% |
+| MiniMax M2.5 | 73.4% | 44.6% | 34.4% | 100% | 98.2% | 30.5% | 65.0% | 2.9% | 15.0% | 11.9% |
+
+### Cross-Tier Performance
+
+Each tier adds complexity. Rankings stabilize from Tier 2 onward.
+
+| Model | Tier 1 | Tier 2 | Tier 3 | T1→T3 Drop |
+|-------|--------|--------|--------|------------|
+| Claude Opus 4.6 | 95.6% | 92.0% | 91.0% | −4.6 pp |
+| GPT-5.4 | 96.9% | 91.0% | 88.1% | −8.8 pp |
+| Gemini 3.1 Pro | 97.3% | 89.5% | 83.9% | −13.4 pp |
+| DeepSeek-R1 | 89.5% | 86.9% | 81.1% | −8.4 pp |
+| MiniMax M2.5 | 84.5% | 73.4% | 40.2% | −44.3 pp |
 
 ## Key Findings
 
@@ -136,6 +158,32 @@ All top-3 models score 100% on pump calculations. Pumps have the simplest thermo
 - **Tier B (85–90%):** Gemini (89.5%), DeepSeek (86.9%) — competitive but with blind spots
 - **Tier C (<75%):** MiniMax (73.4%) — not ready for unsupervised thermo work
 
+### Tier 3 Findings
+
+#### 14. Four-layer difficulty hierarchy works
+
+Ideal gas cycles (~99%) → constant cp air (~97%) → variable cp / VCR (~60–88%) → CCGT (~12–76%). Each layer adds a distinct reasoning challenge: equation-of-state lookups, temperature-dependent properties, multi-fluid coupling.
+
+#### 15. Variable cp air is the new discriminator
+
+BRY-AV (variable cp air Brayton) separates models that memorize constant cp formulas from those that can apply NASA polynomial thermodynamics. Gemini drops from 97.0% (BRY-A, constant cp) to 63.3% (BRY-AV) and 37.6% (BRY-RV, regenerative + variable cp). Opus maintains 98.8%/99.5%.
+
+#### 16. CCGT is the future-proof ceiling
+
+Combined cycle gas turbine (9 state points, dual fluids, HRSG coupling) is the hardest cycle. Best score: Opus at 75.9%. No model exceeds 76% — this problem class has headroom for years.
+
+#### 17. R-134a IIR reference state restores fairness
+
+Using the IIR convention (h=200, s=1.0 at 0°C sat. liquid) for R-134a aligns with textbook practice. Without it, models that memorize ASHRAE-convention values produce systematic offsets that penalize correct reasoning.
+
+#### 18. BRY-RV is the hardest non-CCGT cycle
+
+Regenerative Brayton with variable cp air produces the widest score spread: 2.9% (MiniMax) to 99.5% (Opus). The regenerator effectiveness calculation with temperature-dependent properties requires careful state-point tracking that most models fail.
+
+#### 19. Cross-tier ranking stabilizes
+
+The top-3 ranking (Opus > GPT-5.4 > Gemini) holds across Tiers 2 and 3. Tier 1 rankings are misleading — property lookup accuracy does not predict multi-step thermodynamic reasoning. Three tiers are needed for reliable model assessment.
+
 ## Dataset
 
 ### Tier 1: Property Lookups (110 questions)
@@ -184,9 +232,29 @@ Multi-step thermodynamic analysis of individual components. Each question requir
 
 **Difficulty:** Easy (34), Medium (37), Hard (30)
 
+### Tier 3: Cycle Analysis (82 questions)
+
+Full thermodynamic cycle calculations — Rankine, Brayton, vapor-compression refrigeration, and combined cycle. Each question requires computing multiple state points, energy/entropy balances, and (at higher depths) exergy destruction across the entire cycle.
+
+**Cycle Types:** RNK-I (2), RNK-A (15), RNK-RH (10), BRY-I (3), BRY-A (9), BRY-AV (6), BRY-RG (6), BRY-RV (4), VCR-A (15), CCGT (12)
+
+- **RNK-I/A/RH:** Ideal, actual, and reheat Rankine cycles (Water)
+- **BRY-I/A/AV/RG/RV:** Ideal, actual, actual with variable cp, regenerative, and regenerative with variable cp Brayton cycles (Air)
+- **VCR-A:** Actual vapor-compression refrigeration (R-134a, IIR reference state)
+- **CCGT:** Combined cycle gas turbine (Air + Water, 9 state points)
+
+**Analysis Depths:**
+- **Depth A (29 q):** State points + energy balance (w_net, η_th, COP)
+- **Depth B (26 q):** + Entropy generation per component
+- **Depth C (27 q):** + Exergy destruction and second-law efficiency (η_II)
+
+**Fluids:** Water (27), Air (28), R-134a (15), Air+Water (12)
+
+**Difficulty:** Easy (15), Medium (26), Hard (41)
+
 ### Ground Truth
 
-All reference values computed with CoolProp 7.2.0. Tier 1 uses IAPWS-IF97 (water/steam). Tier 2 uses IAPWS-IF97 for water and Helmholtz EOS for air and R-134a. CoolProp validated against NIST reference data with maximum deviation of 0.037%.
+All reference values computed with CoolProp 7.2.0. Tier 1 uses IAPWS-IF97 (water/steam). Tier 2 uses IAPWS-IF97 for water and Helmholtz EOS for air and R-134a. Tier 3 uses IAPWS-IF97 for water, Helmholtz EOS for R-134a (IIR reference state), CoolProp real-gas for constant cp air cycles, and NASA 7-coefficient polynomials for variable cp air cycles (BRY-AV, BRY-RV). CoolProp validated against NIST reference data with maximum deviation of 0.037%.
 
 ## Quick Start
 
@@ -203,6 +271,9 @@ python scripts/run_evaluation.py --provider openai --model gpt-5.4 --output resu
 
 # Tier 2: Component analysis
 python scripts/run_evaluation_tier2.py --provider openai --output results_tier2/
+
+# Tier 3: Cycle analysis
+python scripts/run_evaluation_tier3.py --provider openai --output results_tier3/
 
 # Or with other providers
 python scripts/run_evaluation.py --provider anthropic --output results/
@@ -236,6 +307,16 @@ python scripts/run_batch_openai.py --collect
 python scripts/run_batch_openai_tier2.py --submit
 python scripts/run_batch_openai_tier2.py --status
 python scripts/run_batch_openai_tier2.py --collect
+
+# Anthropic batch (Tier 3)
+python scripts/run_batch_anthropic_tier3.py --submit
+python scripts/run_batch_anthropic_tier3.py --status
+python scripts/run_batch_anthropic_tier3.py --collect
+
+# OpenAI batch (Tier 3)
+python scripts/run_batch_openai_tier3.py --submit
+python scripts/run_batch_openai_tier3.py --status
+python scripts/run_batch_openai_tier3.py --collect
 ```
 
 ### LLM-based extraction (recommended)
@@ -252,6 +333,10 @@ python scripts/reextract.py --all                          # all providers
 # Tier 2
 python scripts/reextract_tier2.py --provider openai
 python scripts/reextract_tier2.py --all
+
+# Tier 3
+python scripts/reextract_tier3.py --provider openai
+python scripts/reextract_tier3.py --all
 ```
 
 ## Methodology
@@ -276,6 +361,15 @@ Same extraction pipeline as Tier 1, with weighted step-level scoring:
 3. **Anchor-derive pattern:** Inlet properties anchor the calculation. Subsequent steps derive from anchors via energy/entropy/exergy balances. Error in an anchor propagates downstream — this tests multi-step reasoning fidelity.
 4. **Dead state:** T₀ = 25°C (298.15 K), P₀ = 0.1 MPa (101.325 kPa) for all exergy calculations.
 
+### Tier 3 Pipeline
+
+Same extraction and scoring pipeline as Tier 2, extended to full cycle analysis:
+
+1. **Questions:** Each problem specifies a cycle type (Rankine, Brayton, VCR, CCGT), operating conditions (pressures, temperatures, efficiencies, mass flow), and an analysis depth (A/B/C). 20–40 output properties are requested per question, each with a weight.
+2. **Multi-state scoring:** Cycles involve 4–9 state points. Each state point's properties (h, s, T, P) are scored individually, then derived quantities (w_net, η_th, COP, S_gen, x_dest) carry higher weights.
+3. **Variable cp handling:** BRY-AV and BRY-RV cycles use NASA 7-coefficient polynomials for air, matching textbook variable-cp Brayton analysis. This tests whether models can go beyond constant cp = 1.005 kJ/(kg·K).
+4. **CCGT coupling:** Combined cycle questions require solving gas and steam sub-cycles linked by an HRSG energy balance (m_dot_steam computed from gas-side waste heat). Errors in the gas cycle propagate to the steam cycle.
+
 ### Why LLM extraction?
 
 Initial regex-based extraction had ~5-15% failure rate depending on model output format (LaTeX subscripts, prose answers, thinking block contamination). LLM extraction reduced this to ~0% while being model-agnostic. We test thermodynamic knowledge, not output formatting.
@@ -283,7 +377,7 @@ Initial regex-based extraction had ~5-15% failure rate depending on model output
 ### Scoring
 
 - **Property accuracy:** fraction of correctly extracted properties within tolerance
-- **Question score:** (Tier 1) fraction of correct properties; (Tier 2) weighted sum of correct steps
+- **Question score:** (Tier 1) fraction of correct properties; (Tier 2/3) weighted sum of correct steps
 - **Mean question score:** average across all questions (reported as "Score" in leaderboard)
 
 ## Supported Providers
@@ -300,8 +394,8 @@ Initial regex-based extraction had ~5-15% failure rate depending on model output
 ## Roadmap
 
 - [x] **Tier 1 — Property Lookups** (v0.1, 110 questions)
-- [x] **Tier 2 — Component Analysis** (v0.2, 101 questions) ← current
-- [ ] **Tier 3 — Cycle Analysis** (60-80 questions): Rankine, Brayton, VCR, cogeneration — full cycle calculations
+- [x] **Tier 2 — Component Analysis** (v0.2, 101 questions)
+- [x] **Tier 3 — Cycle Analysis** (v0.3, 82 questions) ← current
 - [ ] **Tier 4 — Industrial Scenarios** (20-30 questions): Under-specified, judgment-required problems
 - [ ] **Multi-run consistency analysis** (3 runs, mean ± std)
 - [ ] **Tool-augmented track** (CoolProp function calling)
@@ -331,9 +425,9 @@ Only two dedicated thermodynamics benchmarks exist in the LLM evaluation literat
 |-----------|------|--------|----------|
 | UTQA (Geißler et al., 2025) | 50 | MCQ | Physical chemistry thermo |
 | Loubet et al. (2025) | 22 | Calculation | Ideal gas only |
-| **ThermoQA (ours)** | **211** | **Open calculation** | **Engineering thermo, real fluids, component analysis** |
+| **ThermoQA (ours)** | **293** | **Open calculation** | **Engineering thermo, real fluids, component + cycle analysis** |
 
-ThermoQA is the first benchmark covering applied engineering thermodynamics: steam tables, real fluid properties, supercritical states, multi-step component analysis with exergy destruction, and three working fluids.
+ThermoQA is the first benchmark covering applied engineering thermodynamics: steam tables, real fluid properties, supercritical states, multi-step component analysis, full cycle calculations (Rankine, Brayton, VCR, combined cycle), exergy destruction, and four working fluids.
 
 ## License
 
