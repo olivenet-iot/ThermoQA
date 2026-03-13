@@ -1,11 +1,11 @@
 # ThermoQA — Project Handoff Document
 ## A Benchmark for Evaluating Thermodynamic Reasoning in Large Language Models
-### Initiated 6 March 2026 · Updated 10 March 2026 (Session 3)
+### Initiated 6 March 2026 · Updated 13 March 2026 (Session 4)
 
 ---
 
 ## One-Line Summary
-ThermoQA is a comprehensive benchmark to evaluate LLM performance on engineering thermodynamics — from steam table lookups to multi-step exergy analysis and full cycle calculations. **v0.2 is published** with 211 questions (Tier 1 + Tier 2), 5 model evaluations on HuggingFace and GitHub.
+ThermoQA is a comprehensive benchmark to evaluate LLM performance on engineering thermodynamics — from steam table lookups to multi-step exergy analysis and full cycle calculations. **v0.3 is published** with 293 questions (Tier 1 + Tier 2 + Tier 3), 3 tiers, 10 cycle types, 5 model evaluations on HuggingFace and GitHub.
 
 ---
 
@@ -19,18 +19,18 @@ This document is a **continuation prompt** for Claude. It contains all context n
 **Relationship to EntropyHunter:** ThermoQA is the natural evolution. EntropyHunter is a model — ThermoQA is the standard by which all models (including EntropyHunter) will be measured.
 
 **Repository:** `github.com/olivenet-iot/ThermoQA`
-**HuggingFace:** `huggingface.co/datasets/olivenet/thermoqa` (two configs: tier1_properties, tier2_components)
+**HuggingFace:** `huggingface.co/datasets/olivenet/thermoqa` (three configs: tier1_properties, tier2_components, tier3_cycles)
 **HuggingFace (legacy):** `huggingface.co/datasets/olivenet/thermoqa-v0.1` (Tier 1 only, kept for backward compat)
 **Development environment:** Claude Code on Ubuntu, `~/ThermoQA/`
 **EntropyHunter taxonomy reference:** `~/entropy-hunter/taxonomy/`
 
 ---
 
-## Current Status: Phase 2 — COMPLETE ✅
+## Current Status: Phase 3 — COMPLETE ✅
 
-### v0.2 Published (10 March 2026)
+### v0.3 Published (13 March 2026)
 
-**Both tiers complete. 211 questions total. 5 models evaluated. LLM extraction applied. HuggingFace published.**
+**Three tiers complete. 293 questions total (110 + 101 + 82). 10 cycle types. 4-layer difficulty. 5 models evaluated. LLM extraction applied. HuggingFace published.**
 
 ### Final Leaderboard — Tier 1: Property Lookups (110 questions)
 
@@ -81,6 +81,47 @@ This document is a **continuation prompt** for Claude. It contains all context n
 | DeepSeek | 85.1% | 86.9% | +1.8pp | 8/101 questions |
 | Google | 88.9% | 89.5% | +0.6pp | 1/101 questions |
 | OpenAI | 91.0% | 91.0% | +0.0pp | 0/101 questions |
+
+### Final Leaderboard — Tier 3: Cycle Analysis (82 questions, 10 cycles, LLM re-extracted)
+
+| Rank | Model | Provider | Score | Water | Air | R-134a | Air+Water | Depth A | Depth B | Depth C | Tok/Q |
+|------|-------|----------|-------|-------|-----|--------|-----------|---------|---------|---------|-------|
+| 🥇 | Claude Opus 4.6 | Anthropic | **91.1%** | 97.9% | 99.5% | 75.1% | 75.9% | 91.4% | 94.8% | 87.0% | ~53K |
+| 🥈 | GPT-5.4 | OpenAI | **88.1%** | 91.5% | 97.4% | 79.2% | 70.3% | 89.9% | 89.9% | 84.6% | ~15K |
+| 🥉 | Gemini 3.1 Pro | Google | **83.9%** | 93.9% | 81.3% | 88.6% | 61.7% | 81.3% | 87.6% | 83.1% | ~2.2K |
+| 4 | DeepSeek-R1 | DeepSeek | **81.1%** | 89.0% | 90.4% | 63.7% | 63.1% | 76.4% | 87.8% | 79.6% | ~18K |
+| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 11.9% | 38.7% | 47.2% | 35.1% | ~15K |
+
+### Tier 3 V2 — By Cycle Type
+
+| Model | RNK (27q) | BRY (28q) | VCR (15q) | CCGT (12q) |
+|-------|-----------|-----------|-----------|------------|
+| Opus 4.6 | 97.9% | 99.5% | 75.1% | 75.9% |
+| GPT-5.4 | 91.5% | 97.4% | 79.2% | 70.3% |
+| Gemini 3.1 | 93.9% | 81.3% | 88.6% | 61.7% |
+| DeepSeek-R1 | 89.0% | 90.4% | 63.7% | 63.1% |
+| MiniMax M2.5 | 42.9% | 63.2% | 15.0% | 11.9% |
+
+### Cross-Tier Comparison (T1 → T2 → T3)
+
+| Model | Tier 1 | Tier 2 | Tier 3 | T1→T3 Drop | Interpretation |
+|-------|--------|--------|--------|------------|----------------|
+| Claude Opus 4.6 | 95.6% | 92.0% | 91.1% | -4.5pp | Best chaining — smallest drop across all 3 tiers |
+| GPT-5.4 | 96.9% | 91.0% | 88.1% | -8.8pp | |
+| Gemini 3.1 Pro | 97.3% | 89.5% | 83.9% | -13.4pp | Biggest frontier drop — struggles with multi-step |
+| DeepSeek-R1 | 89.5% | 86.9% | 81.1% | -8.4pp | |
+| MiniMax M2.5 | 84.5% | 73.4% | 40.2% | -44.3pp | Catastrophic collapse on cycle analysis |
+
+### Session 4 Commits (11-13 March 2026)
+
+| Commit | Description |
+|--------|-------------|
+| `8342a77` | docs: update README with Tier 3 V2 results — 293 questions, 10 cycles, 5 models |
+| `86ecbca` | fix: replace CoolProp real-gas air with NASA polynomial ideal gas for BRY-AV/BRY-RV ground truth |
+| `affdbbf` | feat: harden Tier 3 to V2 — 6 changes, 10 cycles, 82 questions |
+| `cedbf88` | fix: align Google Batch API with current docs — MIME type, snake_case, state handling |
+| `d79f6ae` | fix: remove ref-state-dependent VCR-A steps and fix Unicode subscript extraction |
+| `2462a50` | feat: add Tier 3 cycle analysis — 95 questions across 7 cycles × 3 depths |
 
 ### Session 3 Commits (8-10 March 2026)
 
@@ -163,6 +204,114 @@ Frontier (89–92%): Opus, GPT, Gemini. Mid-tier (87%): DeepSeek. Below (73%): M
 
 ### 8. Output format is a hidden variable
 LLM re-extraction impact: MiniMax +11.9pp, Opus +7.0pp, DeepSeek +1.8pp, Gemini +0.6pp, GPT +0.0pp. GPT-5.4 writes perfectly regex-friendly structured answers. Opus writes LaTeX that breaks regex. The extraction method is as important as model capability for fair benchmarking.
+
+---
+
+## Key Findings (Session 4 — Tier 3 V1→V2)
+
+### 1. V1 was too easy (93-96% for frontier)
+30 ideal cycle free points + constant cp Air + R-134a absolute h/s removed from scoring. V2 fixes all three.
+
+### 2. CoolProp "Air" ≠ textbook air tables
+CoolProp models Air as real gas mixture (N₂/O₂/Ar). Textbook "variable specific heats" uses ideal gas with NASA polynomial cp(T). ~126 kJ/kg offset on absolute h, 5-24% on derived quantities. Fixed by implementing NASA 7-coefficient polynomials matching Çengel Table A-17.
+
+### 3. abs_tolerance=0.5 was broken for dimensionless quantities
+eta_th=0.19 vs 0.24 passed because |0.05| < 0.5. Fixed: 0.02 for eta_th, eta_II, COP_R, COP_Carnot.
+
+### 4. Variable cp is the new discriminator
+Gemini scores 53% on variable cp Brayton (uses constant-cp isentropic formula despite "variable specific heats" instruction). Opus 99%, GPT 93%. Distinguishes models that know Pr-method from those that don't.
+
+### 5. CCGT combined cycle = future-proof
+Best model 75%. 9 states, 2 fluids, HRSG coupling. Should remain challenging for years.
+
+### 6. R-134a IIR reference state specified in question text
+Models must use IIR (h=200, s=1.0 at 0°C sat liquid). Restores absolute h/s scoring fairly.
+
+### 7. OpenAI max_completion_tokens=16000 was too low
+Complex V2 questions (32-60 steps) consumed all tokens in reasoning, empty response. Fixed to 65536.
+
+### 8. Consistency scoring works
+energy_balance_error step checks model's own internal consistency. Only 25% of models pass (their own numbers don't close energy balance).
+
+### 9. Token efficiency: Gemini 23× cheaper than Opus
+Gemini: ~2.2K tok/Q → 83.9%. Opus: ~53K tok/Q → 91.1%. Diminishing returns on thinking tokens.
+
+### 10. MiniMax below benchmark threshold
+40.2% overall, VCR Depth C mostly 0%, CCGT mostly 0%. Not competitive on engineering thermodynamics.
+
+---
+
+## Decisions Resolved (Session 4)
+
+| Question | Decision | Reasoning |
+|----------|----------|-----------|
+| V1 too easy? | Yes — 6 changes to harden | 93-96% ceiling, no room for future models |
+| Ideal cycles | 30→5 | Free 100%, no discrimination value |
+| Variable cp backend | NASA polynomial, not CoolProp "Air" | CoolProp = real gas, textbook = ideal gas with cp(T). 126 kJ/kg discrepancy |
+| R-134a scoring | Restore absolute h/s, specify IIR in question | Convention mismatch fixed by explicit instruction |
+| Weight scheme | 6-tier (1,2,3,4,5,6) | Emphasize engineering outcomes over intermediate values |
+| Combined cycle | CCGT with variable cp Air + Water | Crown jewel, 9 states, 2 fluids, future-proof |
+| Consistency scoring | Energy balance closure as scored step | Tests self-consistency, not just accuracy |
+| abs_tolerance for η | 0.5→0.02 | 0.5 let 22% errors pass on dimensionless quantities |
+| OpenAI max_tokens | 16000→65536 | Complex questions exhausted reasoning budget |
+| CCGT ground truth | CoolProp "Air" (not NASA) | CCGT gas side still uses real gas — TODO for future fix |
+
+---
+
+## Lessons Learned (Session 4)
+
+| Lesson | Detail |
+|--------|--------|
+| **Smoke test before full run** | 10-question test caught max_tokens bug, ground truth mismatch, tolerance issues before spending on 82×5 runs |
+| **Ground truth source matters** | CoolProp "Air" vs NASA polynomial = 126 kJ/kg offset. Same function name, different physics model. Always verify against canonical textbook values |
+| **Tolerance design is non-trivial** | abs_tolerance=0.5 seemed safe but broke dimensionless scoring. Different quantity types need different tolerances |
+| **V1→V2 iteration is normal** | First version always reveals design flaws. Build, test, analyze, fix. Don't try to get it perfect first time |
+| **Patch > Regenerate** | When ground truth changes but parameters don't, patch in-place. Saves all existing model responses |
+| **4-layer difficulty = sustainable benchmark** | Layer 1 for sanity, Layer 4 for ceiling. Benchmark stays relevant as models improve |
+
+---
+
+## What Was Built (Session 4 — Tier 3 Pipeline)
+
+### Tier 3 Generation Pipeline
+- `generation/cycle_state_generator.py` — full cycle state point generator for 10 cycle types (RNK-I, RNK-A, RNK-RH, BRY-I, BRY-A, BRY-RG, BRY-AV, BRY-RV, VCR-A, CCGT). CoolProp for Water/R-134a, NASA polynomial for variable-cp Air. 4-layer difficulty (easy/medium/hard/expert).
+- `generation/templates/tier3_cycles.py` — parametric cycle templates with step definitions and weights (6-tier: 1,2,3,4,5,6).
+- `taxonomy/tier3_cycles.yaml` — 10 cycle types, parameter ranges, fluid assignments.
+- `scripts/generate_tier3.py` — CLI entry point for Tier 3 question generation.
+
+### Tier 3 Evaluation Scripts
+- `scripts/run_evaluation_tier3.py` — sequential runner for Tier 3.
+- `scripts/run_batch_anthropic_tier3.py` — Anthropic batch API.
+- `scripts/run_batch_openai_tier3.py` — OpenAI batch API (max_completion_tokens=65536).
+- `scripts/run_batch_google_tier3.py` — Google sequential/batch.
+- `scripts/reextract_tier3.py` — LLM re-extraction for Tier 3.
+- `scripts/rescore_tier3.py` — re-score existing responses with updated ground truth/tolerances.
+
+### V1→V2 Hardening Scripts
+- `scripts/patch_variable_cp_ground_truth.py` — patch BRY-AV/BRY-RV ground truth from CoolProp real-gas Air to NASA polynomial ideal gas.
+- `scripts/verify_tier3_prepublish.py` — pre-publication validation of Tier 3 dataset.
+
+### Evaluation Module Extensions
+- `evaluation/scorer.py` — `score_tier3_question()` with 6-tier weighted scoring, abs_tolerance=0.02 for dimensionless quantities (eta_th, eta_II, COP_R, COP_Carnot).
+- `evaluation/extractor.py` — Tier 3 property pattern extensions, Unicode subscript extraction fix.
+- `evaluation/llm_extractor.py` — `extract_tier3()` with Tier 3 step ID hints.
+
+### NASA Polynomial Implementation
+- Variable-cp air properties via NASA 7-coefficient polynomials matching Çengel Table A-17. Replaces CoolProp "Air" (real gas mixture) for BRY-AV and BRY-RV cycle types where textbook ideal-gas air tables are the expected reference.
+
+### Design Docs
+- `TIER3_DESIGN.md` — V1 design document.
+- `TIER3_DESIGN_V2.md` — V2 hardening design: 6 changes, rationale, implementation plan.
+
+---
+
+## Known Issues / TODO
+
+- CCGT gas side still uses CoolProp "Air" (real gas), not NASA polynomial. Should be patched for consistency with BRY-AV/BRY-RV. Impact: CCGT scores may shift when fixed.
+- Google batch API still unreliable for preview models. Sequential preferred.
+- MiniMax re-extraction has ~24 JSON parse failures (garbage model responses).
+- Multi-run consistency analysis not yet done (single run only).
+- HuggingFace dataset viewer may show "UnexpectedError" for nested JSON.
 
 ---
 
@@ -364,9 +513,9 @@ Leaderboard (run_evaluation_tier2.py --report)
 
 | Provider | Model | API String | Thinking Config | Batch Script |
 |----------|-------|-----------|----------------|--------------|
-| Google | Gemini 3.1 Pro | `gemini-3.1-pro-preview` | `thinking_level="HIGH"` | `run_batch_google_tier2.py` (unreliable) |
-| OpenAI | GPT-5.4 | `gpt-5.4` | `reasoning_effort="high"` | `run_batch_openai.py` / `_tier2.py` |
-| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | `adaptive`, `max_tokens=64000` | `run_batch_anthropic.py` / `_tier2.py` |
+| Google | Gemini 3.1 Pro | `gemini-3.1-pro-preview` | `thinking_level="HIGH"` | `run_batch_google_tier2.py` / `_tier3.py` (unreliable) |
+| OpenAI | GPT-5.4 | `gpt-5.4` | `reasoning_effort="high"`, `max_completion_tokens=65536` | `run_batch_openai.py` / `_tier2.py` / `_tier3.py` |
+| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | `adaptive`, `max_tokens=64000` | `run_batch_anthropic.py` / `_tier2.py` / `_tier3.py` |
 | DeepSeek | DeepSeek-R1 | `deepseek-reasoner` | Native (always reasoning) | Sequential only |
 | MiniMax | MiniMax M2.5 | `MiniMax-M2.5` | Inline `<think>` tags | Sequential only |
 | Ollama | (any local) | configurable | varies | Sequential only |
@@ -391,6 +540,16 @@ Leaderboard (run_evaluation_tier2.py --report)
 | DeepSeek-R1 | 352 | 14,053 | 86.9% | 161.7 |
 | MiniMax M2.5 | 373 | 11,659 | 73.4% | 158.8 |
 
+### Token Usage — Tier 3
+
+| Model | Mean Input | Mean Output | Score | Tokens per % |
+|-------|-----------|-------------|-------|-------------|
+| Gemini 3.1 Pro | 734 | 2,242 | 83.9% | 26.7 |
+| GPT-5.4 | 680 | 14,896 | 88.1% | 169.1 |
+| Claude Opus 4.6 | 838 | 53,439 | 91.1% | 586.6 |
+| DeepSeek-R1 | 649 | 18,019 | 81.1% | 222.2 |
+| MiniMax M2.5 | 682 | 15,203 | 40.2% | 378.2 |
+
 ---
 
 ## Project Structure (Updated)
@@ -399,8 +558,10 @@ Leaderboard (run_evaluation_tier2.py --report)
 ThermoQA/
 ├── CLAUDE.md                              # Claude Code instructions
 ├── THERMOQA_HANDOFF.md                    # This document
-├── TIER2_DESIGN.md                        # NEW: Tier 2 design document
-├── README.md                              # Public-facing (both leaderboards)
+├── TIER2_DESIGN.md                        # Tier 2 design document
+├── TIER3_DESIGN.md                        # NEW: Tier 3 V1 design document
+├── TIER3_DESIGN_V2.md                     # NEW: Tier 3 V2 hardening design
+├── README.md                              # Public-facing (all 3 leaderboards)
 ├── .env                                   # API keys (gitignored)
 ├── env.example                            # Template (includes HF_TOKEN)
 ├── .gitignore
@@ -409,18 +570,21 @@ ThermoQA/
 │
 ├── taxonomy/
 │   ├── tier1_properties.yaml              # 8 categories, param ranges, scoring config
-│   └── tier2_components.yaml              # NEW: 7 components, depths, step weights
+│   ├── tier2_components.yaml              # 7 components, depths, step weights
+│   └── tier3_cycles.yaml                  # NEW: 10 cycle types, param ranges, fluid assignments
 │
 ├── generation/
 │   ├── __init__.py
-│   ├── state_generator.py                 # NEW: Tier 2 anchor-derive physics (~430 lines)
+│   ├── cycle_state_generator.py            # NEW: Tier 3 cycle state point generator
+│   ├── state_generator.py                 # Tier 2 anchor-derive physics (~430 lines)
 │   ├── param_sampler.py                   # Extended: +12 Tier 2 samplers (+350 lines)
 │   ├── ground_truth.py                    # Extended: Tier 2 dispatch
 │   ├── question_generator.py              # Extended: generate_tier2_questions() (+200 lines)
 │   └── templates/
 │       ├── __init__.py
 │       ├── tier1_properties.py            # 29 parametric templates
-│       └── tier2_components.py            # NEW: 36 ComponentTemplates (~550 lines)
+│       ├── tier2_components.py            # 36 ComponentTemplates (~550 lines)
+│       └── tier3_cycles.py                # NEW: Tier 3 cycle templates with step weights
 │
 ├── evaluation/
 │   ├── __init__.py
@@ -434,8 +598,11 @@ ThermoQA/
 │   ├── tier1_properties/
 │   │   ├── questions.jsonl                # 110 questions
 │   │   └── metadata.json
-│   └── tier2_components/                  # NEW
-│       ├── questions.jsonl                # 101 questions
+│   ├── tier2_components/
+│   │   ├── questions.jsonl                # 101 questions
+│   │   └── metadata.json
+│   └── tier3_cycles/                      # NEW
+│       ├── questions.jsonl                # 82 questions (10 cycle types)
 │       └── metadata.json
 │
 ├── results/                               # Tier 1 per-provider results (gitignored)
@@ -445,27 +612,45 @@ ThermoQA/
 │   ├── deepseek/                          # 89.5%
 │   └── minimax/                           # 84.5%
 │
-├── results_tier2/                         # NEW: Tier 2 per-provider results (gitignored)
+├── results_tier2/                         # Tier 2 per-provider results (gitignored)
 │   ├── google/                            # 89.5%
 │   ├── openai/                            # 91.0%
 │   ├── anthropic/                         # 92.0%
 │   ├── deepseek/                          # 86.9%
 │   └── minimax/                           # 73.4%
 │
+├── results_tier3/                         # NEW: Tier 3 V2 per-provider results (gitignored)
+│   ├── google/                            # 83.9%
+│   ├── openai/                            # 88.1%
+│   ├── anthropic/                         # 91.1%
+│   ├── deepseek/                          # 81.1%
+│   └── minimax/                           # 40.2%
+│
+├── results_tier3_v1/                      # Tier 3 V1 results (backup)
+│
 ├── scripts/
 │   ├── validate_coolprop.py
 │   ├── generate_tier1.py
-│   ├── generate_tier2.py                  # NEW
+│   ├── generate_tier2.py
+│   ├── generate_tier3.py                  # NEW: Tier 3 cycle question generation
 │   ├── run_evaluation.py                  # Tier 1 sequential evaluation CLI
-│   ├── run_evaluation_tier2.py            # NEW: Tier 2 sequential + report
+│   ├── run_evaluation_tier2.py            # Tier 2 sequential + report
+│   ├── run_evaluation_tier3.py            # NEW: Tier 3 sequential + report
 │   ├── run_batch_anthropic.py             # Tier 1 Anthropic batch
-│   ├── run_batch_anthropic_tier2.py       # NEW: Tier 2 Anthropic batch
+│   ├── run_batch_anthropic_tier2.py       # Tier 2 Anthropic batch
+│   ├── run_batch_anthropic_tier3.py       # NEW: Tier 3 Anthropic batch
 │   ├── run_batch_openai.py               # Tier 1 OpenAI batch
-│   ├── run_batch_openai_tier2.py          # NEW: Tier 2 OpenAI batch
-│   ├── run_batch_google_tier2.py          # NEW: Tier 2 Google batch
+│   ├── run_batch_openai_tier2.py          # Tier 2 OpenAI batch
+│   ├── run_batch_openai_tier3.py          # NEW: Tier 3 OpenAI batch
+│   ├── run_batch_google_tier2.py          # Tier 2 Google batch
+│   ├── run_batch_google_tier3.py          # NEW: Tier 3 Google batch/sequential
 │   ├── reextract.py                       # Tier 1 LLM re-extraction
-│   ├── reextract_tier2.py                 # NEW: Tier 2 LLM re-extraction
-│   ├── publish_huggingface.py             # Updated: both tiers, multi-config
+│   ├── reextract_tier2.py                 # Tier 2 LLM re-extraction
+│   ├── reextract_tier3.py                 # NEW: Tier 3 LLM re-extraction
+│   ├── rescore_tier3.py                   # NEW: re-score with updated ground truth
+│   ├── patch_variable_cp_ground_truth.py  # NEW: NASA polynomial patch for Air
+│   ├── verify_tier3_prepublish.py         # NEW: pre-publication validation
+│   ├── publish_huggingface.py             # Updated: three tiers, multi-config
 │   └── test_scorer.py
 │
 └── paper/                                 # arxiv paper drafts (Phase 4)
@@ -495,22 +680,26 @@ ThermoQA/
 - ✅ Published on HuggingFace: `olivenet/thermoqa` (two configs)
 - ✅ README updated with both leaderboards
 
-### Phase 2.5 — Improvements (optional, before Tier 3)
-- ⏳ EntropyHunter v0.4 evaluation via Ollama (Tier 1 + Tier 2)
+### Phase 3 — Tier 3: Cycle Analysis ✅ COMPLETE
+- ✅ 10 cycle types: RNK-I, RNK-A, RNK-RH, BRY-I, BRY-A, BRY-RG, BRY-AV, BRY-RV, VCR-A, CCGT
+- ✅ 82 questions with 4-layer difficulty (easy/medium/hard/expert)
+- ✅ 3 depths: A (energy), B (entropy), C (exergy)
+- ✅ 4 fluid contexts: Water (27), Air (28), R-134a (15), Air+Water (12)
+- ✅ NASA polynomial implementation for variable-cp air (Çengel Table A-17)
+- ✅ V1→V2 hardening: 6 changes (ideal reduction, variable cp, IIR ref state, abs_tolerance, consistency scoring, weight scheme)
+- ✅ 6-tier weighted scoring with abs_tolerance=0.02 for dimensionless quantities
+- ✅ 5 models evaluated with LLM re-extraction
+- ✅ Published on HuggingFace: `olivenet/thermoqa` (three configs)
+- ✅ README updated with all 3 leaderboards
+
+### Phase 3.5 — Improvements (optional, before publication)
+- ⏳ CCGT gas side: patch from CoolProp "Air" to NASA polynomial for consistency
+- ⏳ EntropyHunter v0.4 evaluation via Ollama (Tier 1 + Tier 2 + Tier 3)
 - ⏳ Multi-run consistency analysis (3 runs, mean ± std)
 - ⏳ "Take max of regex vs LLM" extraction logic
-- ⏳ Fix Air dead state latent bug in `get_dead_state()`
-- ⏳ ExergyLab knowledge base review for Tier 3 parameter ranges (`~/exergy-lab/knowledge/`)
-
-### Phase 3 — Tier 3: Cycle Analysis (next major)
-- Rankine, Brayton, VCR, cogeneration — full cycles (6+ state points)
-- 8-15 calculation steps per problem
-- Phase-change HX (condenser/evaporator) included here
-- Throttling valve returns here (within VCR cycle context)
-- ExergyLab `~/exergy-lab/knowledge/` for parameter realism and formula cross-check
 
 ### Phase 4 — Publication
-- arxiv paper: Tier 1 + Tier 2 + Tier 3 combined
+- arxiv paper: Tier 1 + Tier 2 + Tier 3 combined (293 questions)
 - Potential venues: Energy and AI (Elsevier), MDPI Entropy, NeurIPS Benchmark Workshop
 - Affiliation: Independent Researcher / Olivenet, KKTC
 
@@ -541,11 +730,13 @@ CoolProp 7.2.0 uses IAPWS-IF97 (same as NIST Webbook). Validated:
 - Cross-verified: forward + inverse computation agreement within 0.01%
 
 ### Scoring Tolerance
-- Numerical: ±2% relative OR ±0.5 absolute (whichever more lenient) — same for Tier 1 and Tier 2
+- Numerical: ±2% relative OR ±0.5 absolute (whichever more lenient) — Tier 1 and Tier 2
 - Quality (x): abs_tolerance = 0.03 (x ∈ [0,1]) — Tier 1 only
 - Phase: exact match against acceptable_aliases (case-insensitive) — Tier 1 only
 - Tier 2 step-level scoring: score = Σ(weight_i × passed_i) / Σ(weight_i)
-- Dead state (Tier 2): always T₀ = 25°C (298.15 K), P₀ = 0.1 MPa
+- Tier 3 step-level scoring: same weighted formula, 6-tier weights (1,2,3,4,5,6)
+- Tier 3 dimensionless quantities: abs_tolerance = 0.02 for eta_th, eta_II, COP_R, COP_Carnot (0.5 was too lenient — let 22% errors pass)
+- Dead state (Tier 2/3): always T₀ = 25°C (298.15 K), P₀ = 0.1 MPa
 
 ### API Key Environment Variables
 ```
