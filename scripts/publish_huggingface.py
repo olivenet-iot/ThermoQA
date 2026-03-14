@@ -250,7 +250,7 @@ def main():
         repo_id=args.repo,
         repo_type="dataset",
         operations=operations,
-        commit_message=f"Add Tier 3 V2: 82 cycle analysis questions, 10 cycle types, 5 models",
+        commit_message=f"Update dataset card: remove Tier 4 placeholder, add future work",
     )
 
     print(f"\nDone! Commit: {commit_info.commit_url}")

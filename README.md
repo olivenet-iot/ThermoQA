@@ -396,10 +396,13 @@ Initial regex-based extraction had ~5-15% failure rate depending on model output
 - [x] **Tier 1 — Property Lookups** (v0.1, 110 questions)
 - [x] **Tier 2 — Component Analysis** (v0.2, 101 questions)
 - [x] **Tier 3 — Cycle Analysis** (v0.3, 82 questions) ← current
-- [ ] **Tier 4 — Industrial Scenarios** (20-30 questions): Under-specified, judgment-required problems
 - [ ] **Multi-run consistency analysis** (3 runs, mean ± std)
 - [ ] **Tool-augmented track** (CoolProp function calling)
 - [ ] **EntropyHunter evaluation** (fine-tuned 8B model)
+
+## Future Work
+
+Future extensions may include open-ended industrial design problems requiring engineering judgment, where single correct answers don't exist.
 
 ## Related Projects
 
