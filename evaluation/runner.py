@@ -9,6 +9,8 @@ import json
 import os
 import sys
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -414,6 +416,8 @@ def run_evaluation(
     output_dir: str,
     n_runs: int = 1,
     delay_s: float = 1.0,
+    run_num: int | None = None,
+    parallel: int = 1,
 ) -> str:
     """
     Run a provider against all questions, score responses, write results.
@@ -422,6 +426,8 @@ def run_evaluation(
     """
     questions = load_questions(questions_path)
     provider_dir = os.path.join(output_dir, provider.name)
+    if run_num is not None:
+        provider_dir = os.path.join(provider_dir, f"run{run_num}")
     os.makedirs(provider_dir, exist_ok=True)
     responses_path = os.path.join(provider_dir, "responses.jsonl")
 
@@ -443,56 +449,31 @@ def run_evaluation(
         # Approximate running score from existing responses
         running_score = 0.0
 
-        with open(responses_path, "a") as f_out:
-            for i, q in enumerate(pending, 1):
+        if parallel > 1:
+            # ---- Parallel execution path ----
+            file_lock = threading.Lock()
+            progress_count = [0]
+
+            def process_question(q):
                 qid = q["id"]
                 expected_keys = list(q["expected"].keys())
-
-                # Show progress before the (potentially slow) API call
-                sys.stdout.write(
-                    f"\r  [{len(completed) + i}/{len(questions)}] {qid} ..."
-                )
-                sys.stdout.flush()
-
                 try:
                     resp = provider.generate(SYSTEM_PROMPT, q["question"])
                 except Exception as exc:
                     print(f"\n  ERROR on {qid}: {exc}")
-                    # Write a failed entry so we can skip on resume if desired
-                    entry = {
-                        "id": qid,
-                        "question": q["question"],
-                        "raw_response": "",
-                        "response_text": "",
-                        "thinking_text": None,
-                        "extracted": {},
-                        "scores": [],
-                        "question_score": 0.0,
-                        "model": provider.model,
-                        "latency_s": 0.0,
-                        "input_tokens": None,
-                        "output_tokens": None,
+                    return {
+                        "id": qid, "question": q["question"],
+                        "raw_response": "", "response_text": "",
+                        "thinking_text": None, "extracted": {},
+                        "scores": [], "question_score": 0.0,
+                        "model": provider.model, "latency_s": 0.0,
+                        "input_tokens": None, "output_tokens": None,
                         "error": str(exc),
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
-                    f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
-                    f_out.flush()
-                    n_scored += 1
-                    _print_progress(len(completed) + i, len(questions), qid, running_score)
-                    if delay_s > 0:
-                        time.sleep(delay_s)
-                    continue
-
-                # Fallback: Opus adaptive may put everything in thinking block
                 extraction_text = resp.text if resp.text.strip() else (resp.thinking_text or "")
                 extracted = extract_properties(extraction_text, expected_keys)
                 qr = score_question(q, extracted)
-
-                n_scored += 1
-                total_score += qr.score
-                running_score = total_score / (n_scored - len(completed)) if (n_scored - len(completed)) > 0 else 0.0
-
-                # Build per-property score list
                 scores = []
                 for pr in qr.property_results:
                     scores.append({
@@ -503,10 +484,8 @@ def run_evaluation(
                         "error_pct": pr.error_pct,
                         "error_type": pr.error_type,
                     })
-
-                entry = {
-                    "id": qid,
-                    "question": q["question"],
+                return {
+                    "id": qid, "question": q["question"],
                     "raw_response": resp.raw_text,
                     "response_text": resp.text,
                     "thinking_text": resp.thinking_text,
@@ -519,15 +498,117 @@ def run_evaluation(
                     "output_tokens": resp.output_tokens,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
-                f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
-                f_out.flush()
 
-                _print_progress(len(completed) + i, len(questions), qid, running_score)
+            try:
+                with open(responses_path, "a") as f_out:
+                    with ThreadPoolExecutor(max_workers=parallel) as executor:
+                        futures = {executor.submit(process_question, q): q for q in pending}
+                        for future in as_completed(futures):
+                            try:
+                                entry = future.result()
+                            except Exception as e:
+                                q = futures[future]
+                                print(f"\nFatal error on {q['id']}: {e}")
+                                continue
+                            qid = entry["id"]
+                            with file_lock:
+                                f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                                f_out.flush()
+                                progress_count[0] += 1
+                                sys.stdout.write(
+                                    f"\r  [{len(completed) + progress_count[0]}/{len(questions)}] completed {qid}"
+                                )
+                                sys.stdout.flush()
+                print()
+            except KeyboardInterrupt:
+                print("\n\nInterrupted! Partial results saved.")
+        else:
+            # ---- Sequential execution path (original) ----
+            with open(responses_path, "a") as f_out:
+                for i, q in enumerate(pending, 1):
+                    qid = q["id"]
+                    expected_keys = list(q["expected"].keys())
 
-                if delay_s > 0 and i < len(pending):
-                    time.sleep(delay_s)
+                    # Show progress before the (potentially slow) API call
+                    sys.stdout.write(
+                        f"\r  [{len(completed) + i}/{len(questions)}] {qid} ..."
+                    )
+                    sys.stdout.flush()
 
-        print()  # newline after progress bar
+                    try:
+                        resp = provider.generate(SYSTEM_PROMPT, q["question"])
+                    except Exception as exc:
+                        print(f"\n  ERROR on {qid}: {exc}")
+                        # Write a failed entry so we can skip on resume if desired
+                        entry = {
+                            "id": qid,
+                            "question": q["question"],
+                            "raw_response": "",
+                            "response_text": "",
+                            "thinking_text": None,
+                            "extracted": {},
+                            "scores": [],
+                            "question_score": 0.0,
+                            "model": provider.model,
+                            "latency_s": 0.0,
+                            "input_tokens": None,
+                            "output_tokens": None,
+                            "error": str(exc),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        }
+                        f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                        f_out.flush()
+                        n_scored += 1
+                        _print_progress(len(completed) + i, len(questions), qid, running_score)
+                        if delay_s > 0:
+                            time.sleep(delay_s)
+                        continue
+
+                    # Fallback: Opus adaptive may put everything in thinking block
+                    extraction_text = resp.text if resp.text.strip() else (resp.thinking_text or "")
+                    extracted = extract_properties(extraction_text, expected_keys)
+                    qr = score_question(q, extracted)
+
+                    n_scored += 1
+                    total_score += qr.score
+                    running_score = total_score / (n_scored - len(completed)) if (n_scored - len(completed)) > 0 else 0.0
+
+                    # Build per-property score list
+                    scores = []
+                    for pr in qr.property_results:
+                        scores.append({
+                            "key": pr.prop_key,
+                            "expected": pr.expected,
+                            "extracted": pr.extracted,
+                            "passed": pr.passed,
+                            "error_pct": pr.error_pct,
+                            "error_type": pr.error_type,
+                        })
+
+                    entry = {
+                        "id": qid,
+                        "question": q["question"],
+                        "raw_response": resp.raw_text,
+                        "response_text": resp.text,
+                        "thinking_text": resp.thinking_text,
+                        "extracted": {k: v for k, v in extracted.items()},
+                        "scores": scores,
+                        "question_score": qr.score,
+                        "model": resp.model,
+                        "latency_s": resp.latency_s,
+                        "input_tokens": resp.input_tokens,
+                        "output_tokens": resp.output_tokens,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                    f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                    f_out.flush()
+
+                    _print_progress(len(completed) + i, len(questions), qid, running_score)
+
+                    if delay_s > 0 and i < len(pending):
+                        time.sleep(delay_s)
+
+            print()  # newline after progress bar
 
     # Generate summary
     summary = _build_summary(questions, responses_path, provider)

@@ -49,8 +49,16 @@ def main():
         help="Delay between API calls in seconds (default: 1.0)",
     )
     parser.add_argument(
+        "--run", type=int, default=None,
+        help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
+    )
+    parser.add_argument(
         "--timeout", type=float, default=300.0,
         help="API timeout in seconds (default: 300)",
+    )
+    parser.add_argument(
+        "--parallel", type=int, default=1,
+        help="Number of parallel workers for evaluation (default: 1, sequential)",
     )
     parser.add_argument(
         "--report",
@@ -102,6 +110,8 @@ def main():
         output_dir=args.output,
         n_runs=args.n_runs,
         delay_s=args.delay,
+        run_num=args.run,
+        parallel=args.parallel,
     )
 
 

@@ -18,6 +18,8 @@ import json
 import os
 import sys
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 # Ensure project root is on path when running as script
@@ -194,9 +196,11 @@ def _write_summary(all_entries, questions, provider_name, model_name, summary_pa
 
 
 def run_tier3_evaluation(provider, questions, output_dir, delay_s=1.0,
-                         selected_ids=None):
+                         selected_ids=None, run_num=None, parallel=1):
     """Run Tier 3 evaluation loop with incremental saves."""
     provider_dir = os.path.join(output_dir, provider.name)
+    if run_num is not None:
+        provider_dir = os.path.join(provider_dir, f"run{run_num}")
     os.makedirs(provider_dir, exist_ok=True)
     responses_path = os.path.join(provider_dir, "responses.jsonl")
     summary_path = os.path.join(provider_dir, "summary.json")
@@ -250,6 +254,78 @@ def run_tier3_evaluation(provider, questions, output_dir, delay_s=1.0,
     # Track all entries for summary (existing + new)
     all_entries = dict(existing_entries)
 
+    if parallel > 1:
+        # ---- Parallel execution path ----
+        file_lock = threading.Lock()
+        progress_count = [0]
+
+        def process_question(q):
+            qid = q["id"]
+            step_ids = [s["id"] for s in q["steps"]]
+            try:
+                resp = provider.generate(SYSTEM_PROMPT, q["question"])
+            except Exception as exc:
+                print(f"\n  ERROR on {qid}: {exc}")
+                return {
+                    "id": qid, "question": q["question"],
+                    "raw_response": "", "response_text": "",
+                    "thinking_text": None, "extracted": {},
+                    "scores": [], "question_score": 0.0, "steps": [],
+                    "cycle_type": q.get("cycle_type", ""),
+                    "depth": q.get("depth", ""),
+                    "fluid": q.get("fluid", ""),
+                    "model": provider.model, "latency_s": 0.0,
+                    "input_tokens": None, "output_tokens": None,
+                    "error": str(exc),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            extraction_text = resp.text if resp.text.strip() else (resp.thinking_text or "")
+            extracted = extract_tier3_properties(extraction_text, step_ids)
+            result = score_tier3_question(q, extracted)
+            return _build_entry(qid, q, resp, extracted, result, resp.model)
+
+        try:
+            with open(responses_path, "a") as f_out:
+                with ThreadPoolExecutor(max_workers=parallel) as executor:
+                    futures = {executor.submit(process_question, q): q for q in pending}
+                    for future in as_completed(futures):
+                        try:
+                            entry = future.result()
+                        except Exception as e:
+                            q = futures[future]
+                            print(f"\nFatal error on {q['id']}: {e}")
+                            continue
+                        qid = entry["id"]
+                        with file_lock:
+                            f_out.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                            f_out.flush()
+                            all_entries[qid] = entry
+                            progress_count[0] += 1
+                            sys.stdout.write(
+                                f"\r  [{done_count + progress_count[0]}/{total}] completed {qid}"
+                            )
+                            sys.stdout.flush()
+                            _write_summary(all_entries, questions, provider.name, provider.model, summary_path)
+            print()
+        except KeyboardInterrupt:
+            print("\n\nInterrupted! Partial results saved.")
+
+        # Skip to final summary
+        summary = _write_summary(all_entries, questions, provider.name, provider.model, summary_path)
+        if summary is None:
+            return
+        print(f"Wrote {len(all_entries)} responses to {responses_path}")
+        print(f"Wrote summary to {summary_path}")
+        print(f"\n=== Results ===")
+        print(f"  Questions:    {summary['total_questions']}")
+        print(f"  Overall:      {summary['overall_score']:.1%}")
+        print(f"  Errors:       {summary['errors']}")
+        if summary["tokens"]["total_input"]:
+            print(f"  Total tokens: {summary['tokens']['total_input']} in / "
+                  f"{summary['tokens']['total_output']} out")
+        return
+
+    # ---- Sequential execution path (original) ----
     try:
         with open(responses_path, "a") as f_out:
             for i, q in enumerate(pending, 1):
@@ -344,11 +420,13 @@ def run_tier3_evaluation(provider, questions, output_dir, delay_s=1.0,
               f"{summary['tokens']['total_output']} out")
 
 
-def run_reextract(provider_name, output_dir, questions):
+def run_reextract(provider_name, output_dir, questions, run_num=None):
     """Re-extract and re-score existing responses using LLM extractor."""
     from evaluation.llm_extractor import LLMExtractor
 
     provider_dir = os.path.join(output_dir, provider_name)
+    if run_num is not None:
+        provider_dir = os.path.join(provider_dir, f"run{run_num}")
     responses_path = os.path.join(provider_dir, "responses.jsonl")
     if not os.path.isfile(responses_path):
         print(f"No responses.jsonl found at {responses_path}")
@@ -564,6 +642,14 @@ def main():
         help="Comma-separated question IDs to (re-)run",
     )
     parser.add_argument(
+        "--run", type=int, default=None,
+        help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
+    )
+    parser.add_argument(
+        "--parallel", type=int, default=1,
+        help="Number of parallel workers for evaluation (default: 1, sequential)",
+    )
+    parser.add_argument(
         "--reextract", action="store_true",
         help="Re-extract responses using LLM extractor (requires --provider)",
     )
@@ -597,9 +683,9 @@ def main():
                 print(f"\n{'='*50}")
                 print(f"Re-extracting: {p}")
                 print(f"{'='*50}")
-                run_reextract(p, args.output, questions)
+                run_reextract(p, args.output, questions, run_num=args.run)
         else:
-            run_reextract(args.provider, args.output, questions)
+            run_reextract(args.provider, args.output, questions, run_num=args.run)
         return
 
     selected_ids = args.ids.split(",") if args.ids else None
@@ -617,7 +703,8 @@ def main():
                     provider_kwargs["max_tokens"] = args.max_tokens
                 provider = get_provider(name, **provider_kwargs)
                 run_tier3_evaluation(provider, questions, args.output,
-                                     delay_s=args.delay, selected_ids=selected_ids)
+                                     delay_s=args.delay, selected_ids=selected_ids,
+                                     run_num=args.run, parallel=args.parallel)
             except (ValueError, ImportError) as e:
                 print(f"  Skipping {name}: {e}")
         return
@@ -642,7 +729,8 @@ def main():
     print()
 
     run_tier3_evaluation(provider, questions, args.output,
-                         delay_s=args.delay, selected_ids=selected_ids)
+                         delay_s=args.delay, selected_ids=selected_ids,
+                         run_num=args.run, parallel=args.parallel)
 
 
 if __name__ == "__main__":
