@@ -44,7 +44,6 @@ class LLMExtractor:
                     {"role": "system", "content": system},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0,
                 max_completion_tokens=max_tokens,
             )
             return response.choices[0].message.content
