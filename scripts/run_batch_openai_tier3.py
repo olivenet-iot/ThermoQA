@@ -397,14 +397,22 @@ def main():
         "--ids", nargs="+",
         help="Only submit these question IDs (for re-running specific questions)",
     )
+    parser.add_argument(
+        "--run", type=int, default=None,
+        help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
+    )
     args = parser.parse_args()
 
+    output_dir = args.output
+    if args.run is not None:
+        output_dir = os.path.join(output_dir, f"run{args.run}")
+
     if args.submit:
-        submit(args.questions, args.output, args.model, args.ids)
+        submit(args.questions, output_dir, args.model, args.ids)
     elif args.status:
-        status(args.output)
+        status(output_dir)
     elif args.collect:
-        collect(args.questions, args.output, args.model)
+        collect(args.questions, output_dir, args.model)
 
 
 if __name__ == "__main__":

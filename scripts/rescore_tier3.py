@@ -126,9 +126,13 @@ def process_provider(
     questions_by_id: dict,
     questions: list[dict],
     dry_run: bool,
+    run_num: int | None = None,
 ):
     """Re-score a single provider's responses using existing extracted values."""
-    responses_path = os.path.join(results_dir, provider, "responses.jsonl")
+    provider_path = os.path.join(results_dir, provider)
+    if run_num is not None:
+        provider_path = os.path.join(provider_path, f"run{run_num}")
+    responses_path = os.path.join(provider_path, "responses.jsonl")
     if not os.path.isfile(responses_path):
         print(f"  No responses.jsonl found for {provider}, skipping.")
         return
@@ -215,7 +219,7 @@ def process_provider(
     print(f"  Wrote {len(entries)} entries to {responses_path}")
 
     # Rebuild summary.json
-    summary_path = os.path.join(results_dir, provider, "summary.json")
+    summary_path = os.path.join(provider_path, "summary.json")
     old_summary = {}
     if os.path.isfile(summary_path):
         with open(summary_path) as f:
@@ -260,6 +264,10 @@ def main():
         "--dry-run", action="store_true",
         help="Compare old vs new scores without writing files",
     )
+    parser.add_argument(
+        "--run", type=int, default=None,
+        help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -279,7 +287,8 @@ def main():
         print(f"\n{'='*55}")
         print(f"Re-scoring: {provider}")
         print(f"{'='*55}")
-        process_provider(provider, args.results_dir, questions_by_id, questions, args.dry_run)
+        process_provider(provider, args.results_dir, questions_by_id, questions, args.dry_run,
+                         run_num=args.run)
 
     print("\nDone.")
 

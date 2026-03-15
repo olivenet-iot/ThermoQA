@@ -489,7 +489,15 @@ def main():
         "--test", action="store_true",
         help="Dry-run: submit only 1 question",
     )
+    parser.add_argument(
+        "--run", type=int, default=None,
+        help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
+    )
     args = parser.parse_args()
+
+    output_dir = args.output
+    if args.run is not None:
+        output_dir = os.path.join(output_dir, f"run{args.run}")
 
     # --test: override to submit only the first question
     ids = args.ids
@@ -499,13 +507,13 @@ def main():
         print(f"TEST MODE: submitting only 1 question ({ids[0]})")
 
     if args.submit:
-        submit(args.questions, args.output, args.model, ids)
+        submit(args.questions, output_dir, args.model, ids)
     elif args.status:
-        status(args.output)
+        status(output_dir)
     elif args.collect:
-        collect(args.questions, args.output, args.model)
+        collect(args.questions, output_dir, args.model)
     elif args.poll:
-        poll(args.questions, args.output, args.model, ids, test=args.test)
+        poll(args.questions, output_dir, args.model, ids, test=args.test)
 
 
 if __name__ == "__main__":

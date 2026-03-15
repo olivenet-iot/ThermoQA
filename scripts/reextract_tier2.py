@@ -109,9 +109,13 @@ def process_provider(
     questions: list[dict],
     extractor: LLMExtractor,
     dry_run: bool,
+    run_num: int | None = None,
 ):
     """Re-extract and re-score a single provider's Tier 2 responses."""
-    responses_path = os.path.join(results_dir, provider, "responses.jsonl")
+    provider_path = os.path.join(results_dir, provider)
+    if run_num is not None:
+        provider_path = os.path.join(provider_path, f"run{run_num}")
+    responses_path = os.path.join(provider_path, "responses.jsonl")
     if not os.path.isfile(responses_path):
         print(f"  No responses.jsonl found for {provider}, skipping.")
         return
@@ -209,7 +213,7 @@ def process_provider(
     print(f"  Wrote {len(entries)} entries to {responses_path}")
 
     # Rebuild summary.json
-    summary_path = os.path.join(results_dir, provider, "summary.json")
+    summary_path = os.path.join(provider_path, "summary.json")
     old_summary = {}
     if os.path.isfile(summary_path):
         with open(summary_path) as f:
@@ -251,6 +255,10 @@ def main():
         "--dry-run", action="store_true",
         help="Compare old vs new scores without writing files",
     )
+    parser.add_argument(
+        "--run", type=int, default=None,
+        help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
+    )
     args = parser.parse_args()
 
     # Determine providers
@@ -276,7 +284,8 @@ def main():
         print(f"Processing: {provider}")
         print(f"{'='*50}")
         process_provider(
-            provider, args.results_dir, questions_by_id, questions, extractor, args.dry_run
+            provider, args.results_dir, questions_by_id, questions, extractor, args.dry_run,
+            run_num=args.run,
         )
 
     print("\nDone.")
