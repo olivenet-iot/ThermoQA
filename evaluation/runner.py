@@ -240,7 +240,7 @@ class DeepSeekProvider(OpenAICompatibleProvider):
 
 class XAIProvider(OpenAICompatibleProvider):
     name = "xai"
-    model = "grok-4"
+    model = "grok-4.20-beta-0309-reasoning"
     is_thinking = True
     use_reasoning_effort = False  # Grok 4 errors on reasoning_effort
     base_url = "https://api.x.ai/v1"

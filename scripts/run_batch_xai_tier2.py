@@ -27,7 +27,7 @@ from evaluation.scorer import build_summary_from_entries, load_questions, score_
 DEFAULT_QUESTIONS = "data/tier2_components/questions.jsonl"
 DEFAULT_OUTPUT_DIR = "results_tier2/xai"
 BATCH_ID_FILE = "batch_id.txt"
-MODEL = "grok-4"
+MODEL = "grok-4.20-beta-0309-reasoning"
 BASE_URL = "https://api.x.ai/v1"
 CHUNK_SIZE = 50
 
