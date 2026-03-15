@@ -188,8 +188,9 @@ def collect(questions_path: str, output_dir: str, model: str):
             continue
 
         expected_keys = list(q["expected"].keys())
-        batch_response = result.get("batch_response", {})
-        completion = batch_response.get("chat_get_completion", {})
+        batch_result = result.get("batch_result", {})
+        response = batch_result.get("response", {})
+        completion = response.get("chat_get_completion", {})
 
         if completion.get("choices"):
             choice = completion["choices"][0]
@@ -233,7 +234,7 @@ def collect(questions_path: str, output_dir: str, model: str):
             }
         else:
             errors += 1
-            error_info = result.get("error", batch_response.get("error", {}))
+            error_info = result.get("error", response.get("error", {}))
             error_msg = error_info.get("message", str(error_info)) if error_info else "Unknown error"
             print(f"  ERROR {qid}: {error_msg}")
 
