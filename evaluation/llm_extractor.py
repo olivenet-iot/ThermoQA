@@ -14,7 +14,7 @@ import anthropic
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_EXTRACTOR_MODEL = "claude-sonnet-4-6-20250514"
+DEFAULT_EXTRACTOR_MODEL = "claude-sonnet-4-6"
 
 SYSTEM_PROMPT = (
     "You are a precise data extractor. Extract ONLY the final numerical answers "
