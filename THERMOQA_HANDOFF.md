@@ -1,6 +1,6 @@
 # ThermoQA — Project Handoff Document
 ## A Benchmark for Evaluating Thermodynamic Reasoning in Large Language Models
-### Initiated 6 March 2026 · Updated 13 March 2026 (Session 4)
+### Initiated 6 March 2026 · Updated 15 March 2026 (Session 5)
 
 ---
 
@@ -84,33 +84,45 @@ This document is a **continuation prompt** for Claude. It contains all context n
 
 ### Final Leaderboard — Tier 3: Cycle Analysis (82 questions, 10 cycles, LLM re-extracted)
 
+*Updated 15 March 2026: hrsg_balance_error scoring artifact removed from CCGT B/C questions (was always None).*
+
 | Rank | Model | Provider | Score | Water | Air | R-134a | Air+Water | Depth A | Depth B | Depth C | Tok/Q |
 |------|-------|----------|-------|-------|-----|--------|-----------|---------|---------|---------|-------|
-| 🥇 | Claude Opus 4.6 | Anthropic | **91.1%** | 97.9% | 99.5% | 75.1% | 75.9% | 91.4% | 94.8% | 87.0% | ~53K |
-| 🥈 | GPT-5.4 | OpenAI | **88.1%** | 91.5% | 97.4% | 79.2% | 70.3% | 89.9% | 89.9% | 84.6% | ~15K |
-| 🥉 | Gemini 3.1 Pro | Google | **83.9%** | 93.9% | 81.3% | 88.6% | 61.7% | 81.3% | 87.6% | 83.1% | ~2.2K |
-| 4 | DeepSeek-R1 | DeepSeek | **81.1%** | 89.0% | 90.4% | 63.7% | 63.1% | 76.4% | 87.8% | 79.6% | ~18K |
-| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 11.9% | 38.7% | 47.2% | 35.1% | ~15K |
+| 🥇 | Claude Opus 4.6 | Anthropic | **91.3%** | 97.9% | 99.5% | 75.1% | 77.3% | 91.4% | 94.8% | 87.0% | ~53K |
+| 🥈 | GPT-5.4 | OpenAI | **88.3%** | 91.5% | 97.4% | 79.2% | 71.7% | 89.9% | 89.9% | 84.6% | ~15K |
+| 🥉 | Gemini 3.1 Pro | Google | **84.1%** | 93.9% | 81.3% | 88.6% | 62.9% | 81.3% | 87.6% | 83.1% | ~2.2K |
+| 4 | DeepSeek-R1 | DeepSeek | **81.2%** | 89.0% | 90.4% | 63.7% | 64.3% | 76.4% | 87.8% | 79.6% | ~18K |
+| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 12.0% | 38.7% | 47.2% | 35.1% | ~15K |
 
 ### Tier 3 V2 — By Cycle Type
 
 | Model | RNK (27q) | BRY (28q) | VCR (15q) | CCGT (12q) |
 |-------|-----------|-----------|-----------|------------|
-| Opus 4.6 | 97.9% | 99.5% | 75.1% | 75.9% |
-| GPT-5.4 | 91.5% | 97.4% | 79.2% | 70.3% |
-| Gemini 3.1 | 93.9% | 81.3% | 88.6% | 61.7% |
-| DeepSeek-R1 | 89.0% | 90.4% | 63.7% | 63.1% |
-| MiniMax M2.5 | 42.9% | 63.2% | 15.0% | 11.9% |
+| Opus 4.6 | 97.9% | 99.5% | 75.1% | 77.3% |
+| GPT-5.4 | 91.5% | 97.4% | 79.2% | 71.7% |
+| Gemini 3.1 | 93.9% | 81.3% | 88.6% | 62.9% |
+| DeepSeek-R1 | 89.0% | 90.4% | 63.7% | 64.3% |
+| MiniMax M2.5 | 42.9% | 63.2% | 15.0% | 12.0% |
 
 ### Cross-Tier Comparison (T1 → T2 → T3)
 
 | Model | Tier 1 | Tier 2 | Tier 3 | T1→T3 Drop | Interpretation |
 |-------|--------|--------|--------|------------|----------------|
-| Claude Opus 4.6 | 95.6% | 92.0% | 91.1% | -4.5pp | Best chaining — smallest drop across all 3 tiers |
-| GPT-5.4 | 96.9% | 91.0% | 88.1% | -8.8pp | |
-| Gemini 3.1 Pro | 97.3% | 89.5% | 83.9% | -13.4pp | Biggest frontier drop — struggles with multi-step |
-| DeepSeek-R1 | 89.5% | 86.9% | 81.1% | -8.4pp | |
+| Claude Opus 4.6 | 95.6% | 92.0% | 91.3% | -4.3pp | Best chaining — smallest drop across all 3 tiers |
+| GPT-5.4 | 96.9% | 91.0% | 88.3% | -8.6pp | |
+| Gemini 3.1 Pro | 97.3% | 89.5% | 84.1% | -13.2pp | Biggest frontier drop — struggles with multi-step |
+| DeepSeek-R1 | 89.5% | 86.9% | 81.2% | -8.3pp | |
 | MiniMax M2.5 | 84.5% | 73.4% | 40.2% | -44.3pp | Catastrophic collapse on cycle analysis |
+
+### Session 5 Commits (13-15 March 2026)
+
+| Commit | Description |
+|--------|-------------|
+| `1519b89` | fix: remove hrsg_balance_error from CCGT scored steps (always None) |
+| `732230c` | feat: add deep investigation script with 12 paper-grade analyses |
+| `d8dfea9` | docs: remove Tier 4 placeholder, move to future work |
+| `9447601` | feat: add Tier 3 cycle analysis to HuggingFace publish script |
+| `c2abc2d` | docs: update THERMOQA_HANDOFF.md with Session 4 — Tier 3 V2 results, 293 questions |
 
 ### Session 4 Commits (11-13 March 2026)
 
@@ -207,6 +219,22 @@ LLM re-extraction impact: MiniMax +11.9pp, Opus +7.0pp, DeepSeek +1.8pp, Gemini 
 
 ---
 
+## Key Findings (Session 5 — Deep Investigation + Scoring Fix)
+
+### 1. hrsg_balance_error was a scoring artifact, not a model failure
+`_compute_consistency()` for `hrsg_balance_error` always returned None because it requires `m_dot_air` and `m_dot_steam` which aren't available in extracted values. This unfairly penalized all 5 providers on 8 CCGT B/C questions (weight=3 in denominator, always scored as "missing"). Removing it raised CCGT scores by +0.9% to +2.8% per question. The HRSG coupling is already tested via the `m_dot_steam` step.
+
+### 2. energy_balance_error_gas is a genuine failure
+Unlike hrsg_balance_error, `energy_balance_error_gas` is NOT an artifact — models have all upstream values (h1-h5, w_comp, w_gt, q_combustion) but produce 10-20% energy balance errors on the gas side. 85% of evaluations have data but 0% pass the 2% tolerance. This is a real discriminator that stays in scoring.
+
+### 3. Deep investigation produced 12 paper-grade analyses
+`scripts/deep_investigation.py` generates a comprehensive 1200-line report (`analysis/deep_investigation_report.md`) covering: per-step accuracy heatmaps, hardest/easiest steps, consistency check forensics, error propagation analysis, per-cycle-type breakdowns, depth progression, provider-specific failure modes, and actionable recommendations. This forms the analytical backbone for the arxiv paper.
+
+### 4. Step-level difficulty hierarchy validated
+Universally hard steps (<50% mean across all models): `energy_balance_error_gas` (0%), `x_dest_HRSG` (15%), `x_dest_steam_turb` (15%), `x_dest_throttle` (16%), `COP_R` (31%). Universally easy (>90%): basic state properties (h, s, T, P), simple cycle efficiencies for power cycles.
+
+---
+
 ## Key Findings (Session 4 — Tier 3 V1→V2)
 
 ### 1. V1 was too easy (93-96% for frontier)
@@ -222,7 +250,7 @@ eta_th=0.19 vs 0.24 passed because |0.05| < 0.5. Fixed: 0.02 for eta_th, eta_II,
 Gemini scores 53% on variable cp Brayton (uses constant-cp isentropic formula despite "variable specific heats" instruction). Opus 99%, GPT 93%. Distinguishes models that know Pr-method from those that don't.
 
 ### 5. CCGT combined cycle = future-proof
-Best model 75%. 9 states, 2 fluids, HRSG coupling. Should remain challenging for years.
+Best model 77%. 9 states, 2 fluids, HRSG coupling. Should remain challenging for years.
 
 ### 6. R-134a IIR reference state specified in question text
 Models must use IIR (h=200, s=1.0 at 0°C sat liquid). Restores absolute h/s scoring fairly.
@@ -234,10 +262,31 @@ Complex V2 questions (32-60 steps) consumed all tokens in reasoning, empty respo
 energy_balance_error step checks model's own internal consistency. Only 25% of models pass (their own numbers don't close energy balance).
 
 ### 9. Token efficiency: Gemini 23× cheaper than Opus
-Gemini: ~2.2K tok/Q → 83.9%. Opus: ~53K tok/Q → 91.1%. Diminishing returns on thinking tokens.
+Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns on thinking tokens.
 
 ### 10. MiniMax below benchmark threshold
 40.2% overall, VCR Depth C mostly 0%, CCGT mostly 0%. Not competitive on engineering thermodynamics.
+
+---
+
+## Decisions Resolved (Session 5)
+
+| Question | Decision | Reasoning |
+|----------|----------|-----------|
+| hrsg_balance_error always None | **Remove from scoring** | `_compute_consistency()` needs m_dot_air + m_dot_steam, not available in extracted values. Always fails as "missing". HRSG coupling already tested via `m_dot_steam` step (weight=3). Removal eliminates double-penalty without losing coverage |
+| energy_balance_error_gas 0% pass rate | **Keep in scoring** | Unlike hrsg, models HAVE all upstream values (h1-h5, w_comp, w_gt, q_combustion) but produce 10-20% balance errors. Genuine failure, not artifact. Real discriminator |
+| Patch questions.jsonl or regenerate? | **Patch in-place** | Same as V1→V2 strategy. Preserves all existing model responses. Remove from `expected`, `steps`, and question text |
+
+---
+
+## Lessons Learned (Session 5)
+
+| Lesson | Detail |
+|--------|--------|
+| **Distinguish scoring artifacts from model failures** | hrsg_balance_error (100% None) vs energy_balance_error_gas (85% have data, 0% pass). Same 0% pass rate, completely different root causes. Always check the None rate |
+| **Deep investigation before publication** | The 12-analysis script caught a scoring bug that would have been embarrassing in a paper. Automated analysis > manual spot-checking |
+| **Consistency steps need feasibility audit** | A scored step that requires values not available in the extraction pipeline will always fail. Audit all consistency steps against what the extractor can actually provide |
+| **Weight removal changes denominators, not numerators** | Removing a weight=3 step that always scored 0 increases scores because the denominator shrinks. The impact varies by provider (0% to +2.8%) depending on how many other steps they got right |
 
 ---
 
@@ -268,6 +317,29 @@ Gemini: ~2.2K tok/Q → 83.9%. Opus: ~53K tok/Q → 91.1%. Diminishing returns o
 | **V1→V2 iteration is normal** | First version always reveals design flaws. Build, test, analyze, fix. Don't try to get it perfect first time |
 | **Patch > Regenerate** | When ground truth changes but parameters don't, patch in-place. Saves all existing model responses |
 | **4-layer difficulty = sustainable benchmark** | Layer 1 for sanity, Layer 4 for ceiling. Benchmark stays relevant as models improve |
+
+---
+
+## What Was Built (Session 5 — Deep Investigation + Scoring Fix)
+
+### Deep Investigation Script (`scripts/deep_investigation.py`)
+- Generates `analysis/deep_investigation_report.md` — 1200+ line report with 12 paper-grade analyses
+- Analyses: per-step accuracy heatmap, hardest/easiest steps, consistency check forensics, error propagation, per-cycle-type breakdown, depth progression, provider failure modes, step correlation, weight sensitivity
+- Discovered `hrsg_balance_error` scoring artifact (100% None rate across all providers)
+- Confirmed `energy_balance_error_gas` is genuine failure (85% have data, 0% pass)
+
+### hrsg_balance_error Scoring Fix
+- Removed `hrsg_balance_error` step from CCGT template (`generation/templates/tier3_cycles.py`)
+- Removed from scorer `consistency_steps` set and dead `_compute_consistency()` branch
+- Removed from extractor patterns (`evaluation/extractor.py`, `evaluation/llm_extractor.py`)
+- Removed from question generator format hints (`generation/question_generator.py`)
+- Patched `data/tier3_cycles/questions.jsonl` — 8 CCGT B/C questions (expected, steps, question text)
+- Rescored all 5 providers via `scripts/rescore_tier3.py`
+- Updated `scripts/verify_tier3_prepublish.py` consistency checks
+
+### HuggingFace Publishing
+- `scripts/publish_huggingface.py` updated for three-tier publishing (was two-tier)
+- Dynamic commit messages per tier
 
 ---
 
@@ -312,6 +384,7 @@ Gemini: ~2.2K tok/Q → 83.9%. Opus: ~53K tok/Q → 91.1%. Diminishing returns o
 - MiniMax re-extraction has ~24 JSON parse failures (garbage model responses).
 - Multi-run consistency analysis not yet done (single run only).
 - HuggingFace dataset viewer may show "UnexpectedError" for nested JSON.
+- ~~hrsg_balance_error always returned None — scoring artifact~~ **FIXED** (Session 5, commit `1519b89`)
 
 ---
 
@@ -544,10 +617,10 @@ Leaderboard (run_evaluation_tier2.py --report)
 
 | Model | Mean Input | Mean Output | Score | Tokens per % |
 |-------|-----------|-------------|-------|-------------|
-| Gemini 3.1 Pro | 734 | 2,242 | 83.9% | 26.7 |
-| GPT-5.4 | 680 | 14,896 | 88.1% | 169.1 |
-| Claude Opus 4.6 | 838 | 53,439 | 91.1% | 586.6 |
-| DeepSeek-R1 | 649 | 18,019 | 81.1% | 222.2 |
+| Gemini 3.1 Pro | 734 | 2,242 | 84.1% | 26.7 |
+| GPT-5.4 | 680 | 14,896 | 88.3% | 168.7 |
+| Claude Opus 4.6 | 838 | 53,439 | 91.3% | 585.3 |
+| DeepSeek-R1 | 649 | 18,019 | 81.2% | 221.9 |
 | MiniMax M2.5 | 682 | 15,203 | 40.2% | 378.2 |
 
 ---
@@ -619,14 +692,17 @@ ThermoQA/
 │   ├── deepseek/                          # 86.9%
 │   └── minimax/                           # 73.4%
 │
-├── results_tier3/                         # NEW: Tier 3 V2 per-provider results (gitignored)
-│   ├── google/                            # 83.9%
-│   ├── openai/                            # 88.1%
-│   ├── anthropic/                         # 91.1%
-│   ├── deepseek/                          # 81.1%
+├── results_tier3/                         # Tier 3 V2 per-provider results (gitignored)
+│   ├── google/                            # 84.1%
+│   ├── openai/                            # 88.3%
+│   ├── anthropic/                         # 91.3%
+│   ├── deepseek/                          # 81.2%
 │   └── minimax/                           # 40.2%
 │
 ├── results_tier3_v1/                      # Tier 3 V1 results (backup)
+│
+├── analysis/
+│   └── deep_investigation_report.md       # 1200-line report: 12 paper-grade analyses
 │
 ├── scripts/
 │   ├── validate_coolprop.py
@@ -649,7 +725,8 @@ ThermoQA/
 │   ├── reextract_tier3.py                 # NEW: Tier 3 LLM re-extraction
 │   ├── rescore_tier3.py                   # NEW: re-score with updated ground truth
 │   ├── patch_variable_cp_ground_truth.py  # NEW: NASA polynomial patch for Air
-│   ├── verify_tier3_prepublish.py         # NEW: pre-publication validation
+│   ├── verify_tier3_prepublish.py         # Pre-publication validation
+│   ├── deep_investigation.py              # 12 paper-grade analyses → analysis/ report
 │   ├── publish_huggingface.py             # Updated: three tiers, multi-config
 │   └── test_scorer.py
 │
