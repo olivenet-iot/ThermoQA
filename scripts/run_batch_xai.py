@@ -95,7 +95,7 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
         resp = http_requests.post(
             f"{BASE_URL}/batches/{batch_id}/requests",
             headers=_headers(),
-            json={"requests": batch_requests},
+            json={"batch_requests": batch_requests},
         )
         resp.raise_for_status()
         print(f"  Added requests {i + 1}-{i + len(chunk)} / {len(questions)}")
