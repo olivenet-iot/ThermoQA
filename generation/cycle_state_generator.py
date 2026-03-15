@@ -1505,7 +1505,7 @@ def generate_brayton_regenerative_variable(params: dict) -> dict:
 
 def generate_combined_cycle(params: dict) -> dict:
     """
-    Combined Cycle Gas Turbine (CCGT) — gas side (CoolProp Air, variable cp)
+    Combined Cycle Gas Turbine (CCGT) — gas side (ideal gas air, NASA polynomial)
     coupled to steam side (CoolProp Water) via HRSG.
 
     Gas side states: 1 (comp in), 2 (comp out), 3 (turb in/CC out), 4 (turb out), 5 (HRSG hot out/stack)
@@ -1535,44 +1535,46 @@ def generate_combined_cycle(params: dict) -> dict:
     P_steam_kPa = P_steam_MPa * 1000
 
     # =========================================================================
-    # GAS SIDE (CoolProp Air, variable cp)
+    # GAS SIDE (ideal gas air, NASA polynomial)
     # =========================================================================
 
     # State 1: compressor inlet
-    s1 = air_state_variable(T1, P1)
+    s1 = air_state_ideal_table(T1, P1)
     s1["state"] = 1
 
     # State 2s: isentropic compression
-    h2s = CP.PropsSI("H", "S", s1["s"] * 1000, "P", P2 * 1000, "Air") / 1000
-    T2s = CP.PropsSI("T", "S", s1["s"] * 1000, "P", P2 * 1000, "Air")
-    s2s_d = air_state_variable(T2s, P2)
+    s0_2s = s0_ideal_air(T1) + AIR_R_MASS * math.log(P2 / P1)
+    T2s = _find_T_from_s0(s0_2s)
+    h2s = h_ideal_air(T2s)
+    s2s_d = air_state_ideal_table(T2s, P2)
     s2s_d["state"] = "2s"
 
     # State 2: actual compressor exit
     h2 = s1["h"] + (h2s - s1["h"]) / eta_c
-    T2 = CP.PropsSI("T", "H", h2 * 1000, "P", P2 * 1000, "Air")
-    s2 = air_state_variable(T2, P2)
+    T2 = _find_T_from_h(h2)
+    s2 = air_state_ideal_table(T2, P2)
     s2["state"] = 2
 
     # State 3: turbine inlet (after combustion chamber)
-    s3 = air_state_variable(T3, P2)
+    s3 = air_state_ideal_table(T3, P2)
     s3["state"] = 3
 
     # State 4s: isentropic expansion
-    h4s = CP.PropsSI("H", "S", s3["s"] * 1000, "P", P1 * 1000, "Air") / 1000
-    T4s = CP.PropsSI("T", "S", s3["s"] * 1000, "P", P1 * 1000, "Air")
-    s4s_d = air_state_variable(T4s, P1)
+    s0_4s = s0_ideal_air(T3) - AIR_R_MASS * math.log(P2 / P1)
+    T4s = _find_T_from_s0(s0_4s)
+    h4s = h_ideal_air(T4s)
+    s4s_d = air_state_ideal_table(T4s, P1)
     s4s_d["state"] = "4s"
 
     # State 4: actual gas turbine exit
     h4 = s3["h"] - eta_gt * (s3["h"] - h4s)
-    T4 = CP.PropsSI("T", "H", h4 * 1000, "P", P1 * 1000, "Air")
-    s4 = air_state_variable(T4, P1)
+    T4 = _find_T_from_h(h4)
+    s4 = air_state_ideal_table(T4, P1)
     s4["state"] = 4
 
     # State 5: HRSG hot exit / stack
     T5_K = T5_stack_C + 273.15
-    s5 = air_state_variable(T5_K, P1)
+    s5 = air_state_ideal_table(T5_K, P1)
     s5["state"] = 5
 
     # HRSG coupling: heat released by gas side per kg of air
@@ -1706,7 +1708,7 @@ def generate_combined_cycle(params: dict) -> dict:
         })
 
         # Exergy — dual dead states
-        ds_air = get_dead_state("Air_var")   # for gas states 1-5
+        ds_air = {"h0": h_ideal_air(T0_K), "s0": s_ideal_air(T0_K, P0_kPa), "T0_K": T0_K, "P0_kPa": P0_kPa}   # ideal gas air dead state
         ds_water = get_dead_state("Water")   # for steam states 6-9
 
         for st_key in [1, "2s", 2, 3, "4s", 4, 5]:

@@ -33,7 +33,7 @@ DIMENSIONLESS_STEPS = {"eta_th", "eta_combined", "eta_II", "COP_R", "COP_Carnot"
 NEW_DIMENSIONLESS_ABS_TOL = 0.02
 
 # Cycle types to recalculate
-RECALC_CYCLES = {"BRY-AV", "BRY-RV"}
+RECALC_CYCLES = {"BRY-AV", "BRY-RV", "CCGT"}
 
 
 def recalculate_expected(question: dict) -> dict:
