@@ -1,7 +1,7 @@
 """
 Multi-provider LLM evaluation runner for ThermoQA.
 
-Supports: Anthropic, OpenAI, Google, MiniMax, DeepSeek, Ollama.
+Supports: Anthropic, OpenAI, Google, MiniMax, DeepSeek, xAI, Ollama.
 All SDK imports are lazy — missing packages only break the provider that needs them.
 """
 
@@ -154,10 +154,11 @@ class AnthropicProvider(BaseProvider):
 
 
 class OpenAICompatibleProvider(BaseProvider):
-    """Base for OpenAI-compatible APIs (OpenAI, MiniMax, DeepSeek)."""
+    """Base for OpenAI-compatible APIs (OpenAI, MiniMax, DeepSeek, xAI)."""
 
     base_url: str | None = None
     api_key_env: str = ""
+    use_reasoning_effort: bool = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -181,7 +182,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 {"role": "user", "content": user_prompt},
             ],
         }
-        if self.is_thinking:
+        if self.is_thinking and self.use_reasoning_effort:
             create_kwargs["reasoning_effort"] = "high"
         response = self._client.chat.completions.create(**create_kwargs)
         latency = time.monotonic() - t0
@@ -235,6 +236,19 @@ class DeepSeekProvider(OpenAICompatibleProvider):
     is_thinking = True
     base_url = "https://api.deepseek.com/v1"
     api_key_env = "DEEPSEEK_API_KEY"
+
+
+class XAIProvider(OpenAICompatibleProvider):
+    name = "xai"
+    model = "grok-4"
+    is_thinking = True
+    use_reasoning_effort = False  # Grok 4 errors on reasoning_effort
+    base_url = "https://api.x.ai/v1"
+    api_key_env = "XAI_API_KEY"
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("timeout", 3600.0)  # Reasoning model needs long timeout
+        super().__init__(**kwargs)
 
 
 class GoogleProvider(BaseProvider):
@@ -349,6 +363,7 @@ PROVIDERS: dict[str, type[BaseProvider]] = {
     "google": GoogleProvider,
     "minimax": MiniMaxProvider,
     "deepseek": DeepSeekProvider,
+    "xai": XAIProvider,
     "ollama": OllamaProvider,
 }
 
