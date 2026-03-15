@@ -66,11 +66,11 @@ def submit(questions_path: str, output_dir: str, model: str, ids: list[str] | No
     resp = http_requests.post(
         f"{BASE_URL}/batches",
         headers=_headers(),
-        json={},
+        json={"name": "thermoqa_tier1"},
     )
     resp.raise_for_status()
     batch = resp.json()
-    batch_id = batch["id"]
+    batch_id = batch["batch_id"]
     print(f"Created batch: {batch_id}")
 
     # Step 2: Add requests in chunks of CHUNK_SIZE
@@ -122,11 +122,11 @@ def status(output_dir: str):
     resp.raise_for_status()
     batch = resp.json()
 
-    print(f"Batch ID: {batch['id']}")
-    print(f"Status:   {batch.get('status', 'unknown')}")
-    for key in ("num_total", "num_pending", "num_success", "num_error"):
-        if key in batch:
-            print(f"  {key}: {batch[key]}")
+    print(f"Batch ID: {batch['batch_id']}")
+    state = batch.get("state", {})
+    for key in ("num_requests", "num_pending", "num_success", "num_error"):
+        if key in state:
+            print(f"  {key}: {state[key]}")
     if batch.get("created_at"):
         print(f"Created at: {batch['created_at']}")
 
@@ -144,22 +144,23 @@ def collect(questions_path: str, output_dir: str, model: str):
     )
     resp.raise_for_status()
     batch = resp.json()
-    num_pending = batch.get("num_pending", -1)
+    state = batch.get("state", {})
+    num_pending = state.get("num_pending", -1)
     if num_pending > 0:
         print(f"Batch is not yet complete ({num_pending} pending)")
-        for key in ("num_total", "num_pending", "num_success", "num_error"):
-            if key in batch:
-                print(f"  {key}: {batch[key]}")
+        for key in ("num_requests", "num_pending", "num_success", "num_error"):
+            if key in state:
+                print(f"  {key}: {state[key]}")
         sys.exit(1)
 
     # Paginated result retrieval
     print(f"Collecting results for batch {batch_id}...")
     all_results = []
-    page_token = None
+    pagination_token = None
     while True:
         params = {"page_size": 100}
-        if page_token:
-            params["page_token"] = page_token
+        if pagination_token:
+            params["pagination_token"] = pagination_token
         resp = http_requests.get(
             f"{BASE_URL}/batches/{batch_id}/results",
             headers=_headers(),
@@ -169,8 +170,8 @@ def collect(questions_path: str, output_dir: str, model: str):
         page = resp.json()
         results = page.get("results", [])
         all_results.extend(results)
-        page_token = page.get("next_page_token")
-        if not page_token:
+        pagination_token = page.get("pagination_token")
+        if not pagination_token:
             break
         print(f"  Fetched {len(all_results)} results so far...")
 
