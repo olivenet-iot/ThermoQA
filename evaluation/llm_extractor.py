@@ -2,6 +2,7 @@
 LLM-based extractor using Claude Sonnet for robust value extraction from model responses.
 
 Falls back gracefully on parse failures. Returns dicts compatible with extract_properties().
+Supports configurable models including OpenAI-compatible APIs (e.g. gpt-5-mini).
 """
 
 import json
@@ -13,6 +14,8 @@ import anthropic
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EXTRACTOR_MODEL = "claude-sonnet-4-6-20250514"
+
 SYSTEM_PROMPT = (
     "You are a precise data extractor. Extract ONLY the final numerical answers "
     "from thermodynamics problem solutions. Never extract intermediate calculations, "
@@ -21,11 +24,63 @@ SYSTEM_PROMPT = (
 
 
 class LLMExtractor:
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
+        self.model = model or DEFAULT_EXTRACTOR_MODEL
         self.client = anthropic.Anthropic(
             api_key=api_key or os.environ.get("ANTHROPIC_API_KEY")
         )
-        self.model = "claude-sonnet-4-6"
+        self._openai_client = None
+
+    def _call_llm(self, system: str, user_prompt: str, max_tokens: int = 500) -> str:
+        """Call the configured LLM and return raw response text."""
+        if self.model.startswith("gpt") or self.model.startswith("o"):
+            # OpenAI-compatible path
+            if self._openai_client is None:
+                from openai import OpenAI
+                self._openai_client = OpenAI()
+            response = self._openai_client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0,
+                max_tokens=max_tokens,
+            )
+            return response.choices[0].message.content
+        else:
+            # Anthropic path (default)
+            msg = self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                temperature=0,
+                system=system,
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            return msg.content[0].text
+
+    def _parse_json_response(self, system: str, user_prompt: str,
+                             max_tokens: int = 500, label: str = "LLM") -> dict:
+        """Call LLM and parse JSON response with retry."""
+        for attempt in range(2):
+            try:
+                text = self._call_llm(system, user_prompt, max_tokens).strip()
+                # Strip markdown code fences if present
+                if text.startswith("```"):
+                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                    if text.endswith("```"):
+                        text = text[:-3]
+                    text = text.strip()
+                return json.loads(text)
+            except (json.JSONDecodeError, IndexError) as e:
+                if attempt == 0:
+                    logger.debug(f"JSON parse failed, retrying: {e}")
+                    continue
+                logger.warning(f"{label} extraction failed: {e}")
+                return {}
+            except Exception as e:
+                logger.warning(f"API error during {label} extraction: {e}")
+                return {}
 
     def extract(
         self,
@@ -55,32 +110,7 @@ class LLMExtractor:
             f"- Return ONLY the JSON object, no explanation"
         )
 
-        for attempt in range(2):
-            try:
-                msg = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=500,
-                    temperature=0,
-                    system=SYSTEM_PROMPT,
-                    messages=[{"role": "user", "content": user_prompt}],
-                )
-                text = msg.content[0].text.strip()
-                # Strip markdown code fences if present
-                if text.startswith("```"):
-                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                    if text.endswith("```"):
-                        text = text[:-3]
-                    text = text.strip()
-                return json.loads(text)
-            except (json.JSONDecodeError, IndexError) as e:
-                if attempt == 0:
-                    logger.debug(f"JSON parse failed, retrying: {e}")
-                    continue
-                logger.warning(f"LLM extraction failed after 2 attempts: {e}")
-                return {}
-            except anthropic.APIError as e:
-                logger.warning(f"Anthropic API error during extraction: {e}")
-                return {}
+        return self._parse_json_response(SYSTEM_PROMPT, user_prompt, 500, "LLM")
 
     def extract_tier2(
         self,
@@ -122,31 +152,7 @@ class LLMExtractor:
             f"- Return ONLY the JSON object"
         )
 
-        for attempt in range(2):
-            try:
-                msg = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=500,
-                    temperature=0,
-                    system=SYSTEM_PROMPT,
-                    messages=[{"role": "user", "content": user_prompt}],
-                )
-                text = msg.content[0].text.strip()
-                if text.startswith("```"):
-                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                    if text.endswith("```"):
-                        text = text[:-3]
-                    text = text.strip()
-                return json.loads(text)
-            except (json.JSONDecodeError, IndexError) as e:
-                if attempt == 0:
-                    logger.debug(f"JSON parse failed, retrying: {e}")
-                    continue
-                logger.warning(f"LLM Tier 2 extraction failed: {e}")
-                return {}
-            except anthropic.APIError as e:
-                logger.warning(f"Anthropic API error: {e}")
-                return {}
+        return self._parse_json_response(SYSTEM_PROMPT, user_prompt, 500, "LLM Tier 2")
 
     def extract_tier3(
         self,
@@ -211,31 +217,7 @@ class LLMExtractor:
             f"- Return ONLY the JSON object"
         )
 
-        for attempt in range(2):
-            try:
-                msg = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=1000,
-                    temperature=0,
-                    system=SYSTEM_PROMPT,
-                    messages=[{"role": "user", "content": user_prompt}],
-                )
-                text = msg.content[0].text.strip()
-                if text.startswith("```"):
-                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                    if text.endswith("```"):
-                        text = text[:-3]
-                    text = text.strip()
-                return json.loads(text)
-            except (json.JSONDecodeError, IndexError) as e:
-                if attempt == 0:
-                    logger.debug(f"JSON parse failed, retrying: {e}")
-                    continue
-                logger.warning(f"LLM Tier 3 extraction failed: {e}")
-                return {}
-            except anthropic.APIError as e:
-                logger.warning(f"Anthropic API error: {e}")
-                return {}
+        return self._parse_json_response(SYSTEM_PROMPT, user_prompt, 1000, "LLM Tier 3")
 
     def extract_batch(
         self, items: list[dict]

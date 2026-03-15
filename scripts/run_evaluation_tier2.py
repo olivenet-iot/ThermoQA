@@ -405,7 +405,8 @@ def run_tier2_evaluation(provider, questions, output_dir, delay_s=1.0,
               f"{summary['tokens']['total_output']} out")
 
 
-def run_reextract(provider_name, output_dir, questions, run_num=None):
+def run_reextract(provider_name, output_dir, questions, run_num=None,
+                   extractor_model=None):
     """Re-extract and re-score existing responses using LLM extractor."""
     from evaluation.llm_extractor import LLMExtractor
 
@@ -428,7 +429,7 @@ def run_reextract(provider_name, output_dir, questions, run_num=None):
                 entries.append(json.loads(line))
     print(f"Loaded {len(entries)} responses from {responses_path}")
 
-    extractor = LLMExtractor()
+    extractor = LLMExtractor(model=extractor_model)
 
     old_scores = []
     new_scores = []
@@ -635,6 +636,10 @@ def main():
         help="Re-extract responses using LLM extractor (requires --provider)",
     )
     parser.add_argument(
+        "--extractor-model", default=None,
+        help="Model for LLM extraction (default: claude-sonnet-4-6). Use 'gpt-5-mini' for cheaper extraction",
+    )
+    parser.add_argument(
         "--report", action="store_true",
         help="Print Tier 2 leaderboard from all providers",
     )
@@ -664,9 +669,11 @@ def main():
                 print(f"\n{'='*50}")
                 print(f"Re-extracting: {p}")
                 print(f"{'='*50}")
-                run_reextract(p, args.output, questions, run_num=args.run)
+                run_reextract(p, args.output, questions, run_num=args.run,
+                              extractor_model=args.extractor_model)
         else:
-            run_reextract(args.provider, args.output, questions, run_num=args.run)
+            run_reextract(args.provider, args.output, questions, run_num=args.run,
+                          extractor_model=args.extractor_model)
         return
 
     selected_ids = args.ids.split(",") if args.ids else None

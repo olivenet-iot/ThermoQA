@@ -236,6 +236,10 @@ def main():
         "--run", type=int, default=None,
         help="Run number for multi-run analysis (e.g., --run 1 saves to provider/run1/)",
     )
+    parser.add_argument(
+        "--extractor-model", default=None,
+        help="Model for LLM extraction (default: claude-sonnet-4-6). Use 'gpt-5-mini' for cheaper extraction",
+    )
     args = parser.parse_args()
 
     # Determine providers
@@ -254,7 +258,7 @@ def main():
     print(f"Loaded {len(questions)} questions from {args.questions}")
 
     # Create extractor
-    extractor = LLMExtractor()
+    extractor = LLMExtractor(model=args.extractor_model)
 
     for provider in providers:
         print(f"\n{'='*50}")
