@@ -631,7 +631,6 @@ TIER3_ANSWER_HINTS = {
     "energy_balance_error": "energy_balance_error = ___",
     "energy_balance_error_gas": "energy_balance_error_gas = ___",
     "energy_balance_error_steam": "energy_balance_error_steam = ___",
-    "hrsg_balance_error": "hrsg_balance_error = ___",
 }
 
 
@@ -759,7 +758,7 @@ def generate_tier3_questions(output_dir: str, total_target: int = 82,
 
             expected = {}
             consistency_steps = {"energy_balance_error", "energy_balance_error_gas",
-                                 "energy_balance_error_steam", "hrsg_balance_error"}
+                                 "energy_balance_error_steam"}
             dimensionless_steps = {"eta_th", "eta_combined", "eta_II",
                                    "COP_R", "COP_Carnot"}
             for step in template.steps:

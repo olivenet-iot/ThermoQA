@@ -186,7 +186,6 @@ class LLMExtractor:
             "energy_balance_error": "dimensionless (near 0)",
             "energy_balance_error_gas": "dimensionless (near 0)",
             "energy_balance_error_steam": "dimensionless (near 0)",
-            "hrsg_balance_error": "dimensionless (near 0)",
         }
         # s_gen and x_dest component patterns
         for comp in ["pump", "boiler", "turb", "cond", "HPT", "LPT", "reheater",

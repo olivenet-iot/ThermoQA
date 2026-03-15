@@ -250,7 +250,7 @@ def main():
         repo_id=args.repo,
         repo_type="dataset",
         operations=operations,
-        commit_message=f"Update dataset card: remove Tier 4 placeholder, add future work",
+        commit_message=f"Update {tier_desc}: remove hrsg_balance_error scoring artifact from CCGT",
     )
 
     print(f"\nDone! Commit: {commit_info.commit_url}")

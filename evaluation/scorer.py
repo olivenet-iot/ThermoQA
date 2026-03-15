@@ -570,10 +570,6 @@ def _compute_consistency(step_id: str, extracted: dict) -> float | None:
             if q_hrsg_steam > 0:
                 return abs(q_hrsg_steam - (w_st - w_p) - q_cond) / q_hrsg_steam
         return None
-    elif step_id == "hrsg_balance_error":
-        # This requires mass flow rates, which may not be easily computed
-        # from model values alone. Return None — ground truth is ~0.
-        return None
     return None
 
 
@@ -585,7 +581,7 @@ def score_tier3_question(question: dict, extracted: dict) -> Tier3QuestionResult
 
     # Consistency steps: compute from model's own values
     consistency_steps = {"energy_balance_error", "energy_balance_error_gas",
-                         "energy_balance_error_steam", "hrsg_balance_error"}
+                         "energy_balance_error_steam"}
 
     step_results = []
     total_weight = 0.0

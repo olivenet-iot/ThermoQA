@@ -52,21 +52,21 @@ engineering thermodynamics at this depth.
 
 | Rank | Model | Provider | Score | Water | Air | R-134a | Air+Water |
 |------|-------|----------|-------|-------|-----|--------|-----------|
-| 🥇 | Claude Opus 4.6 | Anthropic | **91.0%** | 97.9% | 99.5% | 75.1% | 75.9% |
-| 🥈 | GPT-5.4 | OpenAI | **88.1%** | 91.5% | 97.4% | 79.2% | 70.3% |
-| 🥉 | Gemini 3.1 Pro | Google | **83.9%** | 93.9% | 81.3% | 88.6% | 61.7% |
-| 4 | DeepSeek-R1 | DeepSeek | **81.1%** | 89.0% | 90.4% | 63.7% | 63.1% |
-| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 11.8% |
+| 🥇 | Claude Opus 4.6 | Anthropic | **91.3%** | 97.9% | 99.5% | 75.1% | 77.3% |
+| 🥈 | GPT-5.4 | OpenAI | **88.3%** | 91.5% | 97.4% | 79.2% | 71.7% |
+| 🥉 | Gemini 3.1 Pro | Google | **84.1%** | 93.9% | 81.3% | 88.6% | 62.9% |
+| 4 | DeepSeek-R1 | DeepSeek | **81.2%** | 89.0% | 90.4% | 63.7% | 64.3% |
+| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 12.0% |
 
 #### Per-Cycle-Type Breakdown
 
 | Model | RNK-I | RNK-A | RNK-RH | BRY-I | BRY-A | BRY-AV | BRY-RG | BRY-RV | VCR-A | CCGT |
 |-------|-------|-------|--------|-------|-------|--------|--------|--------|-------|------|
-| Opus 4.6 | 98.0% | 99.8% | 95.0% | 100% | 99.7% | 98.8% | 99.7% | 99.5% | 75.1% | 75.9% |
-| GPT-5.4 | 98.0% | 96.7% | 82.3% | 100% | 100% | 95.2% | 100% | 88.7% | 79.2% | 70.3% |
-| Gemini 3.1 | 100% | 99.8% | 83.9% | 97.3% | 97.0% | 63.3% | 96.7% | 37.6% | 88.6% | 61.7% |
-| DeepSeek-R1 | 94.6% | 94.0% | 80.3% | 100% | 99.2% | 88.5% | 100% | 52.1% | 63.7% | 63.1% |
-| MiniMax M2.5 | 73.4% | 44.6% | 34.4% | 100% | 98.2% | 30.5% | 65.0% | 2.9% | 15.0% | 11.9% |
+| Opus 4.6 | 98.0% | 99.8% | 95.0% | 100% | 99.7% | 98.8% | 99.7% | 99.5% | 75.1% | 77.3% |
+| GPT-5.4 | 98.0% | 96.7% | 82.3% | 100% | 100% | 95.2% | 100% | 88.7% | 79.2% | 71.7% |
+| Gemini 3.1 | 100% | 99.8% | 83.9% | 97.3% | 97.0% | 63.3% | 96.7% | 37.6% | 88.6% | 62.9% |
+| DeepSeek-R1 | 94.6% | 94.0% | 80.3% | 100% | 99.2% | 88.5% | 100% | 52.1% | 63.7% | 64.3% |
+| MiniMax M2.5 | 73.4% | 44.6% | 34.4% | 100% | 98.2% | 30.5% | 65.0% | 2.9% | 15.0% | 12.0% |
 
 ### Cross-Tier Performance
 
@@ -74,10 +74,10 @@ Each tier adds complexity. Rankings stabilize from Tier 2 onward.
 
 | Model | Tier 1 | Tier 2 | Tier 3 | T1→T3 Drop |
 |-------|--------|--------|--------|------------|
-| Claude Opus 4.6 | 95.6% | 92.0% | 91.0% | −4.6 pp |
-| GPT-5.4 | 96.9% | 91.0% | 88.1% | −8.8 pp |
-| Gemini 3.1 Pro | 97.3% | 89.5% | 83.9% | −13.4 pp |
-| DeepSeek-R1 | 89.5% | 86.9% | 81.1% | −8.4 pp |
+| Claude Opus 4.6 | 95.6% | 92.0% | 91.3% | −4.3 pp |
+| GPT-5.4 | 96.9% | 91.0% | 88.3% | −8.6 pp |
+| Gemini 3.1 Pro | 97.3% | 89.5% | 84.1% | −13.2 pp |
+| DeepSeek-R1 | 89.5% | 86.9% | 81.2% | −8.3 pp |
 | MiniMax M2.5 | 84.5% | 73.4% | 40.2% | −44.3 pp |
 
 ## Key Findings
@@ -170,7 +170,7 @@ BRY-AV (variable cp air Brayton) separates models that memorize constant cp form
 
 #### 16. CCGT is the future-proof ceiling
 
-Combined cycle gas turbine (9 state points, dual fluids, HRSG coupling) is the hardest cycle. Best score: Opus at 75.9%. No model exceeds 76% — this problem class has headroom for years.
+Combined cycle gas turbine (9 state points, dual fluids, HRSG coupling) is the hardest cycle. Best score: Opus at 77.3%. No model exceeds 78% — this problem class has headroom for years.
 
 #### 17. R-134a IIR reference state restores fairness
 

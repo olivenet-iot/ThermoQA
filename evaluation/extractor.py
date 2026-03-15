@@ -573,7 +573,6 @@ TIER3_PROPERTY_PATTERNS: dict[str, list[tuple[str, float]]] = {
     "energy_balance_error": [(r"energy[_\s]?balance[_\s]?error\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
     "energy_balance_error_gas": [(r"energy[_\s]?balance[_\s]?error[_\s]?gas\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
     "energy_balance_error_steam": [(r"energy[_\s]?balance[_\s]?error[_\s]?steam\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
-    "hrsg_balance_error": [(r"hrsg[_\s]?balance[_\s]?error\s*[=:≈~]\s*" + _NUMCAP, 1.0)],
 }
 
 

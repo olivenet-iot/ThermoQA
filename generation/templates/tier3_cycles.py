@@ -756,7 +756,6 @@ _CCGT_B = [
     {"id": "s_gen_total", "formula": "sum", "unit": "kJ/(kg·K)", "weight": 5},
     {"id": "energy_balance_error_gas", "formula": "|q_cc - (w_gt-w_c) - q_hrsg| / q_cc", "unit": "-", "weight": 3},
     {"id": "energy_balance_error_steam", "formula": "|q_hrsg_steam - w_st_net - q_cond| / q_hrsg_steam", "unit": "-", "weight": 3},
-    {"id": "hrsg_balance_error", "formula": "|Q_air - Q_steam| / Q_air", "unit": "-", "weight": 3},
 ]
 _CCGT_C = [
     # Flow exergies (all states)
