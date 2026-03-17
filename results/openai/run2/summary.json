@@ -1,0 +1,98 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.4",
+  "total_questions": 110,
+  "total_responses": 110,
+  "total_properties": 290,
+  "total_correct_properties": 284,
+  "property_accuracy": 0.9793,
+  "mean_question_score": 0.9818,
+  "per_category": {
+    "subcooled_liquid": {
+      "n_questions": 10,
+      "n_props": 21,
+      "n_correct": 21,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "saturated_liquid": {
+      "n_questions": 12,
+      "n_props": 35,
+      "n_correct": 35,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "wet_steam": {
+      "n_questions": 18,
+      "n_props": 57,
+      "n_correct": 57,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "saturated_vapor": {
+      "n_questions": 10,
+      "n_props": 31,
+      "n_correct": 31,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "superheated_vapor": {
+      "n_questions": 20,
+      "n_props": 48,
+      "n_correct": 48,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "supercritical": {
+      "n_questions": 10,
+      "n_props": 45,
+      "n_correct": 41,
+      "mean_score": 0.9,
+      "accuracy": 0.9111
+    },
+    "phase_determination": {
+      "n_questions": 15,
+      "n_props": 15,
+      "n_correct": 15,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "inverse_lookups": {
+      "n_questions": 15,
+      "n_props": 38,
+      "n_correct": 36,
+      "mean_score": 0.9333,
+      "accuracy": 0.9474
+    }
+  },
+  "per_difficulty": {
+    "easy": {
+      "n_questions": 52,
+      "mean_score": 1.0
+    },
+    "medium": {
+      "n_questions": 30,
+      "mean_score": 0.9667
+    },
+    "hard": {
+      "n_questions": 28,
+      "mean_score": 0.9643
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 0,
+    "min_latency_s": 0,
+    "max_latency_s": 0,
+    "note": "Batch API — no per-request latency available"
+  },
+  "tokens": {
+    "total_input": 30038,
+    "total_output": 1191221,
+    "mean_input": 273.1,
+    "mean_output": 10829.3
+  },
+  "reextracted_at": "2026-03-17T07:43:58.638265+00:00",
+  "generated_at": "2026-03-15T13:00:03.819711+00:00",
+  "batch_id": "batch_69b6a3ed7ed48190955a27976f484dda"
+}

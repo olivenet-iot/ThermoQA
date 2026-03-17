@@ -1,0 +1,372 @@
+{
+  "provider": "google",
+  "model": "gemini-3.1-pro-preview",
+  "tier": 3,
+  "overall_score": 0.8611,
+  "total_questions": 82,
+  "total_responses": 82,
+  "total_properties": 2127,
+  "total_correct_properties": 1835,
+  "property_accuracy": 0.8627,
+  "by_cycle_type": {
+    "RNK": {
+      "score": 0.9264,
+      "count": 27
+    },
+    "BRY": {
+      "score": 0.8171,
+      "count": 28
+    },
+    "VCR": {
+      "score": 0.9142,
+      "count": 15
+    },
+    "CCGT": {
+      "score": 0.7505,
+      "count": 12
+    }
+  },
+  "by_depth": {
+    "A": {
+      "count": 29,
+      "score": 0.8213
+    },
+    "B": {
+      "count": 26,
+      "score": 0.938
+    },
+    "C": {
+      "count": 27,
+      "score": 0.8298
+    }
+  },
+  "by_fluid": {
+    "Water": {
+      "count": 27,
+      "score": 0.9264
+    },
+    "Air": {
+      "count": 28,
+      "score": 0.8171
+    },
+    "R-134a": {
+      "count": 15,
+      "score": 0.9142
+    },
+    "Air+Water": {
+      "count": 12,
+      "score": 0.7505
+    }
+  },
+  "by_ideal_vs_actual": {
+    "ideal": {
+      "count": 5,
+      "score": 0.9837
+    },
+    "actual": {
+      "count": 77,
+      "score": 0.8531
+    }
+  },
+  "by_step_type": {
+    "h1": {
+      "score": 0.9634
+    },
+    "h2s": {
+      "score": 0.9351
+    },
+    "h2": {
+      "score": 0.9024
+    },
+    "h3": {
+      "score": 0.9756
+    },
+    "h4s": {
+      "score": 0.8571
+    },
+    "h4": {
+      "score": 0.9268
+    },
+    "w_pump": {
+      "score": 0.9744
+    },
+    "q_in": {
+      "score": 0.9455
+    },
+    "w_turb": {
+      "score": 0.8889
+    },
+    "w_net": {
+      "score": 0.8182
+    },
+    "eta_th": {
+      "score": 0.8909
+    },
+    "W_dot_net": {
+      "score": 0.8182
+    },
+    "s1": {
+      "score": 0.8679
+    },
+    "s2": {
+      "score": 0.8679
+    },
+    "s3": {
+      "score": 0.8679
+    },
+    "s4": {
+      "score": 0.8679
+    },
+    "s_gen_pump": {
+      "score": 1.0
+    },
+    "s_gen_boiler": {
+      "score": 1.0
+    },
+    "s_gen_turb": {
+      "score": 0.9655
+    },
+    "s_gen_cond": {
+      "score": 0.9429
+    },
+    "s_gen_total": {
+      "score": 0.9811
+    },
+    "energy_balance_error": {
+      "score": 0.9762
+    },
+    "ef1": {
+      "score": 0.8148
+    },
+    "ef2": {
+      "score": 0.7037
+    },
+    "ef3": {
+      "score": 0.8889
+    },
+    "ef4": {
+      "score": 0.7407
+    },
+    "x_dest_boiler": {
+      "score": 0.8889
+    },
+    "x_dest_cond": {
+      "score": 0.4444
+    },
+    "x_dest_total": {
+      "score": 0.6296
+    },
+    "eta_II": {
+      "score": 0.913
+    },
+    "x_dest_pump": {
+      "score": 0.5833
+    },
+    "x_dest_turb": {
+      "score": 0.7692
+    },
+    "h5": {
+      "score": 0.9375
+    },
+    "h6": {
+      "score": 0.875
+    },
+    "w_HPT": {
+      "score": 0.5
+    },
+    "w_LPT": {
+      "score": 0.7
+    },
+    "w_comp": {
+      "score": 0.7455
+    },
+    "s_gen_comp": {
+      "score": 0.9722
+    },
+    "s_gen_cc": {
+      "score": 0.9615
+    },
+    "s_gen_hr": {
+      "score": 0.9444
+    },
+    "s5": {
+      "score": 0.9
+    },
+    "s6": {
+      "score": 0.9
+    },
+    "s_gen_HPT": {
+      "score": 1.0
+    },
+    "s_gen_reheater": {
+      "score": 1.0
+    },
+    "s_gen_LPT": {
+      "score": 1.0
+    },
+    "ef5": {
+      "score": 0.5
+    },
+    "ef6": {
+      "score": 0.5
+    },
+    "x_dest_HPT": {
+      "score": 0.3333
+    },
+    "x_dest_reheater": {
+      "score": 0.0
+    },
+    "x_dest_LPT": {
+      "score": 0.3333
+    },
+    "h5s": {
+      "score": 0.8
+    },
+    "x_dest_cc": {
+      "score": 0.6154
+    },
+    "x_dest_hr": {
+      "score": 0.7778
+    },
+    "x_dest_comp": {
+      "score": 0.6471
+    },
+    "s_gen_regen": {
+      "score": 1.0
+    },
+    "x_dest_regen": {
+      "score": 0.6667
+    },
+    "q_L": {
+      "score": 1.0
+    },
+    "q_H": {
+      "score": 1.0
+    },
+    "x4": {
+      "score": 1.0
+    },
+    "COP_R": {
+      "score": 0.8
+    },
+    "W_dot_comp": {
+      "score": 0.9333
+    },
+    "Q_dot_L": {
+      "score": 1.0
+    },
+    "s_gen_throttle": {
+      "score": 1.0
+    },
+    "s_gen_evap": {
+      "score": 1.0
+    },
+    "x_dest_throttle": {
+      "score": 0.8
+    },
+    "x_dest_evap": {
+      "score": 1.0
+    },
+    "COP_Carnot": {
+      "score": 1.0
+    },
+    "T2": {
+      "score": 0.7727
+    },
+    "T4": {
+      "score": 0.7778
+    },
+    "T5": {
+      "score": 0.75
+    },
+    "h7s": {
+      "score": 1.0
+    },
+    "h7": {
+      "score": 1.0
+    },
+    "h8": {
+      "score": 1.0
+    },
+    "h9s": {
+      "score": 0.6667
+    },
+    "h9": {
+      "score": 0.8333
+    },
+    "m_dot_steam": {
+      "score": 0.75
+    },
+    "q_combustion": {
+      "score": 0.9167
+    },
+    "w_gas_turb": {
+      "score": 0.75
+    },
+    "w_steam_turb": {
+      "score": 0.5
+    },
+    "W_net_combined": {
+      "score": 0.4167
+    },
+    "eta_combined": {
+      "score": 0.6667
+    },
+    "s7": {
+      "score": 1.0
+    },
+    "s8": {
+      "score": 1.0
+    },
+    "s9": {
+      "score": 1.0
+    },
+    "s_gen_gas_turb": {
+      "score": 1.0
+    },
+    "s_gen_HRSG": {
+      "score": 1.0
+    },
+    "s_gen_steam_turb": {
+      "score": 1.0
+    },
+    "energy_balance_error_gas": {
+      "score": 0.0
+    },
+    "energy_balance_error_steam": {
+      "score": 1.0
+    },
+    "ef7": {
+      "score": 0.5
+    },
+    "ef8": {
+      "score": 0.25
+    },
+    "ef9": {
+      "score": 0.25
+    },
+    "x_dest_gas_turb": {
+      "score": 0.25
+    },
+    "x_dest_HRSG": {
+      "score": 0.0
+    },
+    "x_dest_steam_turb": {
+      "score": 0.0
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 158.39,
+    "min_latency_s": 36.44,
+    "max_latency_s": 278.64
+  },
+  "tokens": {
+    "total_input": 60075,
+    "total_output": 184130,
+    "mean_input": 732.6,
+    "mean_output": 2245.5
+  },
+  "generated_at": "2026-03-16T12:11:06.590908+00:00",
+  "reextracted_at": "2026-03-17T08:00:18.032070+00:00"
+}

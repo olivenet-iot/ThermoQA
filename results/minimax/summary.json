@@ -1,0 +1,96 @@
+{
+  "provider": "minimax",
+  "model": "MiniMax-M2.5",
+  "total_questions": 110,
+  "total_responses": 110,
+  "total_properties": 290,
+  "total_correct_properties": 232,
+  "property_accuracy": 0.8,
+  "mean_question_score": 0.8447,
+  "per_category": {
+    "subcooled_liquid": {
+      "n_questions": 10,
+      "n_props": 21,
+      "n_correct": 19,
+      "mean_score": 0.9167,
+      "accuracy": 0.9048
+    },
+    "saturated_liquid": {
+      "n_questions": 12,
+      "n_props": 35,
+      "n_correct": 34,
+      "mean_score": 0.9792,
+      "accuracy": 0.9714
+    },
+    "wet_steam": {
+      "n_questions": 18,
+      "n_props": 57,
+      "n_correct": 53,
+      "mean_score": 0.9259,
+      "accuracy": 0.9298
+    },
+    "saturated_vapor": {
+      "n_questions": 10,
+      "n_props": 31,
+      "n_correct": 29,
+      "mean_score": 0.95,
+      "accuracy": 0.9355
+    },
+    "superheated_vapor": {
+      "n_questions": 20,
+      "n_props": 48,
+      "n_correct": 38,
+      "mean_score": 0.8333,
+      "accuracy": 0.7917
+    },
+    "supercritical": {
+      "n_questions": 10,
+      "n_props": 45,
+      "n_correct": 18,
+      "mean_score": 0.4333,
+      "accuracy": 0.4
+    },
+    "phase_determination": {
+      "n_questions": 15,
+      "n_props": 15,
+      "n_correct": 15,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "inverse_lookups": {
+      "n_questions": 15,
+      "n_props": 38,
+      "n_correct": 26,
+      "mean_score": 0.6556,
+      "accuracy": 0.6842
+    }
+  },
+  "per_difficulty": {
+    "easy": {
+      "n_questions": 52,
+      "mean_score": 0.9006
+    },
+    "medium": {
+      "n_questions": 30,
+      "mean_score": 0.7889
+    },
+    "hard": {
+      "n_questions": 28,
+      "mean_score": 0.7083
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 187.5,
+    "min_latency_s": 7.51,
+    "max_latency_s": 861.33
+  },
+  "tokens": {
+    "total_input": 30422,
+    "total_output": 830555,
+    "mean_input": 276.6,
+    "mean_output": 7550.5
+  },
+  "reextracted_at": "2026-03-08T09:46:27.279520+00:00",
+  "generated_at": "2026-03-08T09:48:33.353170+00:00"
+}

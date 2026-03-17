@@ -1,0 +1,98 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "total_questions": 110,
+  "total_responses": 110,
+  "total_properties": 290,
+  "total_correct_properties": 260,
+  "property_accuracy": 0.8966,
+  "mean_question_score": 0.9045,
+  "per_category": {
+    "inverse_lookups": {
+      "n_questions": 15,
+      "n_props": 38,
+      "n_correct": 33,
+      "mean_score": 0.8333,
+      "accuracy": 0.8684
+    },
+    "phase_determination": {
+      "n_questions": 15,
+      "n_props": 15,
+      "n_correct": 11,
+      "mean_score": 0.7333,
+      "accuracy": 0.7333
+    },
+    "supercritical": {
+      "n_questions": 10,
+      "n_props": 45,
+      "n_correct": 24,
+      "mean_score": 0.6,
+      "accuracy": 0.5333
+    },
+    "saturated_liquid": {
+      "n_questions": 12,
+      "n_props": 35,
+      "n_correct": 35,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "superheated_vapor": {
+      "n_questions": 20,
+      "n_props": 48,
+      "n_correct": 48,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "subcooled_liquid": {
+      "n_questions": 10,
+      "n_props": 21,
+      "n_correct": 21,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "saturated_vapor": {
+      "n_questions": 10,
+      "n_props": 31,
+      "n_correct": 31,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "wet_steam": {
+      "n_questions": 18,
+      "n_props": 57,
+      "n_correct": 57,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    }
+  },
+  "per_difficulty": {
+    "medium": {
+      "n_questions": 30,
+      "mean_score": 0.9167
+    },
+    "hard": {
+      "n_questions": 28,
+      "mean_score": 0.75
+    },
+    "easy": {
+      "n_questions": 52,
+      "mean_score": 0.9808
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 0,
+    "min_latency_s": 0,
+    "max_latency_s": 0,
+    "note": "Batch API - no per-request latency available"
+  },
+  "tokens": {
+    "total_input": 42586,
+    "total_output": 44666,
+    "mean_input": 387.1,
+    "mean_output": 406.1
+  },
+  "reextracted_at": "2026-03-17T07:43:56.507386+00:00",
+  "generated_at": "2026-03-15T13:51:31.200357+00:00",
+  "batch_id": "batch_728b5ee3-ad84-4467-9c04-260ce59f7d4c"
+}

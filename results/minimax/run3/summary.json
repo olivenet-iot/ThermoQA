@@ -1,0 +1,95 @@
+{
+  "provider": "minimax",
+  "model": "MiniMax-M2.5",
+  "total_questions": 110,
+  "total_responses": 110,
+  "total_properties": 290,
+  "total_correct_properties": 230,
+  "property_accuracy": 0.7931,
+  "mean_question_score": 0.825,
+  "per_category": {
+    "subcooled_liquid": {
+      "n_questions": 10,
+      "n_props": 21,
+      "n_correct": 19,
+      "mean_score": 0.9167,
+      "accuracy": 0.9048
+    },
+    "saturated_liquid": {
+      "n_questions": 12,
+      "n_props": 35,
+      "n_correct": 24,
+      "mean_score": 0.625,
+      "accuracy": 0.6857
+    },
+    "wet_steam": {
+      "n_questions": 18,
+      "n_props": 57,
+      "n_correct": 53,
+      "mean_score": 0.9259,
+      "accuracy": 0.9298
+    },
+    "saturated_vapor": {
+      "n_questions": 10,
+      "n_props": 31,
+      "n_correct": 30,
+      "mean_score": 0.975,
+      "accuracy": 0.9677
+    },
+    "superheated_vapor": {
+      "n_questions": 20,
+      "n_props": 48,
+      "n_correct": 43,
+      "mean_score": 0.9167,
+      "accuracy": 0.8958
+    },
+    "supercritical": {
+      "n_questions": 10,
+      "n_props": 45,
+      "n_correct": 19,
+      "mean_score": 0.4333,
+      "accuracy": 0.4222
+    },
+    "phase_determination": {
+      "n_questions": 15,
+      "n_props": 15,
+      "n_correct": 14,
+      "mean_score": 0.9333,
+      "accuracy": 0.9333
+    },
+    "inverse_lookups": {
+      "n_questions": 15,
+      "n_props": 38,
+      "n_correct": 28,
+      "mean_score": 0.7333,
+      "accuracy": 0.7368
+    }
+  },
+  "per_difficulty": {
+    "easy": {
+      "n_questions": 52,
+      "mean_score": 0.883
+    },
+    "medium": {
+      "n_questions": 30,
+      "mean_score": 0.8944
+    },
+    "hard": {
+      "n_questions": 28,
+      "mean_score": 0.6429
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 181.75,
+    "min_latency_s": 7.38,
+    "max_latency_s": 563.08
+  },
+  "tokens": {
+    "total_input": 30422,
+    "total_output": 863068,
+    "mean_input": 276.6,
+    "mean_output": 7846.1
+  },
+  "generated_at": "2026-03-16T17:22:17.789979+00:00"
+}

@@ -1,0 +1,96 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "total_questions": 110,
+  "total_responses": 110,
+  "total_properties": 290,
+  "total_correct_properties": 262,
+  "property_accuracy": 0.9034,
+  "mean_question_score": 0.9288,
+  "per_category": {
+    "inverse_lookups": {
+      "n_questions": 15,
+      "n_props": 38,
+      "n_correct": 37,
+      "mean_score": 0.9667,
+      "accuracy": 0.9737
+    },
+    "phase_determination": {
+      "n_questions": 15,
+      "n_props": 15,
+      "n_correct": 13,
+      "mean_score": 0.8667,
+      "accuracy": 0.8667
+    },
+    "supercritical": {
+      "n_questions": 10,
+      "n_props": 45,
+      "n_correct": 21,
+      "mean_score": 0.5,
+      "accuracy": 0.4667
+    },
+    "saturated_liquid": {
+      "n_questions": 12,
+      "n_props": 35,
+      "n_correct": 35,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "superheated_vapor": {
+      "n_questions": 20,
+      "n_props": 48,
+      "n_correct": 47,
+      "mean_score": 0.9833,
+      "accuracy": 0.9792
+    },
+    "subcooled_liquid": {
+      "n_questions": 10,
+      "n_props": 21,
+      "n_correct": 21,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "saturated_vapor": {
+      "n_questions": 10,
+      "n_props": 31,
+      "n_correct": 31,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "wet_steam": {
+      "n_questions": 18,
+      "n_props": 57,
+      "n_correct": 57,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    }
+  },
+  "per_difficulty": {
+    "medium": {
+      "n_questions": 30,
+      "mean_score": 0.9833
+    },
+    "hard": {
+      "n_questions": 28,
+      "mean_score": 0.7857
+    },
+    "easy": {
+      "n_questions": 52,
+      "mean_score": 0.9744
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 2.57,
+    "min_latency_s": 0.0,
+    "max_latency_s": 283.22
+  },
+  "tokens": {
+    "total_input": 42586,
+    "total_output": 46185,
+    "mean_input": 387.1,
+    "mean_output": 419.9
+  },
+  "reextracted_at": "2026-03-15T13:35:33.026144+00:00",
+  "generated_at": "2026-03-15T12:49:40.179282+00:00"
+}

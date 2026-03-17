@@ -1,0 +1,371 @@
+{
+  "provider": "minimax",
+  "model": "MiniMax-M2.5",
+  "tier": 3,
+  "overall_score": 0.4159,
+  "total_questions": 82,
+  "total_responses": 82,
+  "total_properties": 2127,
+  "total_correct_properties": 853,
+  "property_accuracy": 0.401,
+  "by_cycle_type": {
+    "RNK": {
+      "score": 0.4569,
+      "count": 27
+    },
+    "BRY": {
+      "score": 0.6383,
+      "count": 28
+    },
+    "VCR": {
+      "score": 0.1501,
+      "count": 15
+    },
+    "CCGT": {
+      "score": 0.1369,
+      "count": 12
+    }
+  },
+  "by_ideal_vs_actual": {
+    "ideal": {
+      "count": 5,
+      "score": 0.8936
+    },
+    "actual": {
+      "count": 77,
+      "score": 0.3848
+    }
+  },
+  "by_depth": {
+    "A": {
+      "count": 29,
+      "score": 0.397
+    },
+    "C": {
+      "count": 27,
+      "score": 0.3545
+    },
+    "B": {
+      "count": 26,
+      "score": 0.5006
+    }
+  },
+  "by_fluid": {
+    "Water": {
+      "count": 27,
+      "score": 0.4569
+    },
+    "Air": {
+      "count": 28,
+      "score": 0.6383
+    },
+    "R-134a": {
+      "count": 15,
+      "score": 0.1501
+    },
+    "Air+Water": {
+      "count": 12,
+      "score": 0.1369
+    }
+  },
+  "by_step_type": {
+    "h1": {
+      "score": 0.6585
+    },
+    "h2": {
+      "score": 0.5122
+    },
+    "h3": {
+      "score": 0.5
+    },
+    "h4": {
+      "score": 0.378
+    },
+    "w_pump": {
+      "score": 0.7179
+    },
+    "q_in": {
+      "score": 0.6
+    },
+    "w_turb": {
+      "score": 0.4667
+    },
+    "w_net": {
+      "score": 0.3636
+    },
+    "eta_th": {
+      "score": 0.4909
+    },
+    "W_dot_net": {
+      "score": 0.3636
+    },
+    "s1": {
+      "score": 0.566
+    },
+    "s2": {
+      "score": 0.566
+    },
+    "s3": {
+      "score": 0.566
+    },
+    "s4": {
+      "score": 0.566
+    },
+    "s_gen_pump": {
+      "score": 0.6
+    },
+    "s_gen_boiler": {
+      "score": 0.6471
+    },
+    "s_gen_turb": {
+      "score": 0.7931
+    },
+    "s_gen_cond": {
+      "score": 0.4857
+    },
+    "s_gen_total": {
+      "score": 0.5283
+    },
+    "ef1": {
+      "score": 0.2593
+    },
+    "ef2": {
+      "score": 0.2593
+    },
+    "ef3": {
+      "score": 0.2593
+    },
+    "ef4": {
+      "score": 0.2222
+    },
+    "x_dest_boiler": {
+      "score": 0.4444
+    },
+    "x_dest_cond": {
+      "score": 0.0556
+    },
+    "x_dest_total": {
+      "score": 0.2222
+    },
+    "eta_II": {
+      "score": 0.2609
+    },
+    "h2s": {
+      "score": 0.4935
+    },
+    "h4s": {
+      "score": 0.3095
+    },
+    "energy_balance_error": {
+      "score": 0.6429
+    },
+    "x_dest_pump": {
+      "score": 0.25
+    },
+    "x_dest_turb": {
+      "score": 0.3077
+    },
+    "h5": {
+      "score": 0.4375
+    },
+    "h6": {
+      "score": 0.4062
+    },
+    "w_HPT": {
+      "score": 0.1
+    },
+    "w_LPT": {
+      "score": 0.3
+    },
+    "s5": {
+      "score": 0.3
+    },
+    "s6": {
+      "score": 0.35
+    },
+    "s_gen_HPT": {
+      "score": 0.6667
+    },
+    "s_gen_reheater": {
+      "score": 0.6667
+    },
+    "s_gen_LPT": {
+      "score": 0.6667
+    },
+    "ef5": {
+      "score": 0.0
+    },
+    "ef6": {
+      "score": 0.1
+    },
+    "x_dest_HPT": {
+      "score": 0.0
+    },
+    "x_dest_reheater": {
+      "score": 0.0
+    },
+    "x_dest_LPT": {
+      "score": 0.0
+    },
+    "w_comp": {
+      "score": 0.3273
+    },
+    "s_gen_comp": {
+      "score": 0.5556
+    },
+    "s_gen_cc": {
+      "score": 0.6154
+    },
+    "s_gen_hr": {
+      "score": 0.7778
+    },
+    "x_dest_cc": {
+      "score": 0.3077
+    },
+    "x_dest_hr": {
+      "score": 0.4444
+    },
+    "x_dest_comp": {
+      "score": 0.1765
+    },
+    "h5s": {
+      "score": 0.4
+    },
+    "s_gen_regen": {
+      "score": 0.3333
+    },
+    "x_dest_regen": {
+      "score": 0.0
+    },
+    "q_L": {
+      "score": 0.0
+    },
+    "q_H": {
+      "score": 0.0667
+    },
+    "x4": {
+      "score": 0.2
+    },
+    "COP_R": {
+      "score": 0.0
+    },
+    "W_dot_comp": {
+      "score": 0.0
+    },
+    "Q_dot_L": {
+      "score": 0.0
+    },
+    "s_gen_throttle": {
+      "score": 0.4
+    },
+    "s_gen_evap": {
+      "score": 0.4
+    },
+    "x_dest_throttle": {
+      "score": 0.0
+    },
+    "x_dest_evap": {
+      "score": 0.0
+    },
+    "COP_Carnot": {
+      "score": 0.2
+    },
+    "T2": {
+      "score": 0.2273
+    },
+    "T4": {
+      "score": 0.0556
+    },
+    "T5": {
+      "score": 0.0
+    },
+    "h7s": {
+      "score": 0.3333
+    },
+    "h7": {
+      "score": 0.3333
+    },
+    "h8": {
+      "score": 0.0833
+    },
+    "h9s": {
+      "score": 0.0833
+    },
+    "h9": {
+      "score": 0.0833
+    },
+    "m_dot_steam": {
+      "score": 0.0833
+    },
+    "q_combustion": {
+      "score": 0.0833
+    },
+    "w_gas_turb": {
+      "score": 0.0
+    },
+    "w_steam_turb": {
+      "score": 0.0833
+    },
+    "W_net_combined": {
+      "score": 0.0833
+    },
+    "eta_combined": {
+      "score": 0.1667
+    },
+    "s7": {
+      "score": 0.25
+    },
+    "s8": {
+      "score": 0.125
+    },
+    "s9": {
+      "score": 0.25
+    },
+    "s_gen_gas_turb": {
+      "score": 0.25
+    },
+    "s_gen_HRSG": {
+      "score": 0.25
+    },
+    "s_gen_steam_turb": {
+      "score": 0.25
+    },
+    "energy_balance_error_gas": {
+      "score": 0.0
+    },
+    "energy_balance_error_steam": {
+      "score": 0.25
+    },
+    "ef7": {
+      "score": 0.0
+    },
+    "ef8": {
+      "score": 0.25
+    },
+    "ef9": {
+      "score": 0.25
+    },
+    "x_dest_gas_turb": {
+      "score": 0.0
+    },
+    "x_dest_HRSG": {
+      "score": 0.0
+    },
+    "x_dest_steam_turb": {
+      "score": 0.0
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 418.71,
+    "min_latency_s": 101.8,
+    "max_latency_s": 904.47
+  },
+  "tokens": {
+    "total_input": 55892,
+    "total_output": 1249164,
+    "mean_input": 681.6,
+    "mean_output": 15233.7
+  },
+  "generated_at": "2026-03-16T17:59:19.268968+00:00"
+}

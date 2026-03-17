@@ -1,0 +1,95 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "total_questions": 110,
+  "total_responses": 110,
+  "total_properties": 290,
+  "total_correct_properties": 223,
+  "property_accuracy": 0.769,
+  "mean_question_score": 0.7568,
+  "per_category": {
+    "inverse_lookups": {
+      "n_questions": 15,
+      "n_props": 38,
+      "n_correct": 25,
+      "mean_score": 0.65,
+      "accuracy": 0.6579
+    },
+    "phase_determination": {
+      "n_questions": 15,
+      "n_props": 15,
+      "n_correct": 8,
+      "mean_score": 0.5333,
+      "accuracy": 0.5333
+    },
+    "supercritical": {
+      "n_questions": 10,
+      "n_props": 45,
+      "n_correct": 19,
+      "mean_score": 0.4833,
+      "accuracy": 0.4222
+    },
+    "saturated_liquid": {
+      "n_questions": 12,
+      "n_props": 35,
+      "n_correct": 34,
+      "mean_score": 0.9167,
+      "accuracy": 0.9714
+    },
+    "superheated_vapor": {
+      "n_questions": 20,
+      "n_props": 48,
+      "n_correct": 46,
+      "mean_score": 0.9333,
+      "accuracy": 0.9583
+    },
+    "subcooled_liquid": {
+      "n_questions": 10,
+      "n_props": 21,
+      "n_correct": 16,
+      "mean_score": 0.7,
+      "accuracy": 0.7619
+    },
+    "saturated_vapor": {
+      "n_questions": 10,
+      "n_props": 31,
+      "n_correct": 31,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "wet_steam": {
+      "n_questions": 18,
+      "n_props": 57,
+      "n_correct": 44,
+      "mean_score": 0.7778,
+      "accuracy": 0.7719
+    }
+  },
+  "per_difficulty": {
+    "medium": {
+      "n_questions": 30,
+      "mean_score": 0.7667
+    },
+    "hard": {
+      "n_questions": 28,
+      "mean_score": 0.628
+    },
+    "easy": {
+      "n_questions": 52,
+      "mean_score": 0.8205
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 5.5,
+    "min_latency_s": 0.0,
+    "max_latency_s": 207.53
+  },
+  "tokens": {
+    "total_input": 42586,
+    "total_output": 44633,
+    "mean_input": 387.1,
+    "mean_output": 405.8
+  },
+  "generated_at": "2026-03-16T13:17:25.022018+00:00"
+}

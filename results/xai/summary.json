@@ -1,0 +1,47 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "batch_id": "batch_fb637aad-b6d2-4f39-9d34-0e07a0a9cff7",
+  "total_questions": 3,
+  "total_responses": 3,
+  "total_properties": 9,
+  "total_correct_properties": 9,
+  "property_accuracy": 1.0,
+  "mean_question_score": 1.0,
+  "per_category": {
+    "superheated_vapor": {
+      "n_questions": 1,
+      "n_props": 3,
+      "n_correct": 3,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    },
+    "subcooled_liquid": {
+      "n_questions": 2,
+      "n_props": 6,
+      "n_correct": 6,
+      "mean_score": 1.0,
+      "accuracy": 1.0
+    }
+  },
+  "per_difficulty": {
+    "easy": {
+      "n_questions": 3,
+      "mean_score": 1.0
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 0,
+    "min_latency_s": 0,
+    "max_latency_s": 0,
+    "note": "Batch API - no per-request latency available"
+  },
+  "tokens": {
+    "total_input": 1194,
+    "total_output": 1376,
+    "mean_input": 398.0,
+    "mean_output": 458.7
+  },
+  "generated_at": "2026-03-15T11:22:14.792599+00:00"
+}

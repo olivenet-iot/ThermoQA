@@ -1,0 +1,373 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.4",
+  "tier": 3,
+  "overall_score": 0.8972,
+  "total_questions": 82,
+  "total_responses": 82,
+  "total_properties": 2127,
+  "total_correct_properties": 1884,
+  "property_accuracy": 0.8858,
+  "by_cycle_type": {
+    "RNK": {
+      "score": 0.9376,
+      "count": 27
+    },
+    "BRY": {
+      "score": 0.9735,
+      "count": 28
+    },
+    "VCR": {
+      "score": 0.7462,
+      "count": 15
+    },
+    "CCGT": {
+      "score": 0.8167,
+      "count": 12
+    }
+  },
+  "by_depth": {
+    "A": {
+      "count": 29,
+      "score": 0.9146
+    },
+    "C": {
+      "count": 27,
+      "score": 0.8466
+    },
+    "B": {
+      "count": 26,
+      "score": 0.9303
+    }
+  },
+  "by_fluid": {
+    "Water": {
+      "count": 27,
+      "score": 0.9376
+    },
+    "Air": {
+      "count": 28,
+      "score": 0.9735
+    },
+    "R-134a": {
+      "count": 15,
+      "score": 0.7462
+    },
+    "Air+Water": {
+      "count": 12,
+      "score": 0.8167
+    }
+  },
+  "by_ideal_vs_actual": {
+    "ideal": {
+      "count": 5,
+      "score": 0.9857
+    },
+    "actual": {
+      "count": 77,
+      "score": 0.8914
+    }
+  },
+  "by_step_type": {
+    "h1": {
+      "score": 0.9878
+    },
+    "h2": {
+      "score": 0.9878
+    },
+    "h3": {
+      "score": 0.9878
+    },
+    "h4": {
+      "score": 0.9756
+    },
+    "w_pump": {
+      "score": 1.0
+    },
+    "q_in": {
+      "score": 1.0
+    },
+    "w_turb": {
+      "score": 0.9778
+    },
+    "w_net": {
+      "score": 0.9091
+    },
+    "eta_th": {
+      "score": 0.9818
+    },
+    "W_dot_net": {
+      "score": 0.9091
+    },
+    "s1": {
+      "score": 0.8113
+    },
+    "s2": {
+      "score": 0.8113
+    },
+    "s3": {
+      "score": 0.8113
+    },
+    "s4": {
+      "score": 0.8113
+    },
+    "s_gen_pump": {
+      "score": 1.0
+    },
+    "s_gen_boiler": {
+      "score": 1.0
+    },
+    "s_gen_turb": {
+      "score": 1.0
+    },
+    "s_gen_cond": {
+      "score": 0.9714
+    },
+    "s_gen_total": {
+      "score": 1.0
+    },
+    "ef1": {
+      "score": 0.8148
+    },
+    "ef2": {
+      "score": 0.8519
+    },
+    "ef3": {
+      "score": 0.8519
+    },
+    "ef4": {
+      "score": 0.7407
+    },
+    "x_dest_boiler": {
+      "score": 0.8889
+    },
+    "x_dest_cond": {
+      "score": 0.6111
+    },
+    "x_dest_total": {
+      "score": 0.6667
+    },
+    "eta_II": {
+      "score": 0.7826
+    },
+    "h2s": {
+      "score": 1.0
+    },
+    "h4s": {
+      "score": 0.9762
+    },
+    "energy_balance_error": {
+      "score": 1.0
+    },
+    "x_dest_pump": {
+      "score": 0.9167
+    },
+    "x_dest_turb": {
+      "score": 0.9231
+    },
+    "h5": {
+      "score": 1.0
+    },
+    "h6": {
+      "score": 0.9375
+    },
+    "w_HPT": {
+      "score": 0.4
+    },
+    "w_LPT": {
+      "score": 0.9
+    },
+    "s5": {
+      "score": 0.65
+    },
+    "s6": {
+      "score": 0.95
+    },
+    "s_gen_HPT": {
+      "score": 1.0
+    },
+    "s_gen_reheater": {
+      "score": 1.0
+    },
+    "s_gen_LPT": {
+      "score": 1.0
+    },
+    "ef5": {
+      "score": 0.8
+    },
+    "ef6": {
+      "score": 0.8
+    },
+    "x_dest_HPT": {
+      "score": 0.3333
+    },
+    "x_dest_reheater": {
+      "score": 0.0
+    },
+    "x_dest_LPT": {
+      "score": 0.6667
+    },
+    "w_comp": {
+      "score": 0.7636
+    },
+    "s_gen_comp": {
+      "score": 1.0
+    },
+    "s_gen_cc": {
+      "score": 1.0
+    },
+    "s_gen_hr": {
+      "score": 1.0
+    },
+    "x_dest_cc": {
+      "score": 0.7692
+    },
+    "x_dest_hr": {
+      "score": 0.8889
+    },
+    "x_dest_comp": {
+      "score": 0.7647
+    },
+    "h5s": {
+      "score": 0.9
+    },
+    "s_gen_regen": {
+      "score": 1.0
+    },
+    "x_dest_regen": {
+      "score": 0.6667
+    },
+    "q_L": {
+      "score": 0.8667
+    },
+    "q_H": {
+      "score": 1.0
+    },
+    "x4": {
+      "score": 1.0
+    },
+    "COP_R": {
+      "score": 0.2667
+    },
+    "W_dot_comp": {
+      "score": 0.5333
+    },
+    "Q_dot_L": {
+      "score": 0.8667
+    },
+    "s_gen_throttle": {
+      "score": 1.0
+    },
+    "s_gen_evap": {
+      "score": 1.0
+    },
+    "x_dest_throttle": {
+      "score": 0.2
+    },
+    "x_dest_evap": {
+      "score": 0.6
+    },
+    "COP_Carnot": {
+      "score": 1.0
+    },
+    "T2": {
+      "score": 1.0
+    },
+    "T4": {
+      "score": 0.9444
+    },
+    "T5": {
+      "score": 1.0
+    },
+    "h7s": {
+      "score": 0.9167
+    },
+    "h7": {
+      "score": 0.9167
+    },
+    "h8": {
+      "score": 0.5
+    },
+    "h9s": {
+      "score": 0.5
+    },
+    "h9": {
+      "score": 0.4167
+    },
+    "m_dot_steam": {
+      "score": 0.5
+    },
+    "q_combustion": {
+      "score": 0.8333
+    },
+    "w_gas_turb": {
+      "score": 0.9167
+    },
+    "w_steam_turb": {
+      "score": 0.4167
+    },
+    "W_net_combined": {
+      "score": 0.75
+    },
+    "eta_combined": {
+      "score": 1.0
+    },
+    "s7": {
+      "score": 1.0
+    },
+    "s8": {
+      "score": 1.0
+    },
+    "s9": {
+      "score": 1.0
+    },
+    "s_gen_gas_turb": {
+      "score": 1.0
+    },
+    "s_gen_HRSG": {
+      "score": 1.0
+    },
+    "s_gen_steam_turb": {
+      "score": 1.0
+    },
+    "energy_balance_error_gas": {
+      "score": 0.0
+    },
+    "energy_balance_error_steam": {
+      "score": 1.0
+    },
+    "ef7": {
+      "score": 0.75
+    },
+    "ef8": {
+      "score": 0.5
+    },
+    "ef9": {
+      "score": 0.25
+    },
+    "x_dest_gas_turb": {
+      "score": 0.5
+    },
+    "x_dest_HRSG": {
+      "score": 0.0
+    },
+    "x_dest_steam_turb": {
+      "score": 0.75
+    }
+  },
+  "errors": 0,
+  "timing": {
+    "mean_latency_s": 0.0,
+    "min_latency_s": 0.0,
+    "max_latency_s": 0.0
+  },
+  "tokens": {
+    "total_input": 55673,
+    "total_output": 1284521,
+    "mean_input": 678.9,
+    "mean_output": 15664.9
+  },
+  "generated_at": "2026-03-15T15:09:14.537147+00:00",
+  "reextracted_at": "2026-03-17T07:59:58.864859+00:00",
+  "batch_id": "batch_69b6ad8231608190816ecab50b91f499"
+}
