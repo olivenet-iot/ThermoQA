@@ -1,0 +1,78 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.4",
+  "tier": 1,
+  "n_runs": 3,
+  "run_paths": [
+    "results/openai/run1",
+    "results/openai/run2",
+    "results/openai/run3"
+  ],
+  "overall": {
+    "mean": 0.978,
+    "std": 0.0079
+  },
+  "property_accuracy": {
+    "mean": 0.9724,
+    "std": 0.0091
+  },
+  "by_category": {
+    "inverse_lookups": {
+      "mean": 0.9166,
+      "std": 0.0289,
+      "n_runs": 3
+    },
+    "phase_determination": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "saturated_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "saturated_vapor": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "subcooled_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "supercritical": {
+      "mean": 0.8945,
+      "std": 0.0255,
+      "n_runs": 3
+    },
+    "superheated_vapor": {
+      "mean": 0.9944,
+      "std": 0.0096,
+      "n_runs": 3
+    },
+    "wet_steam": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "hard": {
+      "mean": 0.9593,
+      "std": 0.014,
+      "n_runs": 3
+    },
+    "medium": {
+      "mean": 0.9574,
+      "std": 0.0161,
+      "n_runs": 3
+    }
+  }
+}

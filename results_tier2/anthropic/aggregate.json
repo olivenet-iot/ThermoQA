@@ -1,0 +1,90 @@
+{
+  "provider": "anthropic",
+  "model": "claude-opus-4-6",
+  "tier": 2,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier2/anthropic/run1",
+    "results_tier2/anthropic/run2",
+    "results_tier2/anthropic/run3"
+  ],
+  "overall": {
+    "mean": 0.9207,
+    "std": 0.0015
+  },
+  "property_accuracy": {
+    "mean": 0.9158,
+    "std": 0.0062
+  },
+  "by_component": {
+    "boiler": {
+      "mean": 0.9881,
+      "std": 0.0103,
+      "n_runs": 3
+    },
+    "compressor": {
+      "mean": 0.7542,
+      "std": 0.0092,
+      "n_runs": 3
+    },
+    "heat_exchanger": {
+      "mean": 0.9005,
+      "std": 0.0225,
+      "n_runs": 3
+    },
+    "mixing_chamber": {
+      "mean": 0.9149,
+      "std": 0.0042,
+      "n_runs": 3
+    },
+    "nozzle": {
+      "mean": 0.9339,
+      "std": 0.0075,
+      "n_runs": 3
+    },
+    "pump": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "turbine": {
+      "mean": 0.9685,
+      "std": 0.0024,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.8995,
+      "std": 0.0022,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.9083,
+      "std": 0.0066,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.9606,
+      "std": 0.014,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.9402,
+      "std": 0.024,
+      "n_runs": 3
+    },
+    "R134a": {
+      "mean": 0.5405,
+      "std": 0.0497,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9676,
+      "std": 0.0024,
+      "n_runs": 3
+    }
+  }
+}

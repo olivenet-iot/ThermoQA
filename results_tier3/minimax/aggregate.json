@@ -1,0 +1,80 @@
+{
+  "provider": "minimax",
+  "model": "MiniMax-M2.5",
+  "tier": 3,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier3/minimax/run1",
+    "results_tier3/minimax/run2",
+    "results_tier3/minimax/run3"
+  ],
+  "overall": {
+    "mean": 0.5268,
+    "std": 0.0146
+  },
+  "property_accuracy": {
+    "mean": 0.5515,
+    "std": 0.0148
+  },
+  "by_cycle_type": {
+    "BRY": {
+      "mean": 0.7282,
+      "std": 0.0361,
+      "n_runs": 3
+    },
+    "CCGT": {
+      "mean": 0.3177,
+      "std": 0.0312,
+      "n_runs": 3
+    },
+    "RNK": {
+      "mean": 0.5226,
+      "std": 0.0031,
+      "n_runs": 3
+    },
+    "VCR": {
+      "mean": 0.3254,
+      "std": 0.0413,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.4458,
+      "std": 0.023,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.6467,
+      "std": 0.0359,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.4982,
+      "std": 0.0085,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.7282,
+      "std": 0.0361,
+      "n_runs": 3
+    },
+    "Air+Water": {
+      "mean": 0.3177,
+      "std": 0.0312,
+      "n_runs": 3
+    },
+    "R-134a": {
+      "mean": 0.3254,
+      "std": 0.0413,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.5226,
+      "std": 0.0031,
+      "n_runs": 3
+    }
+  }
+}

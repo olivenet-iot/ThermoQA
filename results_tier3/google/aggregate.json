@@ -1,0 +1,80 @@
+{
+  "provider": "google",
+  "model": "gemini-3.1-pro-preview",
+  "tier": 3,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier3/google/run1",
+    "results_tier3/google/run2",
+    "results_tier3/google/run3"
+  ],
+  "overall": {
+    "mean": 0.8755,
+    "std": 0.0152
+  },
+  "property_accuracy": {
+    "mean": 0.8782,
+    "std": 0.0143
+  },
+  "by_cycle_type": {
+    "BRY": {
+      "mean": 0.8418,
+      "std": 0.0303,
+      "n_runs": 3
+    },
+    "CCGT": {
+      "mean": 0.7402,
+      "std": 0.0199,
+      "n_runs": 3
+    },
+    "RNK": {
+      "mean": 0.9518,
+      "std": 0.0113,
+      "n_runs": 3
+    },
+    "VCR": {
+      "mean": 0.9092,
+      "std": 0.0212,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.8441,
+      "std": 0.0107,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.9225,
+      "std": 0.018,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.864,
+      "std": 0.0256,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.8418,
+      "std": 0.0303,
+      "n_runs": 3
+    },
+    "Air+Water": {
+      "mean": 0.7402,
+      "std": 0.0199,
+      "n_runs": 3
+    },
+    "R-134a": {
+      "mean": 0.9092,
+      "std": 0.0212,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9518,
+      "std": 0.0113,
+      "n_runs": 3
+    }
+  }
+}

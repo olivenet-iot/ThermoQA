@@ -1,0 +1,80 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "tier": 3,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier3/xai/run1",
+    "results_tier3/xai/run2",
+    "results_tier3/xai/run3"
+  ],
+  "overall": {
+    "mean": 0.8037,
+    "std": 0.0078
+  },
+  "property_accuracy": {
+    "mean": 0.7952,
+    "std": 0.0096
+  },
+  "by_cycle_type": {
+    "BRY": {
+      "mean": 0.8318,
+      "std": 0.0343,
+      "n_runs": 3
+    },
+    "CCGT": {
+      "mean": 0.5863,
+      "std": 0.0297,
+      "n_runs": 3
+    },
+    "RNK": {
+      "mean": 0.9089,
+      "std": 0.005,
+      "n_runs": 3
+    },
+    "VCR": {
+      "mean": 0.7357,
+      "std": 0.0424,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.8009,
+      "std": 0.0104,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.8188,
+      "std": 0.0328,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.7922,
+      "std": 0.0111,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.8318,
+      "std": 0.0343,
+      "n_runs": 3
+    },
+    "Air+Water": {
+      "mean": 0.5863,
+      "std": 0.0297,
+      "n_runs": 3
+    },
+    "R-134a": {
+      "mean": 0.7357,
+      "std": 0.0424,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9089,
+      "std": 0.005,
+      "n_runs": 3
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "provider": "anthropic",
+  "model": "claude-opus-4-6",
+  "tier": 3,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier3/anthropic/run1",
+    "results_tier3/anthropic/run2",
+    "results_tier3/anthropic/run3"
+  ],
+  "overall": {
+    "mean": 0.9356,
+    "std": 0.0051
+  },
+  "property_accuracy": {
+    "mean": 0.9279,
+    "std": 0.0063
+  },
+  "by_cycle_type": {
+    "BRY": {
+      "mean": 0.9918,
+      "std": 0.0047,
+      "n_runs": 3
+    },
+    "CCGT": {
+      "mean": 0.9014,
+      "std": 0.0233,
+      "n_runs": 3
+    },
+    "RNK": {
+      "mean": 0.9591,
+      "std": 0.0181,
+      "n_runs": 3
+    },
+    "VCR": {
+      "mean": 0.8158,
+      "std": 0.0295,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.9355,
+      "std": 0.0148,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.961,
+      "std": 0.0136,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.9112,
+      "std": 0.0127,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.9918,
+      "std": 0.0047,
+      "n_runs": 3
+    },
+    "Air+Water": {
+      "mean": 0.9014,
+      "std": 0.0233,
+      "n_runs": 3
+    },
+    "R-134a": {
+      "mean": 0.8158,
+      "std": 0.0295,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9591,
+      "std": 0.0181,
+      "n_runs": 3
+    }
+  }
+}

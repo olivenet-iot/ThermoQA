@@ -1,0 +1,90 @@
+{
+  "provider": "google",
+  "model": "gemini-3.1-pro-preview",
+  "tier": 2,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier2/google/run1",
+    "results_tier2/google/run2",
+    "results_tier2/google/run3"
+  ],
+  "overall": {
+    "mean": 0.9076,
+    "std": 0.0124
+  },
+  "property_accuracy": {
+    "mean": 0.8908,
+    "std": 0.0089
+  },
+  "by_component": {
+    "boiler": {
+      "mean": 0.9851,
+      "std": 0.0257,
+      "n_runs": 3
+    },
+    "compressor": {
+      "mean": 0.6628,
+      "std": 0.0671,
+      "n_runs": 3
+    },
+    "heat_exchanger": {
+      "mean": 0.8915,
+      "std": 0.0082,
+      "n_runs": 3
+    },
+    "mixing_chamber": {
+      "mean": 0.9855,
+      "std": 0.0073,
+      "n_runs": 3
+    },
+    "nozzle": {
+      "mean": 0.9172,
+      "std": 0.0051,
+      "n_runs": 3
+    },
+    "pump": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "turbine": {
+      "mean": 0.9439,
+      "std": 0.0207,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.9008,
+      "std": 0.0199,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.8951,
+      "std": 0.0091,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.9304,
+      "std": 0.0086,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.8395,
+      "std": 0.0231,
+      "n_runs": 3
+    },
+    "R134a": {
+      "mean": 0.4759,
+      "std": 0.0308,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9816,
+      "std": 0.0113,
+      "n_runs": 3
+    }
+  }
+}

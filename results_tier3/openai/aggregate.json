@@ -1,0 +1,80 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.4",
+  "tier": 3,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier3/openai/run1",
+    "results_tier3/openai/run2",
+    "results_tier3/openai/run3"
+  ],
+  "overall": {
+    "mean": 0.8974,
+    "std": 0.0013
+  },
+  "property_accuracy": {
+    "mean": 0.8869,
+    "std": 0.0055
+  },
+  "by_cycle_type": {
+    "BRY": {
+      "mean": 0.9783,
+      "std": 0.0083,
+      "n_runs": 3
+    },
+    "CCGT": {
+      "mean": 0.8196,
+      "std": 0.0026,
+      "n_runs": 3
+    },
+    "RNK": {
+      "mean": 0.9208,
+      "std": 0.0147,
+      "n_runs": 3
+    },
+    "VCR": {
+      "mean": 0.7665,
+      "std": 0.0235,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.9077,
+      "std": 0.0164,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.9242,
+      "std": 0.0073,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.8605,
+      "std": 0.0143,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.9783,
+      "std": 0.0083,
+      "n_runs": 3
+    },
+    "Air+Water": {
+      "mean": 0.8196,
+      "std": 0.0026,
+      "n_runs": 3
+    },
+    "R-134a": {
+      "mean": 0.7665,
+      "std": 0.0235,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9208,
+      "std": 0.0147,
+      "n_runs": 3
+    }
+  }
+}

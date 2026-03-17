@@ -1,0 +1,90 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "tier": 2,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier2/xai/run1",
+    "results_tier2/xai/run2",
+    "results_tier2/xai/run3"
+  ],
+  "overall": {
+    "mean": 0.8792,
+    "std": 0.0067
+  },
+  "property_accuracy": {
+    "mean": 0.8788,
+    "std": 0.0043
+  },
+  "by_component": {
+    "boiler": {
+      "mean": 0.9375,
+      "std": 0.0089,
+      "n_runs": 3
+    },
+    "compressor": {
+      "mean": 0.6484,
+      "std": 0.0341,
+      "n_runs": 3
+    },
+    "heat_exchanger": {
+      "mean": 0.8554,
+      "std": 0.0049,
+      "n_runs": 3
+    },
+    "mixing_chamber": {
+      "mean": 0.9811,
+      "std": 0.0038,
+      "n_runs": 3
+    },
+    "nozzle": {
+      "mean": 0.8911,
+      "std": 0.0314,
+      "n_runs": 3
+    },
+    "pump": {
+      "mean": 0.9901,
+      "std": 0.0113,
+      "n_runs": 3
+    },
+    "turbine": {
+      "mean": 0.8995,
+      "std": 0.0188,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.8221,
+      "std": 0.0179,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.8829,
+      "std": 0.001,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.9432,
+      "std": 0.0118,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.8827,
+      "std": 0.01,
+      "n_runs": 3
+    },
+    "R134a": {
+      "mean": 0.4395,
+      "std": 0.0127,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.9377,
+      "std": 0.0121,
+      "n_runs": 3
+    }
+  }
+}

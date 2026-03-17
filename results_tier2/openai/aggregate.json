@@ -1,0 +1,90 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.4",
+  "tier": 2,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier2/openai/run1",
+    "results_tier2/openai/run2",
+    "results_tier2/openai/run3"
+  ],
+  "overall": {
+    "mean": 0.9079,
+    "std": 0.0053
+  },
+  "property_accuracy": {
+    "mean": 0.9042,
+    "std": 0.0041
+  },
+  "by_component": {
+    "boiler": {
+      "mean": 0.9905,
+      "std": 0.0165,
+      "n_runs": 3
+    },
+    "compressor": {
+      "mean": 0.712,
+      "std": 0.0329,
+      "n_runs": 3
+    },
+    "heat_exchanger": {
+      "mean": 0.8478,
+      "std": 0.0052,
+      "n_runs": 3
+    },
+    "mixing_chamber": {
+      "mean": 0.9904,
+      "std": 0.0042,
+      "n_runs": 3
+    },
+    "nozzle": {
+      "mean": 0.9664,
+      "std": 0.0214,
+      "n_runs": 3
+    },
+    "pump": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "turbine": {
+      "mean": 0.9079,
+      "std": 0.0158,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.8824,
+      "std": 0.0146,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.908,
+      "std": 0.0172,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.9385,
+      "std": 0.008,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.936,
+      "std": 0.0189,
+      "n_runs": 3
+    },
+    "R134a": {
+      "mean": 0.5043,
+      "std": 0.0268,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.956,
+      "std": 0.0046,
+      "n_runs": 3
+    }
+  }
+}

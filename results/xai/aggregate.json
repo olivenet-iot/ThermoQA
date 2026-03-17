@@ -1,0 +1,78 @@
+{
+  "provider": "xai",
+  "model": "grok-4.20-beta-0309-reasoning",
+  "tier": 1,
+  "n_runs": 3,
+  "run_paths": [
+    "results/xai/run1",
+    "results/xai/run2",
+    "results/xai/run3"
+  ],
+  "overall": {
+    "mean": 0.9182,
+    "std": 0.0124
+  },
+  "property_accuracy": {
+    "mean": 0.8977,
+    "std": 0.0052
+  },
+  "by_category": {
+    "inverse_lookups": {
+      "mean": 0.9,
+      "std": 0.0667,
+      "n_runs": 3
+    },
+    "phase_determination": {
+      "mean": 0.8222,
+      "std": 0.077,
+      "n_runs": 3
+    },
+    "saturated_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "saturated_vapor": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "subcooled_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "supercritical": {
+      "mean": 0.5278,
+      "std": 0.0631,
+      "n_runs": 3
+    },
+    "superheated_vapor": {
+      "mean": 0.9944,
+      "std": 0.0096,
+      "n_runs": 3
+    },
+    "wet_steam": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "mean": 0.9787,
+      "std": 0.0037,
+      "n_runs": 3
+    },
+    "hard": {
+      "mean": 0.7718,
+      "std": 0.0191,
+      "n_runs": 3
+    },
+    "medium": {
+      "mean": 0.95,
+      "std": 0.0333,
+      "n_runs": 3
+    }
+  }
+}

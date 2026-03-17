@@ -1,0 +1,78 @@
+{
+  "provider": "anthropic",
+  "model": "claude-opus-4-6",
+  "tier": 1,
+  "n_runs": 3,
+  "run_paths": [
+    "results/anthropic/run1",
+    "results/anthropic/run2",
+    "results/anthropic/run3"
+  ],
+  "overall": {
+    "mean": 0.9641,
+    "std": 0.0092
+  },
+  "property_accuracy": {
+    "mean": 0.9448,
+    "std": 0.0104
+  },
+  "by_category": {
+    "inverse_lookups": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "phase_determination": {
+      "mean": 0.9555,
+      "std": 0.0385,
+      "n_runs": 3
+    },
+    "saturated_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "saturated_vapor": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "subcooled_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "supercritical": {
+      "mean": 0.7055,
+      "std": 0.0385,
+      "n_runs": 3
+    },
+    "superheated_vapor": {
+      "mean": 0.9889,
+      "std": 0.0096,
+      "n_runs": 3
+    },
+    "wet_steam": {
+      "mean": 0.9938,
+      "std": 0.0107,
+      "n_runs": 3
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "mean": 0.9872,
+      "std": 0.0111,
+      "n_runs": 3
+    },
+    "hard": {
+      "mean": 0.8948,
+      "std": 0.0137,
+      "n_runs": 3
+    },
+    "medium": {
+      "mean": 0.9889,
+      "std": 0.0111,
+      "n_runs": 3
+    }
+  }
+}

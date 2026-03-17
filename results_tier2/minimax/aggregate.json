@@ -1,0 +1,90 @@
+{
+  "provider": "minimax",
+  "model": "MiniMax-M2.5",
+  "tier": 2,
+  "n_runs": 3,
+  "run_paths": [
+    "results_tier2/minimax/run1",
+    "results_tier2/minimax/run2",
+    "results_tier2/minimax/run3"
+  ],
+  "overall": {
+    "mean": 0.7618,
+    "std": 0.0106
+  },
+  "property_accuracy": {
+    "mean": 0.7946,
+    "std": 0.0087
+  },
+  "by_component": {
+    "boiler": {
+      "mean": 0.7129,
+      "std": 0.0322,
+      "n_runs": 3
+    },
+    "compressor": {
+      "mean": 0.5551,
+      "std": 0.0146,
+      "n_runs": 3
+    },
+    "heat_exchanger": {
+      "mean": 0.876,
+      "std": 0.0125,
+      "n_runs": 3
+    },
+    "mixing_chamber": {
+      "mean": 0.885,
+      "std": 0.018,
+      "n_runs": 3
+    },
+    "nozzle": {
+      "mean": 0.6828,
+      "std": 0.0526,
+      "n_runs": 3
+    },
+    "pump": {
+      "mean": 0.9753,
+      "std": 0.0238,
+      "n_runs": 3
+    },
+    "turbine": {
+      "mean": 0.7006,
+      "std": 0.0035,
+      "n_runs": 3
+    }
+  },
+  "by_depth": {
+    "A": {
+      "mean": 0.7191,
+      "std": 0.0044,
+      "n_runs": 3
+    },
+    "B": {
+      "mean": 0.7872,
+      "std": 0.0264,
+      "n_runs": 3
+    },
+    "C": {
+      "mean": 0.7833,
+      "std": 0.0116,
+      "n_runs": 3
+    }
+  },
+  "by_fluid": {
+    "Air": {
+      "mean": 0.9625,
+      "std": 0.0106,
+      "n_runs": 3
+    },
+    "R134a": {
+      "mean": 0.5419,
+      "std": 0.0346,
+      "n_runs": 3
+    },
+    "Water": {
+      "mean": 0.7453,
+      "std": 0.0085,
+      "n_runs": 3
+    }
+  }
+}

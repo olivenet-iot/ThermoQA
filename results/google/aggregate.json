@@ -1,0 +1,78 @@
+{
+  "provider": "google",
+  "model": "gemini-3.1-pro-preview",
+  "tier": 1,
+  "n_runs": 3,
+  "run_paths": [
+    "results/google/run1",
+    "results/google/run2",
+    "results/google/run3"
+  ],
+  "overall": {
+    "mean": 0.9788,
+    "std": 0.0053
+  },
+  "property_accuracy": {
+    "mean": 0.9609,
+    "std": 0.0111
+  },
+  "by_category": {
+    "inverse_lookups": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "phase_determination": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "saturated_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "saturated_vapor": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "subcooled_liquid": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "supercritical": {
+      "mean": 0.7778,
+      "std": 0.0385,
+      "n_runs": 3
+    },
+    "superheated_vapor": {
+      "mean": 0.9944,
+      "std": 0.0096,
+      "n_runs": 3
+    },
+    "wet_steam": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "mean": 1.0,
+      "std": 0.0,
+      "n_runs": 3
+    },
+    "hard": {
+      "mean": 0.9207,
+      "std": 0.0137,
+      "n_runs": 3
+    },
+    "medium": {
+      "mean": 0.9963,
+      "std": 0.0064,
+      "n_runs": 3
+    }
+  }
+}

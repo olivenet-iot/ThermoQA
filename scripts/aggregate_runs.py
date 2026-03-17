@@ -3,7 +3,8 @@
 Aggregate multi-run evaluation results for consistency analysis.
 
 Usage:
-    python scripts/aggregate_runs.py --provider anthropic --tier 3
+    python scripts/aggregate_runs.py --provider anthropic --tier 1
+    python scripts/aggregate_runs.py --all --tier 2
     python scripts/aggregate_runs.py --all --tier 3
 """
 
@@ -15,7 +16,35 @@ import os
 import sys
 
 
-def aggregate_provider(provider_dir: str) -> dict | None:
+def _mean_std(values):
+    if not values:
+        return 0.0, 0.0
+    m = sum(values) / len(values)
+    if len(values) < 2:
+        return m, 0.0
+    variance = sum((v - m) ** 2 for v in values) / (len(values) - 1)
+    return m, math.sqrt(variance)
+
+
+def _aggregate_breakdown(summaries, key):
+    """Aggregate a breakdown dict (by_cycle_type, by_component, per_category, etc.)."""
+    all_keys = set()
+    for s in summaries:
+        all_keys.update(s.get(key, {}).keys())
+    result = {}
+    for k in sorted(all_keys):
+        # Try 'score' first (T2/T3), then 'mean_score' (T1 per_category)
+        vals = []
+        for s in summaries:
+            entry = s.get(key, {}).get(k, {})
+            v = entry.get("score", entry.get("mean_score", entry.get("mean_question_score", 0)))
+            vals.append(v)
+        m, sd = _mean_std(vals)
+        result[k] = {"mean": round(m, 4), "std": round(sd, 4), "n_runs": len(summaries)}
+    return result
+
+
+def aggregate_provider(provider_dir: str, tier: int) -> dict | None:
     """Aggregate run*/summary.json files in a provider directory."""
     pattern = os.path.join(provider_dir, "run*", "summary.json")
     paths = sorted(glob.glob(pattern))
@@ -29,59 +58,37 @@ def aggregate_provider(provider_dir: str) -> dict | None:
 
     n = len(summaries)
 
-    def mean_std(values):
-        if not values:
-            return 0.0, 0.0
-        m = sum(values) / len(values)
-        if len(values) < 2:
-            return m, 0.0
-        variance = sum((v - m) ** 2 for v in values) / (len(values) - 1)
-        return m, math.sqrt(variance)
+    # Overall score — T1 uses mean_question_score, T2/T3 use overall_score
+    scores = [s.get("overall_score", s.get("mean_question_score", 0)) for s in summaries]
+    overall_mean, overall_std = _mean_std(scores)
 
-    # Overall score
-    scores = [s["overall_score"] for s in summaries]
-    overall_mean, overall_std = mean_std(scores)
+    # Property accuracy
+    prop_accs = [s.get("property_accuracy", 0) for s in summaries]
+    prop_mean, prop_std = _mean_std(prop_accs)
 
-    # Per-cycle type
-    all_cycle_types = set()
-    for s in summaries:
-        all_cycle_types.update(s.get("by_cycle_type", {}).keys())
-    by_cycle_type = {}
-    for ct in sorted(all_cycle_types):
-        vals = [s.get("by_cycle_type", {}).get(ct, {}).get("score", 0) for s in summaries]
-        m, sd = mean_std(vals)
-        by_cycle_type[ct] = {"mean": round(m, 4), "std": round(sd, 4), "n_runs": n}
-
-    # Per-depth
-    all_depths = set()
-    for s in summaries:
-        all_depths.update(s.get("by_depth", {}).keys())
-    by_depth = {}
-    for d in sorted(all_depths):
-        vals = [s.get("by_depth", {}).get(d, {}).get("score", 0) for s in summaries]
-        m, sd = mean_std(vals)
-        by_depth[d] = {"mean": round(m, 4), "std": round(sd, 4), "n_runs": n}
-
-    # Per-fluid
-    all_fluids = set()
-    for s in summaries:
-        all_fluids.update(s.get("by_fluid", {}).keys())
-    by_fluid = {}
-    for fl in sorted(all_fluids):
-        vals = [s.get("by_fluid", {}).get(fl, {}).get("score", 0) for s in summaries]
-        m, sd = mean_std(vals)
-        by_fluid[fl] = {"mean": round(m, 4), "std": round(sd, 4), "n_runs": n}
-
-    return {
+    result = {
         "provider": summaries[0].get("provider", ""),
         "model": summaries[0].get("model", ""),
+        "tier": tier,
         "n_runs": n,
         "run_paths": [os.path.dirname(p) for p in paths],
         "overall": {"mean": round(overall_mean, 4), "std": round(overall_std, 4)},
-        "by_cycle_type": by_cycle_type,
-        "by_depth": by_depth,
-        "by_fluid": by_fluid,
+        "property_accuracy": {"mean": round(prop_mean, 4), "std": round(prop_std, 4)},
     }
+
+    if tier == 1:
+        result["by_category"] = _aggregate_breakdown(summaries, "per_category")
+        result["by_difficulty"] = _aggregate_breakdown(summaries, "per_difficulty")
+    elif tier == 2:
+        result["by_component"] = _aggregate_breakdown(summaries, "by_component")
+        result["by_depth"] = _aggregate_breakdown(summaries, "by_depth")
+        result["by_fluid"] = _aggregate_breakdown(summaries, "by_fluid")
+    elif tier == 3:
+        result["by_cycle_type"] = _aggregate_breakdown(summaries, "by_cycle_type")
+        result["by_depth"] = _aggregate_breakdown(summaries, "by_depth")
+        result["by_fluid"] = _aggregate_breakdown(summaries, "by_fluid")
+
+    return result
 
 
 def main():
@@ -118,7 +125,7 @@ def main():
             print(f"Provider directory not found: {provider_dir}")
             continue
 
-        result = aggregate_provider(provider_dir)
+        result = aggregate_provider(provider_dir, args.tier)
         if result is None:
             print(f"{provider}: no run*/summary.json found, skipping")
             continue
