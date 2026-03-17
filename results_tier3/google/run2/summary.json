@@ -2,19 +2,19 @@
   "provider": "google",
   "model": "gemini-3.1-pro-preview",
   "tier": 3,
-  "overall_score": 0.8611,
+  "overall_score": 0.8787,
   "total_questions": 82,
   "total_responses": 82,
   "total_properties": 2127,
-  "total_correct_properties": 1835,
-  "property_accuracy": 0.8627,
+  "total_correct_properties": 1869,
+  "property_accuracy": 0.8787,
   "by_cycle_type": {
     "RNK": {
-      "score": 0.9264,
+      "score": 0.9569,
       "count": 27
     },
     "BRY": {
-      "score": 0.8171,
+      "score": 0.8393,
       "count": 28
     },
     "VCR": {
@@ -29,7 +29,7 @@
   "by_depth": {
     "A": {
       "count": 29,
-      "score": 0.8213
+      "score": 0.8497
     },
     "B": {
       "count": 26,
@@ -37,17 +37,17 @@
     },
     "C": {
       "count": 27,
-      "score": 0.8298
+      "score": 0.8528
     }
   },
   "by_fluid": {
     "Water": {
       "count": 27,
-      "score": 0.9264
+      "score": 0.9569
     },
     "Air": {
       "count": 28,
-      "score": 0.8171
+      "score": 0.8393
     },
     "R-134a": {
       "count": 15,
@@ -65,57 +65,57 @@
     },
     "actual": {
       "count": 77,
-      "score": 0.8531
+      "score": 0.8719
     }
   },
   "by_step_type": {
     "h1": {
-      "score": 0.9634
+      "score": 0.9878
     },
     "h2s": {
-      "score": 0.9351
+      "score": 0.9481
     },
     "h2": {
-      "score": 0.9024
-    },
-    "h3": {
-      "score": 0.9756
-    },
-    "h4s": {
-      "score": 0.8571
-    },
-    "h4": {
       "score": 0.9268
     },
+    "h3": {
+      "score": 0.9878
+    },
+    "h4s": {
+      "score": 0.881
+    },
+    "h4": {
+      "score": 0.9512
+    },
     "w_pump": {
-      "score": 0.9744
+      "score": 1.0
     },
     "q_in": {
-      "score": 0.9455
+      "score": 0.9818
     },
     "w_turb": {
-      "score": 0.8889
+      "score": 0.9111
     },
     "w_net": {
-      "score": 0.8182
+      "score": 0.8364
     },
     "eta_th": {
-      "score": 0.8909
+      "score": 0.9273
     },
     "W_dot_net": {
       "score": 0.8182
     },
     "s1": {
-      "score": 0.8679
+      "score": 0.8868
     },
     "s2": {
-      "score": 0.8679
+      "score": 0.8868
     },
     "s3": {
-      "score": 0.8679
+      "score": 0.8868
     },
     "s4": {
-      "score": 0.8679
+      "score": 0.8868
     },
     "s_gen_pump": {
       "score": 1.0
@@ -124,25 +124,25 @@
       "score": 1.0
     },
     "s_gen_turb": {
-      "score": 0.9655
+      "score": 1.0
     },
     "s_gen_cond": {
       "score": 0.9429
     },
     "s_gen_total": {
-      "score": 0.9811
+      "score": 1.0
     },
     "energy_balance_error": {
-      "score": 0.9762
+      "score": 1.0
     },
     "ef1": {
-      "score": 0.8148
+      "score": 0.8519
     },
     "ef2": {
-      "score": 0.7037
+      "score": 0.7407
     },
     "ef3": {
-      "score": 0.8889
+      "score": 0.9259
     },
     "ef4": {
       "score": 0.7407
@@ -157,7 +157,7 @@
       "score": 0.6296
     },
     "eta_II": {
-      "score": 0.913
+      "score": 0.9565
     },
     "x_dest_pump": {
       "score": 0.5833
@@ -169,25 +169,25 @@
       "score": 0.9375
     },
     "h6": {
-      "score": 0.875
+      "score": 0.9062
     },
     "w_HPT": {
-      "score": 0.5
+      "score": 0.6
     },
     "w_LPT": {
-      "score": 0.7
+      "score": 0.8
     },
     "w_comp": {
-      "score": 0.7455
+      "score": 0.7636
     },
     "s_gen_comp": {
-      "score": 0.9722
+      "score": 1.0
     },
     "s_gen_cc": {
-      "score": 0.9615
+      "score": 1.0
     },
     "s_gen_hr": {
-      "score": 0.9444
+      "score": 1.0
     },
     "s5": {
       "score": 0.9
@@ -368,5 +368,5 @@
     "mean_output": 2245.5
   },
   "generated_at": "2026-03-16T12:11:06.590908+00:00",
-  "reextracted_at": "2026-03-17T08:00:18.032070+00:00"
+  "reextracted_at": "2026-03-17T09:17:03.216048+00:00"
 }

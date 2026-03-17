@@ -4,9 +4,9 @@
   "total_questions": 110,
   "total_responses": 110,
   "total_properties": 290,
-  "total_correct_properties": 230,
-  "property_accuracy": 0.7931,
-  "mean_question_score": 0.8409,
+  "total_correct_properties": 236,
+  "property_accuracy": 0.8138,
+  "mean_question_score": 0.8545,
   "per_category": {
     "subcooled_liquid": {
       "n_questions": 10,
@@ -25,9 +25,9 @@
     "wet_steam": {
       "n_questions": 18,
       "n_props": 57,
-      "n_correct": 49,
-      "mean_score": 0.8519,
-      "accuracy": 0.8596
+      "n_correct": 52,
+      "mean_score": 0.9074,
+      "accuracy": 0.9123
     },
     "saturated_vapor": {
       "n_questions": 10,
@@ -46,9 +46,9 @@
     "supercritical": {
       "n_questions": 10,
       "n_props": 45,
-      "n_correct": 15,
-      "mean_score": 0.3667,
-      "accuracy": 0.3333
+      "n_correct": 18,
+      "mean_score": 0.4167,
+      "accuracy": 0.4
     },
     "phase_determination": {
       "n_questions": 15,
@@ -76,7 +76,7 @@
     },
     "hard": {
       "n_questions": 28,
-      "mean_score": 0.6667
+      "mean_score": 0.7202
     }
   },
   "errors": 0,
@@ -91,6 +91,6 @@
     "mean_input": 276.6,
     "mean_output": 7474.4
   },
-  "reextracted_at": "2026-03-17T07:47:05.585116+00:00",
+  "reextracted_at": "2026-03-17T09:12:37.133494+00:00",
   "generated_at": "2026-03-15T14:33:37.403548+00:00"
 }

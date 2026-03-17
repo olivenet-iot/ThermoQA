@@ -2,12 +2,12 @@
   "provider": "xai",
   "model": "grok-4.20-beta-0309-reasoning",
   "tier": 3,
-  "overall_score": 0.8068,
+  "overall_score": 0.8093,
   "total_questions": 82,
   "total_responses": 82,
   "total_properties": 2127,
-  "total_correct_properties": 1700,
-  "property_accuracy": 0.7992,
+  "total_correct_properties": 1706,
+  "property_accuracy": 0.8021,
   "by_cycle_type": {
     "BRY": {
       "score": 0.8457,
@@ -18,7 +18,7 @@
       "count": 12
     },
     "RNK": {
-      "score": 0.9055,
+      "score": 0.9132,
       "count": 27
     },
     "VCR": {
@@ -37,7 +37,7 @@
     },
     "C": {
       "count": 27,
-      "score": 0.7735
+      "score": 0.7812
     }
   },
   "by_fluid": {
@@ -51,7 +51,7 @@
     },
     "Water": {
       "count": 27,
-      "score": 0.9055
+      "score": 0.9132
     },
     "R-134a": {
       "count": 15,
@@ -65,7 +65,7 @@
     },
     "actual": {
       "count": 77,
-      "score": 0.7955
+      "score": 0.7982
     }
   },
   "by_step_type": {
@@ -91,13 +91,13 @@
       "score": 0.6545
     },
     "q_in": {
-      "score": 0.9273
+      "score": 0.9455
     },
     "w_turb": {
       "score": 0.8667
     },
     "w_net": {
-      "score": 0.7455
+      "score": 0.7636
     },
     "eta_th": {
       "score": 0.9091
@@ -130,10 +130,10 @@
       "score": 1.0
     },
     "s_gen_total": {
-      "score": 0.9434
+      "score": 0.9623
     },
     "energy_balance_error": {
-      "score": 0.9762
+      "score": 1.0
     },
     "ef1": {
       "score": 0.7037
@@ -226,7 +226,7 @@
       "score": 0.5833
     },
     "w_pump": {
-      "score": 0.9487
+      "score": 1.0
     },
     "w_steam_turb": {
       "score": 0.1667
@@ -368,6 +368,6 @@
     "mean_output": 986.2
   },
   "generated_at": "2026-03-16T06:24:54.546039+00:00",
-  "reextracted_at": "2026-03-17T08:01:31.021470+00:00",
+  "reextracted_at": "2026-03-17T09:17:01.138352+00:00",
   "batch_id": "batch_76a9c25d-bffd-4b33-b0fd-3f59b4470a0a"
 }

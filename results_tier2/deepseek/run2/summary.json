@@ -2,15 +2,15 @@
   "provider": "deepseek",
   "model": "deepseek-reasoner",
   "tier": 2,
-  "overall_score": 0.9127,
+  "overall_score": 0.9183,
   "total_questions": 101,
   "total_responses": 101,
   "total_properties": 748,
-  "total_correct_properties": 686,
-  "property_accuracy": 0.9171,
+  "total_correct_properties": 689,
+  "property_accuracy": 0.9211,
   "by_component": {
     "turbine": {
-      "score": 0.9137,
+      "score": 0.9378,
       "count": 18
     },
     "compressor": {
@@ -18,7 +18,7 @@
       "count": 14
     },
     "pump": {
-      "score": 0.987,
+      "score": 1.0,
       "count": 10
     },
     "heat_exchanger": {
@@ -45,7 +45,7 @@
     },
     "B": {
       "count": 35,
-      "score": 0.888
+      "score": 0.9042
     },
     "C": {
       "count": 30,
@@ -55,11 +55,11 @@
   "by_fluid": {
     "Water": {
       "count": 74,
-      "score": 0.9345
+      "score": 0.9363
     },
     "Air": {
       "count": 17,
-      "score": 0.9042
+      "score": 0.9298
     },
     "R134a": {
       "count": 10,
@@ -74,19 +74,19 @@
       "score": 0.8906
     },
     "h2s": {
-      "score": 0.8929
+      "score": 0.9107
     },
     "h2": {
       "score": 0.9265
     },
     "w_out": {
-      "score": 0.8333
+      "score": 0.8889
     },
     "s2": {
       "score": 0.907
     },
     "s_gen": {
-      "score": 0.9778
+      "score": 1.0
     },
     "x_dest": {
       "score": 0.75
@@ -177,5 +177,5 @@
     "mean_output": 13773.1
   },
   "generated_at": "2026-03-15T16:30:11.197333+00:00",
-  "reextracted_at": "2026-03-17T07:50:28.664106+00:00"
+  "reextracted_at": "2026-03-17T09:14:25.103492+00:00"
 }
