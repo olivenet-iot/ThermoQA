@@ -2,12 +2,12 @@
   "provider": "deepseek",
   "model": "deepseek-reasoner",
   "tier": 3,
-  "overall_score": 0.8302,
+  "overall_score": 0.8359,
   "total_questions": 82,
   "total_responses": 82,
   "total_properties": 2127,
-  "total_correct_properties": 1830,
-  "property_accuracy": 0.8604,
+  "total_correct_properties": 1847,
+  "property_accuracy": 0.8684,
   "by_cycle_type": {
     "RNK": {
       "score": 0.8899,
@@ -18,7 +18,7 @@
       "count": 28
     },
     "VCR": {
-      "score": 0.637,
+      "score": 0.6686,
       "count": 15
     },
     "CCGT": {
@@ -33,7 +33,7 @@
     },
     "C": {
       "count": 27,
-      "score": 0.8115
+      "score": 0.829
     },
     "B": {
       "count": 26,
@@ -51,7 +51,7 @@
     },
     "R-134a": {
       "count": 15,
-      "score": 0.637
+      "score": 0.6686
     },
     "Air+Water": {
       "count": 12,
@@ -65,21 +65,21 @@
     },
     "actual": {
       "count": 77,
-      "score": 0.8205
+      "score": 0.8267
     }
   },
   "by_step_type": {
     "h1": {
-      "score": 0.9878
+      "score": 1.0
     },
     "h2": {
       "score": 0.9512
     },
     "h3": {
-      "score": 0.939
+      "score": 0.9512
     },
     "h4": {
-      "score": 0.9024
+      "score": 0.9146
     },
     "w_pump": {
       "score": 1.0
@@ -100,16 +100,16 @@
       "score": 0.7818
     },
     "s1": {
-      "score": 0.9623
+      "score": 0.9811
     },
     "s2": {
-      "score": 0.9623
+      "score": 0.9811
     },
     "s3": {
-      "score": 0.9623
+      "score": 0.9811
     },
     "s4": {
-      "score": 0.9623
+      "score": 0.9811
     },
     "s_gen_pump": {
       "score": 1.0
@@ -121,10 +121,10 @@
       "score": 1.0
     },
     "s_gen_cond": {
-      "score": 0.9143
+      "score": 0.9429
     },
     "s_gen_total": {
-      "score": 0.9811
+      "score": 1.0
     },
     "ef1": {
       "score": 0.8148
@@ -157,7 +157,7 @@
       "score": 0.9286
     },
     "energy_balance_error": {
-      "score": 0.9762
+      "score": 1.0
     },
     "x_dest_pump": {
       "score": 0.5833
@@ -211,7 +211,7 @@
       "score": 0.6909
     },
     "s_gen_comp": {
-      "score": 0.9722
+      "score": 1.0
     },
     "s_gen_cc": {
       "score": 1.0
@@ -238,13 +238,13 @@
       "score": 0.6667
     },
     "q_L": {
-      "score": 0.8
+      "score": 0.8667
     },
     "q_H": {
       "score": 0.6
     },
     "x4": {
-      "score": 0.9333
+      "score": 1.0
     },
     "COP_R": {
       "score": 0.1333
@@ -253,13 +253,13 @@
       "score": 0.4
     },
     "Q_dot_L": {
-      "score": 0.8667
+      "score": 0.9333
     },
     "s_gen_throttle": {
-      "score": 0.9
+      "score": 1.0
     },
     "s_gen_evap": {
-      "score": 0.9
+      "score": 1.0
     },
     "x_dest_throttle": {
       "score": 0.2
@@ -268,7 +268,7 @@
       "score": 0.2
     },
     "COP_Carnot": {
-      "score": 0.8
+      "score": 1.0
     },
     "T2": {
       "score": 0.9545
@@ -368,6 +368,5 @@
     "mean_output": 18018.6
   },
   "generated_at": "2026-03-12T18:36:05.359877+00:00",
-  "rescored_at": "2026-03-15T12:09:53.625388+00:00",
-  "reextracted_at": "2026-03-12T19:21:36.496680+00:00"
+  "reextracted_at": "2026-03-17T09:28:29.404462+00:00"
 }

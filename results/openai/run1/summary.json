@@ -1,7 +1,6 @@
 {
   "provider": "openai",
   "model": "gpt-5.4",
-  "batch_id": "batch_69abdc83bf2c8190b5140bc1f163bcde",
   "total_questions": 110,
   "total_responses": 110,
   "total_properties": 290,
@@ -85,7 +84,7 @@
     "mean_latency_s": 0,
     "min_latency_s": 0,
     "max_latency_s": 0,
-    "note": "Batch API \u2014 no per-request latency available"
+    "note": "Batch API — no per-request latency available"
   },
   "tokens": {
     "total_input": 30038,
@@ -93,5 +92,7 @@
     "mean_input": 273.1,
     "mean_output": 10797.8
   },
-  "generated_at": "2026-03-08T09:48:33.356225+00:00"
+  "reextracted_at": "2026-03-17T09:22:49.168643+00:00",
+  "generated_at": "2026-03-08T09:48:33.356225+00:00",
+  "batch_id": "batch_69abdc83bf2c8190b5140bc1f163bcde"
 }

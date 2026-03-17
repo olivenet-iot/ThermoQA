@@ -2,27 +2,27 @@
   "provider": "minimax",
   "model": "MiniMax-M2.5",
   "tier": 2,
-  "overall_score": 0.7341,
+  "overall_score": 0.7709,
   "total_questions": 101,
   "total_responses": 101,
   "total_properties": 748,
-  "total_correct_properties": 566,
-  "property_accuracy": 0.7567,
+  "total_correct_properties": 601,
+  "property_accuracy": 0.8035,
   "by_component": {
     "turbine": {
-      "score": 0.696,
+      "score": 0.7043,
       "count": 18
     },
     "compressor": {
-      "score": 0.5073,
+      "score": 0.5706,
       "count": 14
     },
     "pump": {
-      "score": 0.8852,
+      "score": 0.9852,
       "count": 10
     },
     "heat_exchanger": {
-      "score": 0.8412,
+      "score": 0.8864,
       "count": 19
     },
     "boiler": {
@@ -30,7 +30,7 @@
       "count": 14
     },
     "mixing_chamber": {
-      "score": 0.8062,
+      "score": 0.875,
       "count": 12
     },
     "nozzle": {
@@ -45,17 +45,17 @@
     },
     "B": {
       "count": 35,
-      "score": 0.7604
+      "score": 0.8053
     },
     "C": {
       "count": 30,
-      "score": 0.7231
+      "score": 0.7948
     }
   },
   "by_fluid": {
     "Water": {
       "count": 74,
-      "score": 0.7116
+      "score": 0.7502
     },
     "Air": {
       "count": 17,
@@ -63,72 +63,72 @@
     },
     "R134a": {
       "count": 10,
-      "score": 0.4953
+      "score": 0.5813
     }
   },
   "by_step_type": {
     "h1": {
-      "score": 0.8971
+      "score": 0.9559
     },
     "s1": {
-      "score": 0.8125
+      "score": 0.875
     },
     "h2s": {
-      "score": 0.6071
+      "score": 0.625
     },
     "h2": {
-      "score": 0.6765
+      "score": 0.7059
     },
     "w_out": {
-      "score": 0.3889
+      "score": 0.4444
     },
     "s2": {
-      "score": 0.7674
+      "score": 0.8605
     },
     "s_gen": {
-      "score": 0.9333
+      "score": 1.0
     },
     "x_dest": {
       "score": 0.4
     },
     "eta_II": {
-      "score": 0.6
+      "score": 0.5667
     },
     "w_in": {
-      "score": 0.5833
+      "score": 0.625
     },
     "h_h_in": {
-      "score": 0.9474
+      "score": 1.0
     },
     "h_h_out": {
-      "score": 0.8421
-    },
-    "h_c_in": {
-      "score": 0.6316
-    },
-    "Q_dot": {
       "score": 0.9474
     },
+    "h_c_in": {
+      "score": 0.6842
+    },
+    "Q_dot": {
+      "score": 1.0
+    },
     "h_c_out": {
-      "score": 0.8421
+      "score": 0.8947
     },
     "T_c_out": {
       "score": 0.6842
     },
     "s_h_in": {
-      "score": 0.9167
+      "score": 1.0
     },
     "s_h_out": {
-      "score": 0.9167
+      "score": 1.0
     },
     "s_c_in": {
-      "score": 0.9167
+      "score": 1.0
     },
     "s_c_out": {
-      "score": 0.9167
+      "score": 1.0
     },
     "S_gen_dot": {
-      "score": 0.8
+      "score": 0.9
     },
     "X_dest_dot": {
       "score": 0.2
@@ -149,16 +149,16 @@
       "score": 0.9
     },
     "m3": {
-      "score": 0.9167
+      "score": 1.0
     },
     "h3": {
-      "score": 0.8333
-    },
-    "T3": {
       "score": 0.9167
     },
+    "T3": {
+      "score": 1.0
+    },
     "s3": {
-      "score": 0.875
+      "score": 1.0
     },
     "V2": {
       "score": 0.5
@@ -177,5 +177,5 @@
     "mean_output": 11658.9
   },
   "generated_at": "2026-03-09T23:09:55.608189+00:00",
-  "reextracted_at": "2026-03-10T05:34:17.347351+00:00"
+  "reextracted_at": "2026-03-17T09:24:25.540814+00:00"
 }

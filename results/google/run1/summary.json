@@ -68,11 +68,11 @@
   "per_difficulty": {
     "easy": {
       "n_questions": 52,
-      "mean_score": 0.9808
+      "mean_score": 1.0
     },
     "medium": {
       "n_questions": 30,
-      "mean_score": 0.9556
+      "mean_score": 0.9889
     },
     "hard": {
       "n_questions": 28,
@@ -91,6 +91,6 @@
     "mean_input": 310.7,
     "mean_output": 822.6
   },
-  "reextracted_at": "2026-03-08T09:45:40.751790+00:00",
+  "reextracted_at": "2026-03-17T09:23:00.545136+00:00",
   "generated_at": "2026-03-08T09:48:33.324020+00:00"
 }

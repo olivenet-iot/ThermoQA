@@ -2,28 +2,60 @@
   "provider": "minimax",
   "model": "MiniMax-M2.5",
   "tier": 3,
-  "overall_score": 0.4159,
+  "overall_score": 0.5139,
   "total_questions": 82,
   "total_responses": 82,
   "total_properties": 2127,
-  "total_correct_properties": 853,
-  "property_accuracy": 0.401,
+  "total_correct_properties": 1159,
+  "property_accuracy": 0.5449,
   "by_cycle_type": {
     "RNK": {
-      "score": 0.4569,
+      "score": 0.524,
       "count": 27
     },
     "BRY": {
-      "score": 0.6383,
+      "score": 0.7181,
       "count": 28
     },
     "VCR": {
-      "score": 0.1501,
+      "score": 0.2958,
       "count": 15
     },
     "CCGT": {
-      "score": 0.1369,
+      "score": 0.2873,
       "count": 12
+    }
+  },
+  "by_depth": {
+    "A": {
+      "count": 29,
+      "score": 0.4193
+    },
+    "C": {
+      "count": 27,
+      "score": 0.508
+    },
+    "B": {
+      "count": 26,
+      "score": 0.6254
+    }
+  },
+  "by_fluid": {
+    "Water": {
+      "count": 27,
+      "score": 0.524
+    },
+    "Air": {
+      "count": 28,
+      "score": 0.7181
+    },
+    "R-134a": {
+      "count": 15,
+      "score": 0.2958
+    },
+    "Air+Water": {
+      "count": 12,
+      "score": 0.2873
     }
   },
   "by_ideal_vs_actual": {
@@ -33,104 +65,72 @@
     },
     "actual": {
       "count": 77,
-      "score": 0.3848
-    }
-  },
-  "by_depth": {
-    "A": {
-      "count": 29,
-      "score": 0.397
-    },
-    "C": {
-      "count": 27,
-      "score": 0.3545
-    },
-    "B": {
-      "count": 26,
-      "score": 0.5006
-    }
-  },
-  "by_fluid": {
-    "Water": {
-      "count": 27,
-      "score": 0.4569
-    },
-    "Air": {
-      "count": 28,
-      "score": 0.6383
-    },
-    "R-134a": {
-      "count": 15,
-      "score": 0.1501
-    },
-    "Air+Water": {
-      "count": 12,
-      "score": 0.1369
+      "score": 0.4892
     }
   },
   "by_step_type": {
     "h1": {
-      "score": 0.6585
+      "score": 0.8415
     },
     "h2": {
-      "score": 0.5122
+      "score": 0.6585
     },
     "h3": {
-      "score": 0.5
+      "score": 0.5854
     },
     "h4": {
-      "score": 0.378
+      "score": 0.4634
     },
     "w_pump": {
-      "score": 0.7179
+      "score": 0.9231
     },
     "q_in": {
-      "score": 0.6
+      "score": 0.6909
     },
     "w_turb": {
-      "score": 0.4667
+      "score": 0.5556
     },
     "w_net": {
-      "score": 0.3636
+      "score": 0.4
     },
     "eta_th": {
-      "score": 0.4909
+      "score": 0.5818
     },
     "W_dot_net": {
-      "score": 0.3636
+      "score": 0.4
     },
     "s1": {
-      "score": 0.566
+      "score": 0.8113
     },
     "s2": {
-      "score": 0.566
+      "score": 0.8113
     },
     "s3": {
-      "score": 0.566
+      "score": 0.8113
     },
     "s4": {
-      "score": 0.566
+      "score": 0.7925
     },
     "s_gen_pump": {
-      "score": 0.6
+      "score": 0.92
     },
     "s_gen_boiler": {
-      "score": 0.6471
+      "score": 0.7059
     },
     "s_gen_turb": {
-      "score": 0.7931
+      "score": 1.0
     },
     "s_gen_cond": {
-      "score": 0.4857
+      "score": 0.7143
     },
     "s_gen_total": {
-      "score": 0.5283
+      "score": 0.717
     },
     "ef1": {
-      "score": 0.2593
+      "score": 0.2963
     },
     "ef2": {
-      "score": 0.2593
+      "score": 0.2963
     },
     "ef3": {
       "score": 0.2593
@@ -151,25 +151,25 @@
       "score": 0.2609
     },
     "h2s": {
-      "score": 0.4935
+      "score": 0.6364
     },
     "h4s": {
-      "score": 0.3095
+      "score": 0.3333
     },
     "energy_balance_error": {
-      "score": 0.6429
+      "score": 0.9048
     },
     "x_dest_pump": {
-      "score": 0.25
+      "score": 0.4167
     },
     "x_dest_turb": {
       "score": 0.3077
     },
     "h5": {
-      "score": 0.4375
+      "score": 0.6562
     },
     "h6": {
-      "score": 0.4062
+      "score": 0.625
     },
     "w_HPT": {
       "score": 0.1
@@ -178,22 +178,22 @@
       "score": 0.3
     },
     "s5": {
-      "score": 0.3
+      "score": 0.55
     },
     "s6": {
-      "score": 0.35
+      "score": 0.7
     },
     "s_gen_HPT": {
-      "score": 0.6667
+      "score": 1.0
     },
     "s_gen_reheater": {
-      "score": 0.6667
+      "score": 1.0
     },
     "s_gen_LPT": {
-      "score": 0.6667
+      "score": 1.0
     },
     "ef5": {
-      "score": 0.0
+      "score": 0.1
     },
     "ef6": {
       "score": 0.1
@@ -208,16 +208,16 @@
       "score": 0.0
     },
     "w_comp": {
-      "score": 0.3273
+      "score": 0.5091
     },
     "s_gen_comp": {
-      "score": 0.5556
+      "score": 0.9167
     },
     "s_gen_cc": {
-      "score": 0.6154
+      "score": 0.8077
     },
     "s_gen_hr": {
-      "score": 0.7778
+      "score": 1.0
     },
     "x_dest_cc": {
       "score": 0.3077
@@ -229,37 +229,37 @@
       "score": 0.1765
     },
     "h5s": {
-      "score": 0.4
+      "score": 0.6
     },
     "s_gen_regen": {
-      "score": 0.3333
+      "score": 1.0
     },
     "x_dest_regen": {
-      "score": 0.0
+      "score": 0.3333
     },
     "q_L": {
-      "score": 0.0
+      "score": 0.1333
     },
     "q_H": {
       "score": 0.0667
     },
     "x4": {
-      "score": 0.2
+      "score": 0.2667
     },
     "COP_R": {
-      "score": 0.0
+      "score": 0.0667
     },
     "W_dot_comp": {
-      "score": 0.0
+      "score": 0.1333
     },
     "Q_dot_L": {
-      "score": 0.0
+      "score": 0.2
     },
     "s_gen_throttle": {
-      "score": 0.4
+      "score": 0.8
     },
     "s_gen_evap": {
-      "score": 0.4
+      "score": 0.9
     },
     "x_dest_throttle": {
       "score": 0.0
@@ -271,22 +271,22 @@
       "score": 0.2
     },
     "T2": {
-      "score": 0.2273
+      "score": 0.5455
     },
     "T4": {
       "score": 0.0556
     },
     "T5": {
-      "score": 0.0
+      "score": 0.25
     },
     "h7s": {
-      "score": 0.3333
+      "score": 0.6667
     },
     "h7": {
-      "score": 0.3333
+      "score": 0.6667
     },
     "h8": {
-      "score": 0.0833
+      "score": 0.25
     },
     "h9s": {
       "score": 0.0833
@@ -301,7 +301,7 @@
       "score": 0.0833
     },
     "w_gas_turb": {
-      "score": 0.0
+      "score": 0.1667
     },
     "w_steam_turb": {
       "score": 0.0833
@@ -310,31 +310,31 @@
       "score": 0.0833
     },
     "eta_combined": {
-      "score": 0.1667
+      "score": 0.25
     },
     "s7": {
-      "score": 0.25
+      "score": 0.625
     },
     "s8": {
-      "score": 0.125
+      "score": 0.25
     },
     "s9": {
-      "score": 0.25
+      "score": 0.625
     },
     "s_gen_gas_turb": {
-      "score": 0.25
+      "score": 0.5
     },
     "s_gen_HRSG": {
-      "score": 0.25
+      "score": 0.5
     },
     "s_gen_steam_turb": {
-      "score": 0.25
+      "score": 0.625
     },
     "energy_balance_error_gas": {
       "score": 0.0
     },
     "energy_balance_error_steam": {
-      "score": 0.25
+      "score": 0.5
     },
     "ef7": {
       "score": 0.0
@@ -349,7 +349,7 @@
       "score": 0.0
     },
     "x_dest_HRSG": {
-      "score": 0.0
+      "score": 0.25
     },
     "x_dest_steam_turb": {
       "score": 0.0
@@ -367,5 +367,6 @@
     "mean_input": 681.6,
     "mean_output": 15233.7
   },
-  "generated_at": "2026-03-16T17:59:19.268968+00:00"
+  "generated_at": "2026-03-16T17:59:19.268968+00:00",
+  "reextracted_at": "2026-03-17T09:27:30.606664+00:00"
 }
