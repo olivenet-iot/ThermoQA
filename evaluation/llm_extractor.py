@@ -38,14 +38,22 @@ class LLMExtractor:
             if self._openai_client is None:
                 from openai import OpenAI
                 self._openai_client = OpenAI()
-            response = self._openai_client.chat.completions.create(
-                model=self.model,
-                messages=[
+            # Reasoning models (o-series) use max_completion_tokens, no temperature
+            # Standard models (gpt-*) use max_tokens + temperature=0
+            is_reasoning = self.model.startswith("o")
+            kwargs = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system},
                     {"role": "user", "content": user_prompt},
                 ],
-                max_completion_tokens=max_tokens,
-            )
+            }
+            if is_reasoning:
+                kwargs["max_completion_tokens"] = max_tokens
+            else:
+                kwargs["max_tokens"] = max_tokens
+                kwargs["temperature"] = 0
+            response = self._openai_client.chat.completions.create(**kwargs)
             return response.choices[0].message.content
         else:
             # Anthropic path (default)

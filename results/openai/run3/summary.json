@@ -1,7 +1,6 @@
 {
   "provider": "openai",
   "model": "gpt-5.4",
-  "batch_id": "batch_69b7f78005308190a5ea4a7851f702ce",
   "total_questions": 110,
   "total_responses": 110,
   "total_properties": 290,
@@ -93,5 +92,7 @@
     "mean_input": 273.1,
     "mean_output": 10685.9
   },
-  "generated_at": "2026-03-16T13:14:53.610311+00:00"
+  "reextracted_at": "2026-03-17T08:22:21.300801+00:00",
+  "generated_at": "2026-03-16T13:14:53.610311+00:00",
+  "batch_id": "batch_69b7f78005308190a5ea4a7851f702ce"
 }

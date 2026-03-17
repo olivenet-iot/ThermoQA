@@ -2,12 +2,12 @@
   "provider": "google",
   "model": "gemini-3.1-pro-preview",
   "tier": 2,
-  "overall_score": 0.8985,
+  "overall_score": 0.9084,
   "total_questions": 101,
   "total_responses": 101,
   "total_properties": 748,
-  "total_correct_properties": 663,
-  "property_accuracy": 0.8864,
+  "total_correct_properties": 668,
+  "property_accuracy": 0.893,
   "by_component": {
     "turbine": {
       "score": 0.9294,
@@ -18,7 +18,7 @@
       "count": 14
     },
     "pump": {
-      "score": 0.9,
+      "score": 1.0,
       "count": 10
     },
     "heat_exchanger": {
@@ -41,7 +41,7 @@
   "by_depth": {
     "A": {
       "count": 36,
-      "score": 0.8792
+      "score": 0.907
     },
     "B": {
       "count": 35,
@@ -55,7 +55,7 @@
   "by_fluid": {
     "Water": {
       "count": 74,
-      "score": 0.9624
+      "score": 0.9759
     },
     "Air": {
       "count": 17,
@@ -68,16 +68,16 @@
   },
   "by_step_type": {
     "h1": {
-      "score": 0.9265
+      "score": 0.9412
     },
     "s1": {
-      "score": 0.7188
+      "score": 0.7344
     },
     "h2s": {
-      "score": 0.9107
+      "score": 0.9286
     },
     "h2": {
-      "score": 0.9265
+      "score": 0.9412
     },
     "w_out": {
       "score": 0.8889
@@ -95,7 +95,7 @@
       "score": 0.9
     },
     "w_in": {
-      "score": 0.8333
+      "score": 0.875
     },
     "h_h_in": {
       "score": 1.0
@@ -176,5 +176,6 @@
     "mean_input": 415.7,
     "mean_output": 1353.5
   },
-  "generated_at": "2026-03-16T14:58:39.166981+00:00"
+  "generated_at": "2026-03-16T14:58:39.166981+00:00",
+  "reextracted_at": "2026-03-17T08:32:13.814198+00:00"
 }

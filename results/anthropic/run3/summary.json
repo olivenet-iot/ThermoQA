@@ -4,16 +4,16 @@
   "total_questions": 110,
   "total_responses": 110,
   "total_properties": 290,
-  "total_correct_properties": 254,
-  "property_accuracy": 0.8759,
-  "mean_question_score": 0.9152,
+  "total_correct_properties": 274,
+  "property_accuracy": 0.9448,
+  "mean_question_score": 0.9621,
   "per_category": {
     "subcooled_liquid": {
       "n_questions": 10,
       "n_props": 21,
-      "n_correct": 19,
-      "mean_score": 0.9,
-      "accuracy": 0.9048
+      "n_correct": 21,
+      "mean_score": 1.0,
+      "accuracy": 1.0
     },
     "saturated_liquid": {
       "n_questions": 12,
@@ -39,16 +39,16 @@
     "superheated_vapor": {
       "n_questions": 20,
       "n_props": 48,
-      "n_correct": 42,
-      "mean_score": 0.9,
-      "accuracy": 0.875
+      "n_correct": 48,
+      "mean_score": 1.0,
+      "accuracy": 1.0
     },
     "supercritical": {
       "n_questions": 10,
       "n_props": 45,
-      "n_correct": 18,
-      "mean_score": 0.4667,
-      "accuracy": 0.4
+      "n_correct": 30,
+      "mean_score": 0.6833,
+      "accuracy": 0.6667
     },
     "phase_determination": {
       "n_questions": 15,
@@ -68,15 +68,15 @@
   "per_difficulty": {
     "easy": {
       "n_questions": 52,
-      "mean_score": 0.9423
+      "mean_score": 0.9808
     },
     "medium": {
       "n_questions": 30,
-      "mean_score": 0.9667
+      "mean_score": 1.0
     },
     "hard": {
       "n_questions": 28,
-      "mean_score": 0.8095
+      "mean_score": 0.8869
     }
   },
   "errors": 0,
@@ -92,7 +92,7 @@
     "mean_input": 323.8,
     "mean_output": 13434.6
   },
-  "reextracted_at": "2026-03-17T05:55:35.247051+00:00",
+  "reextracted_at": "2026-03-17T08:19:23.454505+00:00",
   "generated_at": "2026-03-16T17:07:14.924664+00:00",
   "batch_id": "msgbatch_017FqSmxudTeDjWwmbyyhtAo"
 }

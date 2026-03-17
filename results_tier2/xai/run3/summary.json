@@ -2,174 +2,173 @@
   "provider": "xai",
   "model": "grok-4.20-beta-0309-reasoning",
   "tier": 2,
-  "overall_score": 0.6495,
+  "overall_score": 0.8829,
   "total_questions": 101,
   "total_responses": 101,
   "total_properties": 748,
-  "total_correct_properties": 504,
-  "property_accuracy": 0.6738,
+  "total_correct_properties": 656,
+  "property_accuracy": 0.877,
   "by_component": {
     "boiler": {
-      "score": 0.8571,
+      "score": 0.9286,
       "count": 14
     },
     "compressor": {
-      "score": 0.2812,
+      "score": 0.6869,
       "count": 14
     },
     "heat_exchanger": {
-      "score": 0.6019,
+      "score": 0.8598,
       "count": 19
     },
     "mixing_chamber": {
-      "score": 0.9212,
+      "score": 0.9783,
       "count": 12
     },
     "nozzle": {
-      "score": 0.6675,
+      "score": 0.8791,
       "count": 14
     },
     "pump": {
-      "score": 0.8126,
+      "score": 0.9778,
       "count": 10
     },
     "turbine": {
-      "score": 0.539,
+      "score": 0.9108,
       "count": 18
     }
   },
   "by_depth": {
     "A": {
       "count": 36,
-      "score": 0.554
+      "score": 0.8404
     },
     "B": {
       "count": 35,
-      "score": 0.5774
+      "score": 0.8826
     },
     "C": {
       "count": 30,
-      "score": 0.8482
+      "score": 0.9342
     }
   },
   "by_fluid": {
     "Water": {
       "count": 74,
-      "score": 0.7361
+      "score": 0.946
     },
     "Air": {
       "count": 17,
-      "score": 0.5705
+      "score": 0.8711
     },
     "R134a": {
       "count": 10,
-      "score": 0.1426
+      "score": 0.4357
     }
   },
   "by_step_type": {
     "h_in": {
-      "score": 0.8571
+      "score": 0.9286
     },
     "h_out": {
-      "score": 0.8571
+      "score": 0.9286
     },
     "q_in": {
-      "score": 0.8571
+      "score": 0.9286
     },
     "s_in": {
-      "score": 0.9
+      "score": 1.0
     },
     "s_out": {
-      "score": 0.9
+      "score": 1.0
     },
     "s_gen": {
-      "score": 0.7111
+      "score": 1.0
     },
     "x_dest": {
-      "score": 0.8
+      "score": 0.9
     },
     "eta_II": {
-      "score": 0.8
+      "score": 0.9
     },
     "h1": {
-      "score": 0.6029
+      "score": 0.9265
     },
     "s1": {
-      "score": 0.625
+      "score": 0.7188
     },
     "h2s": {
-      "score": 0.5893
+      "score": 0.9286
     },
     "h2": {
-      "score": 0.6765
+      "score": 0.9412
     },
     "w_in": {
-      "score": 0.5
+      "score": 0.8333
     },
     "s2": {
-      "score": 0.6977
+      "score": 0.7674
     },
     "h_h_in": {
-      "score": 0.6842
+      "score": 1.0
     },
     "h_h_out": {
-      "score": 0.6316
+      "score": 1.0
     },
     "h_c_in": {
-      "score": 0.3684
+      "score": 0.4737
     },
     "Q_dot": {
-      "score": 0.6842
+      "score": 1.0
     },
     "h_c_out": {
-      "score": 0.5263
-    },
-    "T_c_out": {
       "score": 0.6316
     },
+    "T_c_out": {
+      "score": 0.8947
+    },
     "s_h_in": {
-      "score": 0.75
+      "score": 1.0
     },
     "s_h_out": {
-      "score": 0.75
+      "score": 1.0
     },
     "s_c_in": {
-      "score": 0.5833
+      "score": 0.6667
     },
     "s_c_out": {
-      "score": 0.5833
+      "score": 0.6667
     },
     "S_gen_dot": {
-      "score": 0.8
+      "score": 1.0
     },
     "X_dest_dot": {
       "score": 0.4
     },
     "m3": {
-      "score": 0.8333
+      "score": 1.0
     },
     "h3": {
       "score": 1.0
     },
     "T3": {
-      "score": 0.9167
+      "score": 1.0
     },
     "s3": {
       "score": 1.0
     },
     "V2": {
-      "score": 0.6429
+      "score": 0.7857
     },
     "w_out": {
-      "score": 0.3889
+      "score": 0.8333
     }
   },
   "errors": 0,
   "timing": {
-    "mean_latency_s": 0,
-    "min_latency_s": 0,
-    "max_latency_s": 0,
-    "note": "Batch API - no per-request latency available"
+    "mean_latency_s": 0.0,
+    "min_latency_s": 0.0,
+    "max_latency_s": 0.0
   },
   "tokens": {
     "total_input": 48901,
@@ -178,5 +177,6 @@
     "mean_output": 645.2
   },
   "generated_at": "2026-03-16T13:17:58.037089+00:00",
+  "reextracted_at": "2026-03-17T08:28:20.684059+00:00",
   "batch_id": "batch_e45a9616-aade-410a-b022-e22600630bc8"
 }

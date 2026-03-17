@@ -2,15 +2,15 @@
   "provider": "deepseek",
   "model": "deepseek-reasoner",
   "tier": 3,
-  "overall_score": 0.7986,
+  "overall_score": 0.8007,
   "total_questions": 82,
   "total_responses": 82,
   "total_properties": 2127,
-  "total_correct_properties": 1763,
-  "property_accuracy": 0.8289,
+  "total_correct_properties": 1765,
+  "property_accuracy": 0.8298,
   "by_cycle_type": {
     "RNK": {
-      "score": 0.8407,
+      "score": 0.8469,
       "count": 27
     },
     "BRY": {
@@ -22,28 +22,18 @@
       "count": 15
     },
     "CCGT": {
-      "score": 0.6463,
+      "score": 0.647,
       "count": 12
-    }
-  },
-  "by_ideal_vs_actual": {
-    "ideal": {
-      "count": 5,
-      "score": 0.9784
-    },
-    "actual": {
-      "count": 77,
-      "score": 0.7869
     }
   },
   "by_depth": {
     "A": {
       "count": 29,
-      "score": 0.7502
+      "score": 0.7559
     },
     "C": {
       "count": 27,
-      "score": 0.7976
+      "score": 0.7979
     },
     "B": {
       "count": 26,
@@ -53,7 +43,7 @@
   "by_fluid": {
     "Water": {
       "count": 27,
-      "score": 0.8407
+      "score": 0.8469
     },
     "Air": {
       "count": 28,
@@ -65,12 +55,22 @@
     },
     "Air+Water": {
       "count": 12,
-      "score": 0.6463
+      "score": 0.647
+    }
+  },
+  "by_ideal_vs_actual": {
+    "ideal": {
+      "count": 5,
+      "score": 0.9784
+    },
+    "actual": {
+      "count": 77,
+      "score": 0.7892
     }
   },
   "by_step_type": {
     "h1": {
-      "score": 0.9878
+      "score": 1.0
     },
     "h2s": {
       "score": 0.9351
@@ -103,7 +103,7 @@
       "score": 0.9091
     },
     "W_dot_net": {
-      "score": 0.6909
+      "score": 0.7091
     },
     "s1": {
       "score": 0.9434
@@ -367,5 +367,6 @@
     "mean_input": 648.5,
     "mean_output": 18463.7
   },
-  "generated_at": "2026-03-16T16:24:36.586332+00:00"
+  "generated_at": "2026-03-16T16:24:36.586332+00:00",
+  "reextracted_at": "2026-03-17T08:55:29.560737+00:00"
 }

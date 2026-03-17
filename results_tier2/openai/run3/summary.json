@@ -166,10 +166,9 @@
   },
   "errors": 0,
   "timing": {
-    "mean_latency_s": 0,
-    "min_latency_s": 0,
-    "max_latency_s": 0,
-    "note": "Batch API - no per-request latency available"
+    "mean_latency_s": 0.0,
+    "min_latency_s": 0.0,
+    "max_latency_s": 0.0
   },
   "tokens": {
     "total_input": 37650,
@@ -178,5 +177,6 @@
     "mean_output": 8936.3
   },
   "generated_at": "2026-03-16T15:19:38.918397+00:00",
+  "reextracted_at": "2026-03-17T08:24:41.153852+00:00",
   "batch_id": "batch_69b7fd6219c081908f25553a14f9224a"
 }
