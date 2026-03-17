@@ -144,10 +144,11 @@ def process_provider(
                 entries.append(json.loads(line))
     print(f"  Loaded {len(entries)} responses from {responses_path}")
 
-    # Score and compare
+    # Score and compare (take-max: only apply LLM extraction when it improves score)
     old_scores = []
     new_scores = []
     deltas = []
+    kept_count = 0
 
     for i, entry in enumerate(entries):
         q = questions_by_id.get(entry["id"])
@@ -167,34 +168,42 @@ def process_provider(
 
         result = score_tier3_question(q, new_extracted)
         new_score = result.weighted_score
-        new_scores.append(new_score)
-        deltas.append(new_score - old_score)
 
-        if not dry_run:
-            # Update entry with new extraction
-            scores = []
-            steps = []
-            for sr in result.step_results:
-                scores.append({
-                    "key": sr.step_id,
-                    "expected": sr.expected,
-                    "extracted": sr.extracted,
-                    "passed": sr.passed,
-                    "error_pct": sr.error_pct,
-                    "error_type": sr.error_type,
-                })
-                steps.append({
-                    "id": sr.step_id,
-                    "expected": sr.expected,
-                    "extracted": sr.extracted,
-                    "weight": sr.weight,
-                    "passed": sr.passed,
-                    "error_pct": sr.error_pct,
-                })
-            entry["extracted"] = {k: v for k, v in new_extracted.items()}
-            entry["scores"] = scores
-            entry["steps"] = steps
-            entry["question_score"] = new_score
+        if new_score >= old_score:
+            new_scores.append(new_score)
+            deltas.append(new_score - old_score)
+
+            if not dry_run:
+                # Update entry with new extraction
+                scores = []
+                steps = []
+                for sr in result.step_results:
+                    scores.append({
+                        "key": sr.step_id,
+                        "expected": sr.expected,
+                        "extracted": sr.extracted,
+                        "passed": sr.passed,
+                        "error_pct": sr.error_pct,
+                        "error_type": sr.error_type,
+                    })
+                    steps.append({
+                        "id": sr.step_id,
+                        "expected": sr.expected,
+                        "extracted": sr.extracted,
+                        "weight": sr.weight,
+                        "passed": sr.passed,
+                        "error_pct": sr.error_pct,
+                    })
+                entry["extracted"] = {k: v for k, v in new_extracted.items()}
+                entry["scores"] = scores
+                entry["steps"] = steps
+                entry["question_score"] = new_score
+        else:
+            # Take-max: keep existing extraction (regex was better)
+            new_scores.append(old_score)
+            deltas.append(0.0)
+            kept_count += 1
+            print(f"  Kept regex for {entry['id']} (LLM regression: {old_score:.1%} -> {new_score:.1%})")
 
         if i < len(entries) - 1:
             time.sleep(0.5)
@@ -216,6 +225,8 @@ def process_provider(
     new_acc = sum(new_scores) / len(new_scores) if new_scores else 0
     print(f"\n  Aggregate: {old_acc:.1%} -> {new_acc:.1%} (delta: {new_acc - old_acc:+.1%})")
     print(f"  Changed: {changed}/{len(entries)} questions")
+    if kept_count:
+        print(f"  Kept regex (LLM regression prevented): {kept_count}/{len(entries)} questions")
 
     if dry_run:
         print(f"  [DRY RUN] No files modified.")
