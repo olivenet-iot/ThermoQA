@@ -1,11 +1,11 @@
 # ThermoQA — Project Handoff Document
 ## A Benchmark for Evaluating Thermodynamic Reasoning in Large Language Models
-### Initiated 6 March 2026 · Updated 15 March 2026 (Session 5)
+### Initiated 6 March 2026 · Updated 17 March 2026 (Session 6)
 
 ---
 
 ## One-Line Summary
-ThermoQA is a comprehensive benchmark to evaluate LLM performance on engineering thermodynamics — from steam table lookups to multi-step exergy analysis and full cycle calculations. **v0.3 is published** with 293 questions (Tier 1 + Tier 2 + Tier 3), 3 tiers, 10 cycle types, 5 model evaluations on HuggingFace and GitHub.
+ThermoQA is a comprehensive benchmark to evaluate LLM performance on engineering thermodynamics — from steam table lookups to multi-step exergy analysis and full cycle calculations. **v0.4 is published** with 293 questions (Tier 1 + Tier 2 + Tier 3), 3 tiers, 10 cycle types, 6 models × 3 independent runs (mean ± std) on HuggingFace and GitHub.
 
 ---
 
@@ -26,93 +26,121 @@ This document is a **continuation prompt** for Claude. It contains all context n
 
 ---
 
-## Current Status: Phase 3 — COMPLETE ✅
+## Current Status: Phase 3.5 — Multi-Run + 6th Model ✅ COMPLETE
 
-### v0.3 Published (13 March 2026)
+### v0.4 Published (17 March 2026)
 
-**Three tiers complete. 293 questions total (110 + 101 + 82). 10 cycle types. 4-layer difficulty. 5 models evaluated. LLM extraction applied. HuggingFace published.**
+**293 questions. 6 models. 3 runs each. LLM extraction (gpt-4.1-mini) with take-max logic. v0.4 published on HuggingFace and GitHub.**
 
-### Final Leaderboard — Tier 1: Property Lookups (110 questions)
+### Final Leaderboard — Tier 1: Property Lookups (110 questions, 3-run mean ± std)
 
-| Rank | Model | Provider | Score | Supercritical | Extraction |
-|------|-------|----------|-------|---------------|------------|
-| 🥇 | Gemini 3.1 Pro | Google | **97.3%** | 76.7% | LLM ✅ |
-| 🥈 | GPT-5.4 | OpenAI | **96.9%** | 86.7% | LLM ✅ |
-| 🥉 | Claude Opus 4.6 | Anthropic | **95.6%** | 48.3% | LLM ✅ |
-| 4 | DeepSeek-R1 | DeepSeek | **89.5%** | 48.3% | Regex (LLM had regression) |
-| 5 | MiniMax M2.5 | MiniMax | **84.5%** | 43.3% | LLM ✅ |
+| Rank | Model | Provider | Score | σ | Easy | Medium | Hard |
+|------|-------|----------|-------|---|------|--------|------|
+| 🥇 | Gemini 3.1 Pro | Google | **97.9%** | ±0.5% | 100% | 99.6% | 92.1% |
+| 🥈 | GPT-5.4 | OpenAI | **97.8%** | ±0.8% | 100% | 95.7% | 95.9% |
+| 🥉 | Claude Opus 4.6 | Anthropic | **96.4%** | ±0.9% | 98.7% | 98.9% | 89.5% |
+| 4 | Grok 4 | xAI | **91.8%** | ±1.2% | 97.9% | 95.0% | 77.2% |
+| 5 | DeepSeek-R1 | DeepSeek | **90.5%** | ±0.2% | 98.1% | 93.2% | 73.6% |
+| 6 | MiniMax M2.5 | MiniMax | **85.2%** | ±0.6% | 92.3% | 85.7% | 71.4% |
 
-### Final Leaderboard — Tier 2: Component Analysis (101 questions, LLM re-extracted)
+#### Tier 1 — Per-Category Breakdown
 
-| Rank | Model | Provider | Score | Water | Air | R-134a | Depth A | Depth B | Depth C | Tok/Q |
-|------|-------|----------|-------|-------|-----|--------|---------|---------|---------|-------|
-| 🥇 | Claude Opus 4.6 | Anthropic | **92.0%** | 96.5% | 95.6% | 53.0% | 90.2% | 91.5% | 94.8% | 30,371 |
-| 🥈 | GPT-5.4 | OpenAI | **91.0%** | 95.2% | 95.8% | 52.0% | 89.8% | 89.2% | 94.7% | 8,986 |
-| 🥉 | Gemini 3.1 Pro | Google | **89.5%** | 97.4% | 81.3% | 44.6% | 87.8% | 88.8% | 92.2% | 1,310 |
-| 4 | DeepSeek-R1 | DeepSeek | **86.9%** | 88.5% | 86.5% | 57.6% | 81.3% | 83.7% | 91.3% | 14,053 |
-| 5 | MiniMax M2.5 | MiniMax | **73.4%** | 61.5% | 76.5% | 35.5% | 71.1% | 65.9% | 44.8% | 11,659 |
+| Category | Questions | Gemini | GPT-5.4 | Opus 4.6 | Grok 4 | DeepSeek | MiniMax |
+|----------|-----------|--------|---------|----------|--------|----------|---------|
+| Subcooled Liquid | 10 | 100% | 100% | 100% | 100% | 100% | 93.3% |
+| Saturated Liquid | 12 | 100% | 100% | 100% | 100% | 100% | 87.5% |
+| Wet Steam | 18 | 100% | 100% | 99.4% | 100% | 94.5% | 92.0% |
+| Saturated Vapor | 10 | 100% | 100% | 100% | 100% | 99.2% | 95.8% |
+| Superheated Vapor | 20 | 99.4% | 99.4% | 98.9% | 99.4% | 92.2% | 85.8% |
+| **Supercritical** | **10** | **77.8%** | **89.5%** | **70.5%** | **52.8%** | **48.9%** | **45.0%** |
+| Phase Determination | 15 | 100% | 100% | 95.5% | 82.2% | 88.9% | 97.8% |
+| Inverse Lookups | 15 | 100% | 91.7% | 100% | 90.0% | 93.3% | 75.9% |
 
-### Tier 2 — By Component
+### Final Leaderboard — Tier 2: Component Analysis (101 questions, 3-run mean ± std)
 
-| Model | Turbine | Compressor | Pump | HX | Boiler | Mixer | Nozzle |
-|-------|---------|-----------|------|-----|--------|-------|--------|
-| Opus 4.6 | 96.9% | 76.3% | 100% | 88.7% | 98.2% | 92.0% | 94.1% |
-| GPT-5.4 | 91.2% | 73.4% | 100% | 84.9% | 97.1% | 98.6% | 97.9% |
-| Gemini 3.1 | 93.5% | 58.5% | 100% | 88.5% | 100% | 97.8% | 91.4% |
-| DeepSeek-R1 | 86.8% | 61.4% | 93.3% | 89.9% | 93.5% | 95.7% | 77.0% |
-| MiniMax M2.5 | 55.6% | 48.6% | 88.5% | 66.6% | 73.0% | 59.6% | 45.7% |
+| Rank | Model | Provider | Score | σ | Water | Air | R-134a |
+|------|-------|----------|-------|---|-------|-----|--------|
+| 🥇 | Claude Opus 4.6 | Anthropic | **92.1%** | ±0.2% | 96.8% | 94.0% | 54.1% |
+| 🥈 | GPT-5.4 | OpenAI | **90.8%** | ±0.5% | 95.6% | 93.6% | 50.4% |
+| 🥉 | Gemini 3.1 Pro | Google | **90.8%** | ±1.2% | 98.2% | 84.0% | 47.6% |
+| 4 | DeepSeek-R1 | DeepSeek | **89.2%** | ±2.5% | 92.0% | 92.4% | 63.4% |
+| 5 | Grok 4 | xAI | **87.9%** | ±0.7% | 93.8% | 88.3% | 44.0% |
+| 6 | MiniMax M2.5 | MiniMax | **76.2%** | ±1.1% | 74.5% | 96.3% | 54.2% |
 
-### Tier 1 → Tier 2 Degradation (multi-step penalty)
+#### Tier 2 — By Component (3-run mean)
 
-| Model | Tier 1 | Tier 2 | Drop | Interpretation |
-|-------|--------|--------|------|----------------|
-| Claude Opus 4.6 | 95.6% | 92.0% | -3.6pp | Best chaining — smallest drop |
-| GPT-5.4 | 96.9% | 91.0% | -5.9pp | |
-| Gemini 3.1 Pro | 97.3% | 89.5% | -7.8pp | Fast but fragile on multi-step |
-| DeepSeek-R1 | 89.5% | 86.9% | -2.6pp | |
-| MiniMax M2.5 | 84.5% | 73.4% | -11.1pp | Catastrophic — can't chain calculations |
+| Component | Opus | GPT-5.4 | Gemini | Grok 4 | DeepSeek | MiniMax |
+|-----------|------|---------|--------|--------|----------|---------|
+| Turbine | 96.9% | 90.8% | 94.4% | 90.0% | 91.9% | 70.1% |
+| **Compressor** | **75.4%** | **71.2%** | **66.3%** | **64.8%** | **67.2%** | **55.5%** |
+| Pump | 100% | 100% | 100% | 99.0% | 98.5% | 97.5% |
+| Heat Exchanger | 90.1% | 84.8% | 89.2% | 85.5% | 91.3% | 87.6% |
+| Boiler | 98.8% | 99.1% | 98.5% | 93.8% | 97.8% | 71.3% |
+| Mixing Chamber | 91.5% | 99.0% | 98.6% | 98.1% | 96.6% | 88.5% |
+| Nozzle | 93.4% | 96.6% | 91.7% | 89.1% | 83.6% | 68.3% |
 
-### LLM Re-extraction Impact (Tier 2)
+#### Tier 2 — By Depth (3-run mean)
 
-| Provider | Regex Score | LLM Score | Delta | Changed |
-|----------|------------|-----------|-------|---------|
-| Anthropic | 85.0% | 92.0% | +7.0pp | 20/101 questions |
-| MiniMax | 61.5% | 73.4% | +11.9pp | 16/101 questions |
-| DeepSeek | 85.1% | 86.9% | +1.8pp | 8/101 questions |
-| Google | 88.9% | 89.5% | +0.6pp | 1/101 questions |
-| OpenAI | 91.0% | 91.0% | +0.0pp | 0/101 questions |
+| Depth | Description | Opus | GPT-5.4 | Gemini | Grok 4 | DeepSeek | MiniMax |
+|-------|-------------|------|---------|--------|--------|----------|---------|
+| A | Energy balance | 90.0% | 88.2% | 90.1% | 82.2% | 86.2% | 71.9% |
+| B | + Entropy generation | 90.8% | 90.8% | 89.5% | 88.3% | 88.8% | 78.7% |
+| C | + Exergy analysis | 96.1% | 93.9% | 93.0% | 94.3% | 93.4% | 78.3% |
 
-### Final Leaderboard — Tier 3: Cycle Analysis (82 questions, 10 cycles, LLM re-extracted)
+### Final Leaderboard — Tier 3: Cycle Analysis (82 questions, 3-run mean ± std)
 
-*Updated 15 March 2026: hrsg_balance_error scoring artifact removed from CCGT B/C questions (was always None).*
+| Rank | Model | Provider | Score | σ | Water | Air | R-134a | Air+Water |
+|------|-------|----------|-------|---|-------|-----|--------|-----------|
+| 🥇 | Claude Opus 4.6 | Anthropic | **93.6%** | ±0.5% | 95.9% | 99.2% | 81.6% | 90.1% |
+| 🥈 | GPT-5.4 | OpenAI | **89.7%** | ±0.1% | 92.1% | 97.8% | 76.6% | 82.0% |
+| 🥉 | Gemini 3.1 Pro | Google | **87.5%** | ±1.5% | 95.2% | 84.2% | 90.9% | 74.0% |
+| 4 | DeepSeek-R1 | DeepSeek | **81.0%** | ±2.2% | 86.0% | 87.7% | 66.8% | 72.2% |
+| 5 | Grok 4 | xAI | **80.4%** | ±0.8% | 90.9% | 83.2% | 73.6% | 58.6% |
+| 6 | MiniMax M2.5 | MiniMax | **52.7%** | ±1.5% | 52.3% | 72.8% | 32.5% | 31.8% |
 
-| Rank | Model | Provider | Score | Water | Air | R-134a | Air+Water | Depth A | Depth B | Depth C | Tok/Q |
-|------|-------|----------|-------|-------|-----|--------|-----------|---------|---------|---------|-------|
-| 🥇 | Claude Opus 4.6 | Anthropic | **91.3%** | 97.9% | 99.5% | 75.1% | 77.3% | 91.4% | 94.8% | 87.0% | ~53K |
-| 🥈 | GPT-5.4 | OpenAI | **88.3%** | 91.5% | 97.4% | 79.2% | 71.7% | 89.9% | 89.9% | 84.6% | ~15K |
-| 🥉 | Gemini 3.1 Pro | Google | **84.1%** | 93.9% | 81.3% | 88.6% | 62.9% | 81.3% | 87.6% | 83.1% | ~2.2K |
-| 4 | DeepSeek-R1 | DeepSeek | **81.2%** | 89.0% | 90.4% | 63.7% | 64.3% | 76.4% | 87.8% | 79.6% | ~18K |
-| 5 | MiniMax M2.5 | MiniMax | **40.2%** | 42.9% | 63.2% | 15.0% | 12.0% | 38.7% | 47.2% | 35.1% | ~15K |
+#### Tier 3 — Per-Cycle-Type Breakdown (3-run mean)
 
-### Tier 3 V2 — By Cycle Type
+| Model | RNK-I | RNK-A | RNK-RH | BRY-I | BRY-A | BRY-AV | BRY-RG | BRY-RV | VCR-A | CCGT |
+|-------|-------|-------|--------|-------|-------|--------|--------|--------|-------|------|
+| Opus 4.6 | 99.3% | 99.8% | 89.5% | 100% | 99.9% | 97.4% | 99.6% | 98.9% | 81.6% | 90.1% |
+| GPT-5.4 | 90.4% | 97.5% | 84.3% | 99.1% | 100% | 96.8% | 100% | 90.3% | 76.6% | 82.0% |
+| Gemini 3.1 | 100% | 99.7% | 87.5% | 96.7% | 97.2% | 69.7% | 96.7% | 48.4% | 90.9% | 74.0% |
+| Grok 4 | 90.4% | 96.6% | 82.5% | 97.5% | 96.8% | 54.9% | 96.7% | 63.8% | 73.6% | 58.6% |
+| DeepSeek-R1 | 95.7% | 89.8% | 78.4% | 98.5% | 99.2% | 76.7% | 99.5% | 52.5% | 66.8% | 72.2% |
+| MiniMax M2.5 | 61.7% | 59.1% | 40.2% | 100% | 99.1% | 27.8% | 89.5% | 35.8% | 32.5% | 31.8% |
 
-| Model | RNK (27q) | BRY (28q) | VCR (15q) | CCGT (12q) |
-|-------|-----------|-----------|-----------|------------|
-| Opus 4.6 | 97.9% | 99.5% | 75.1% | 77.3% |
-| GPT-5.4 | 91.5% | 97.4% | 79.2% | 71.7% |
-| Gemini 3.1 | 93.9% | 81.3% | 88.6% | 62.9% |
-| DeepSeek-R1 | 89.0% | 90.4% | 63.7% | 64.3% |
-| MiniMax M2.5 | 42.9% | 63.2% | 15.0% | 12.0% |
+### Cross-Tier Performance + Composite Score
 
-### Cross-Tier Comparison (T1 → T2 → T3)
+Composite = (110×T1 + 101×T2 + 82×T3) / 293.
 
-| Model | Tier 1 | Tier 2 | Tier 3 | T1→T3 Drop | Interpretation |
-|-------|--------|--------|--------|------------|----------------|
-| Claude Opus 4.6 | 95.6% | 92.0% | 91.3% | -4.3pp | Best chaining — smallest drop across all 3 tiers |
-| GPT-5.4 | 96.9% | 91.0% | 88.3% | -8.6pp | |
-| Gemini 3.1 Pro | 97.3% | 89.5% | 84.1% | -13.2pp | Biggest frontier drop — struggles with multi-step |
-| DeepSeek-R1 | 89.5% | 86.9% | 81.2% | -8.3pp | |
-| MiniMax M2.5 | 84.5% | 73.4% | 40.2% | -44.3pp | Catastrophic collapse on cycle analysis |
+| Model | Tier 1 | Tier 2 | Tier 3 | T1→T3 Drop | Composite |
+|-------|--------|--------|--------|------------|-----------|
+| Claude Opus 4.6 | 96.4% | 92.1% | 93.6% | −2.8 pp | **94.1%** |
+| GPT-5.4 | 97.8% | 90.8% | 89.7% | −8.1 pp | **93.1%** |
+| Gemini 3.1 Pro | 97.9% | 90.8% | 87.5% | −10.4 pp | **92.5%** |
+| DeepSeek-R1 | 90.5% | 89.2% | 81.0% | −9.5 pp | **87.4%** |
+| Grok 4 | 91.8% | 87.9% | 80.4% | −11.4 pp | **87.3%** |
+| MiniMax M2.5 | 85.2% | 76.2% | 52.7% | −32.5 pp | **73.0%** |
+
+### Session 6 Commits (15-17 March 2026)
+
+| Commit | Description |
+|--------|-------------|
+| `f8b29ac` | feat: add xAI/Grok 4 provider + batch scripts for all 3 tiers |
+| `84a1287` | fix: use grok-4.20-beta-0309-reasoning (latest flagship) |
+| `aeb156a` | fix: patch CCGT gas side from CoolProp Air to NASA polynomial |
+| `cf2968c` | feat: add --run N flag for multi-run consistency analysis |
+| `6568245` | feat: add --parallel N flag for concurrent sequential evaluation |
+| `343b2b7` | feat: add --extractor-model flag for configurable LLM extraction |
+| `3523ad9`..`16360bf` | (6 commits) xAI batch API field fixes + OpenAI extractor model compatibility |
+| `6590998` | feat: take-max logic in reextract — keep regex when LLM regresses |
+| `0eaded6` | feat: reextract all runs with take-max LLM extraction (gpt-5-mini) |
+| `823cabb` | feat: reextract run3 with gpt-4.1-mini + fix OpenAI temperature/max_tokens |
+| `cb4c21a` | feat: reextract run2 with gpt-4.1-mini (replacing gpt-5-mini results) |
+| `a8d8c86` | feat: reextract run1 with gpt-4.1-mini (second pass) |
+| `195e4f8` | feat: fix aggregate_runs.py for all tiers + generate final leaderboard |
+| `5b869a5` | feat: comprehensive analysis report for arxiv paper |
+| `40b3846` | docs: update README and HuggingFace with 6-model 3-run results (v0.4) |
 
 ### Session 5 Commits (13-15 March 2026)
 
@@ -164,6 +192,31 @@ This document is a **continuation prompt** for Claude. It contains all context n
 | — | fix: rebuild summary from entry scores, not re-extraction (build_summary_from_entries) |
 | — | feat: add HuggingFace dataset publishing script |
 | — | docs: update README with v0.1 leaderboard and methodology |
+
+---
+
+## Key Findings (Session 6 — Multi-Run + Grok 4)
+
+### 1. Multi-run means shift scores up to 2-3 pp from single-run
+MiniMax T3: 40.2% (single run, Session 5) → 52.7% (3-run mean, Session 6). GPT-5.4 T1: 96.9% → 97.8%. Single-run scores are snapshots, not ground truth. Multi-run means are strictly more reliable and should be used for all published results.
+
+### 2. Standard deviation reveals determinism
+σ ranges from ±0.1% (OpenAI T3 — near-deterministic) to ±2.5% (DeepSeek T2 — high variance). This is a publishable signal: models with native reasoning tokens (DeepSeek, OpenAI) tend toward higher variance on complex problems despite low variance on simpler ones. Tier 1 σ: DeepSeek ±0.2% (most consistent), xAI ±1.2% (most variable). Tier 3 σ: OpenAI ±0.1% (most consistent), DeepSeek ±2.2% (most volatile).
+
+### 3. Extractor model matters — gpt-4.1-mini > gpt-5-mini > Sonnet 4.6
+gpt-5-mini had regressions on several questions where regex extraction was correct. gpt-4.1-mini is cheap ($0.40/M input, $1.60/M output), reliable, and produces no regressions. Sonnet 4.6 (Session 2 extractor) was more expensive and less reliable for structured extraction tasks.
+
+### 4. Take-max eliminates extraction regression
+Per-question max(regex, LLM) is strictly non-decreasing: if LLM extraction regresses on a question, regex result is kept. Implements the Session 2 recommendation. This is now the default strategy for all extraction.
+
+### 5. Grok 4 enters mid-tier
+T1 91.8%, T2 87.9%, T3 80.4%. Composite 87.3% ≈ DeepSeek 87.4%. Strong on property lookups (100% on saturated states, 99.4% on superheated vapor) but weaker on multi-step analysis — especially variable cp air (BRY-AV: 54.9%) and combined cycle (CCGT: 58.6%). xAI API does not expose reasoning tokens separately, resulting in artificially low output token counts.
+
+### 6. CCGT gas side patched to NASA polynomial
+Resolves Session 4 known issue. CCGT gas side now uses NASA 7-coefficient polynomials consistent with BRY-AV/BRY-RV, not CoolProp real-gas Air. Impact: CCGT scores shifted slightly for all models.
+
+### 7. Comprehensive analysis enables paper
+`scripts/comprehensive_analysis.py` (1,766 lines) generates `analysis/comprehensive_report.md` (1,273 lines) with 12 analyses: per-category breakdowns, cross-tier comparisons, multi-run statistics, difficulty analysis, fluid-specific performance, component heatmaps, cycle-type rankings, depth progression, token efficiency, error analysis, and model-specific findings.
 
 ---
 
@@ -269,6 +322,19 @@ Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns o
 
 ---
 
+## Decisions Resolved (Session 6)
+
+| Question | Decision | Reasoning |
+|----------|----------|-----------|
+| Extractor model | gpt-4.1-mini | Cheap ($0.40/M input), reliable, no regressions. Replaced Sonnet 4.6 (Session 2) and gpt-5-mini (mid-Session 6) |
+| Take-max vs replace-all | Take-max | Per-question max(regex, LLM) is strictly non-decreasing. Implements Session 2 recommendation |
+| Number of runs | 3 | σ range 0.1–2.5%, sufficient for paper. Diminishing returns beyond 3 |
+| xAI top-level responses | Copy of run1 | HuggingFace publish expects top-level file per provider |
+| Model display names | "Gemini 3.1 Pro", "MiniMax M2.5" | Match aggregate.json model IDs for consistency |
+| CCGT gas side ground truth | NASA polynomial | Patched from CoolProp "Air" for consistency with BRY-AV/BRY-RV |
+
+---
+
 ## Decisions Resolved (Session 5)
 
 | Question | Decision | Reasoning |
@@ -276,6 +342,18 @@ Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns o
 | hrsg_balance_error always None | **Remove from scoring** | `_compute_consistency()` needs m_dot_air + m_dot_steam, not available in extracted values. Always fails as "missing". HRSG coupling already tested via `m_dot_steam` step (weight=3). Removal eliminates double-penalty without losing coverage |
 | energy_balance_error_gas 0% pass rate | **Keep in scoring** | Unlike hrsg, models HAVE all upstream values (h1-h5, w_comp, w_gt, q_combustion) but produce 10-20% balance errors. Genuine failure, not artifact. Real discriminator |
 | Patch questions.jsonl or regenerate? | **Patch in-place** | Same as V1→V2 strategy. Preserves all existing model responses. Remove from `expected`, `steps`, and question text |
+
+---
+
+## Lessons Learned (Session 6)
+
+| Lesson | Detail |
+|--------|--------|
+| **gpt-5-mini unreliable for extraction** | Switched to gpt-4.1-mini mid-session after discovering regressions. Newer model ≠ better model for structured extraction tasks. Always validate extraction quality before committing to a model |
+| **Multi-run means smooth single-run artifacts** | Up to 2-3 pp difference between single-run and 3-run mean. MiniMax T3 jumped +12.5pp. Single-run leaderboards are misleading |
+| **σ is a publishable signal** | Standard deviation across runs reveals model determinism, a dimension not captured by accuracy alone. Low σ = reliable for production use |
+| **Run comprehensive analysis AFTER extraction is final** | Running analysis mid-extraction produces stale data. Wait until all runs are extracted and aggregated before generating reports |
+| **Take-max should have been Session 2 design** | The Session 2 recommendation to "take max of regex vs LLM" was correct but deferred. Implementing it earlier would have saved re-extraction iterations |
 
 ---
 
@@ -303,7 +381,7 @@ Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns o
 | Consistency scoring | Energy balance closure as scored step | Tests self-consistency, not just accuracy |
 | abs_tolerance for η | 0.5→0.02 | 0.5 let 22% errors pass on dimensionless quantities |
 | OpenAI max_tokens | 16000→65536 | Complex questions exhausted reasoning budget |
-| CCGT ground truth | CoolProp "Air" (not NASA) | CCGT gas side still uses real gas — TODO for future fix |
+| CCGT ground truth | CoolProp "Air" (not NASA) | CCGT gas side still uses real gas — ~~TODO for future fix~~ **FIXED** Session 6 (`aeb156a`) |
 
 ---
 
@@ -317,6 +395,35 @@ Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns o
 | **V1→V2 iteration is normal** | First version always reveals design flaws. Build, test, analyze, fix. Don't try to get it perfect first time |
 | **Patch > Regenerate** | When ground truth changes but parameters don't, patch in-place. Saves all existing model responses |
 | **4-layer difficulty = sustainable benchmark** | Layer 1 for sanity, Layer 4 for ceiling. Benchmark stays relevant as models improve |
+
+---
+
+## What Was Built (Session 6 — Multi-Run + xAI + Extraction Overhaul)
+
+### xAI/Grok 4 Provider
+- `evaluation/runner.py` extended with xAI provider (OpenAI-compatible SDK, `grok-4.20-beta-0309-reasoning`)
+- `scripts/run_batch_xai.py` — Tier 1 xAI batch evaluation
+- `scripts/run_batch_xai_tier2.py` — Tier 2 xAI batch evaluation
+- `scripts/run_batch_xai_tier3.py` — Tier 3 xAI batch evaluation
+- 6 fix commits for xAI batch API field names (`batch_id`, nested `state`, `pagination_token`, `batch_result.response`)
+
+### Multi-Run Infrastructure
+- `--run N` flag on all evaluation scripts (commit `cf2968c`) — stores results in `provider/runN/` subdirectories
+- `--parallel N` flag (commit `6568245`) — concurrent sequential evaluation for throughput
+- Directory layout: `results*/provider/run1/`, `run2/`, `run3/` + top-level `aggregate.json`
+
+### Extraction Overhaul
+- `--extractor-model` flag (commit `343b2b7`) — configurable LLM extraction model (default: gpt-4.1-mini)
+- Dual-path `evaluation/llm_extractor.py`: Anthropic SDK path + OpenAI-compatible path
+- Take-max logic (commit `6590998`): per-question max(regex, LLM) — strictly non-decreasing extraction
+- Migration: Sonnet 4.6 → gpt-5-mini (regressions) → gpt-4.1-mini (final)
+
+### Aggregation & Analysis
+- `scripts/aggregate_runs.py` (~144 lines) — computes mean ± std across 3 runs per model per tier, generates `aggregate.json` with `by_category`, `by_component`, `by_cycle_type`, `by_fluid`, `by_depth` breakdowns
+- `scripts/comprehensive_analysis.py` (~1,766 lines) — 12 paper-grade analyses, generates `analysis/comprehensive_report.md` (~1,273 lines)
+
+### CCGT Ground Truth Fix
+- Commit `aeb156a`: patched CCGT gas side from CoolProp "Air" (real gas) to NASA 7-coefficient polynomial (ideal gas), consistent with BRY-AV/BRY-RV
 
 ---
 
@@ -379,12 +486,15 @@ Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns o
 
 ## Known Issues / TODO
 
-- CCGT gas side still uses CoolProp "Air" (real gas), not NASA polynomial. Should be patched for consistency with BRY-AV/BRY-RV. Impact: CCGT scores may shift when fixed.
+- ~~CCGT gas side still uses CoolProp "Air" (real gas)~~ **FIXED** (Session 6, commit `aeb156a`) — patched to NASA polynomial
 - Google batch API still unreliable for preview models. Sequential preferred.
 - MiniMax re-extraction has ~24 JSON parse failures (garbage model responses).
-- Multi-run consistency analysis not yet done (single run only).
+- ~~Multi-run consistency analysis not yet done (single run only)~~ **DONE** (Session 6, v0.4 — 3 runs × 6 models × 3 tiers)
 - HuggingFace dataset viewer may show "UnexpectedError" for nested JSON.
 - ~~hrsg_balance_error always returned None — scoring artifact~~ **FIXED** (Session 5, commit `1519b89`)
+- `comprehensive_analysis.py` uses stale model display names in some tables ("Gemini 2.5 Pro", "MiniMax M1")
+- Token usage not aggregated across multi-run (single-run values in tables above)
+- MiniMax T3 top-level responses only 71/82 (stale copy — aggregate uses per-run data)
 
 ---
 
@@ -410,7 +520,7 @@ Gemini: ~2.2K tok/Q → 84.1%. Opus: ~53K tok/Q → 91.3%. Diminishing returns o
 
 **Lesson:** LLM extractor is not always better. DeepSeek had regression — Sonnet misextracted 2 questions that regex got right. For DeepSeek, regex results kept.
 
-**Recommendation for future:** Use LLM extractor as primary, but compare with regex. Take the better result per question if needed. Or implement "take max of regex vs LLM" logic.
+**Recommendation for future:** Use LLM extractor as primary, but compare with regex. Take the better result per question if needed. Or implement "take max of regex vs LLM" logic. **→ IMPLEMENTED** (Session 6, commit `6590998`). Take-max is now the default extraction strategy. Extractor model changed from Sonnet 4.6 to gpt-4.1-mini.
 
 ### Reextract CLI (`scripts/reextract.py`)
 ```bash
@@ -553,7 +663,7 @@ Raw response → responses.jsonl (thinking + text preserved)
     ↓
 Quick regex extraction (live progress bar in runner)
     ↓
-LLM Extractor (Sonnet 4.6, temperature=0) via reextract.py
+LLM Extractor (gpt-4.1-mini, temperature=0, take-max vs regex) via reextract.py
     ↓
 Scorer (±2% relative OR ±0.5 absolute tolerance)
     ↓
@@ -573,13 +683,25 @@ Raw response → results_tier2/{provider}/responses.jsonl (incremental flush)
     ↓
 Quick regex (extract_tier2_properties) in runner — live progress bar
     ↓
-LLM Extractor (extract_tier2, Sonnet 4.6) via reextract_tier2.py
+LLM Extractor (extract_tier2, gpt-4.1-mini, take-max) via reextract_tier2.py
     ↓
 Step-level Scorer (score_tier2_question, weighted partial credit)
     ↓
 Summary (by_component, by_depth, by_fluid, by_step_type → summary.json)
     ↓
 Leaderboard (run_evaluation_tier2.py --report)
+```
+
+### Multi-Run Aggregation Pipeline
+
+```
+Run 1 results (provider/run1/summary.json)  ──┐
+Run 2 results (provider/run2/summary.json)  ──┼──→ aggregate_runs.py ──→ aggregate.json (mean ± std)
+Run 3 results (provider/run3/summary.json)  ──┘            │
+                                                           ↓
+                                              comprehensive_analysis.py
+                                                           ↓
+                                              analysis/comprehensive_report.md (12 analyses)
 ```
 
 ### Provider Configuration (Final)
@@ -591,6 +713,7 @@ Leaderboard (run_evaluation_tier2.py --report)
 | Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | `adaptive`, `max_tokens=64000` | `run_batch_anthropic.py` / `_tier2.py` / `_tier3.py` |
 | DeepSeek | DeepSeek-R1 | `deepseek-reasoner` | Native (always reasoning) | Sequential only |
 | MiniMax | MiniMax M2.5 | `MiniMax-M2.5` | Inline `<think>` tags | Sequential only |
+| xAI | Grok 4 | `grok-4.20-beta-0309-reasoning` | Native reasoning | `run_batch_xai.py` / `_tier2.py` / `_tier3.py` |
 | Ollama | (any local) | configurable | varies | Sequential only |
 
 ### Token Usage — Tier 1
@@ -601,7 +724,10 @@ Leaderboard (run_evaluation_tier2.py --report)
 | GPT-5.4 | 273 | 10,798 | 96.9% | 111.4 |
 | Claude Opus 4.6 | 341 | 12,981 | 95.6% | 135.8 |
 | DeepSeek-R1 | 257 | 7,476 | 89.5% | 83.5 |
-| MiniMax M2.5 | 277 | 7,551 | 84.5% | 89.4 |
+| MiniMax M2.5 | 277 | 7,551 | 85.2% | 88.6 |
+| Grok 4 | 380 | 274 | 91.8% | 3.0* |
+
+*Grok 4 output tokens likely exclude reasoning tokens (xAI API does not report them separately).
 
 ### Token Usage — Tier 2
 
@@ -611,7 +737,8 @@ Leaderboard (run_evaluation_tier2.py --report)
 | GPT-5.4 | 373 | 8,986 | 91.0% | 98.7 |
 | Claude Opus 4.6 | 465 | 30,371 | 92.0% | 330.1 |
 | DeepSeek-R1 | 352 | 14,053 | 86.9% | 161.7 |
-| MiniMax M2.5 | 373 | 11,659 | 73.4% | 158.8 |
+| MiniMax M2.5 | 373 | 11,659 | 76.2% | 153.0 |
+| Grok 4 | 406 | 538 | 87.9% | 6.1* |
 
 ### Token Usage — Tier 3
 
@@ -621,7 +748,8 @@ Leaderboard (run_evaluation_tier2.py --report)
 | GPT-5.4 | 680 | 14,896 | 88.3% | 168.7 |
 | Claude Opus 4.6 | 838 | 53,439 | 91.3% | 585.3 |
 | DeepSeek-R1 | 649 | 18,019 | 81.2% | 221.9 |
-| MiniMax M2.5 | 682 | 15,203 | 40.2% | 378.2 |
+| MiniMax M2.5 | 682 | 15,203 | 52.7% | 288.5 |
+| Grok 4 | 587 | 697 | 80.4% | 8.7* |
 
 ---
 
@@ -679,30 +807,40 @@ ThermoQA/
 │       └── metadata.json
 │
 ├── results/                               # Tier 1 per-provider results (gitignored)
-│   ├── google/                            # 97.3%
-│   ├── openai/                            # 96.9%
-│   ├── anthropic/                         # 95.6%
-│   ├── deepseek/                          # 89.5%
-│   └── minimax/                           # 84.5%
+│   ├── google/                            # 97.9% ±0.5%
+│   │   ├── run1/ run2/ run3/             # 3 independent runs
+│   │   └── aggregate.json                 # mean ± std across runs
+│   ├── openai/                            # 97.8% ±0.8%
+│   ├── anthropic/                         # 96.4% ±0.9%
+│   ├── xai/                               # 91.8% ±1.2% (NEW)
+│   ├── deepseek/                          # 90.5% ±0.2%
+│   └── minimax/                           # 85.2% ±0.6%
 │
 ├── results_tier2/                         # Tier 2 per-provider results (gitignored)
-│   ├── google/                            # 89.5%
-│   ├── openai/                            # 91.0%
-│   ├── anthropic/                         # 92.0%
-│   ├── deepseek/                          # 86.9%
-│   └── minimax/                           # 73.4%
+│   ├── anthropic/                         # 92.1% ±0.2%
+│   │   ├── run1/ run2/ run3/
+│   │   └── aggregate.json
+│   ├── openai/                            # 90.8% ±0.5%
+│   ├── google/                            # 90.8% ±1.2%
+│   ├── deepseek/                          # 89.2% ±2.5%
+│   ├── xai/                               # 87.9% ±0.7% (NEW)
+│   └── minimax/                           # 76.2% ±1.1%
 │
 ├── results_tier3/                         # Tier 3 V2 per-provider results (gitignored)
-│   ├── google/                            # 84.1%
-│   ├── openai/                            # 88.3%
-│   ├── anthropic/                         # 91.3%
-│   ├── deepseek/                          # 81.2%
-│   └── minimax/                           # 40.2%
+│   ├── anthropic/                         # 93.6% ±0.5%
+│   │   ├── run1/ run2/ run3/
+│   │   └── aggregate.json
+│   ├── openai/                            # 89.7% ±0.1%
+│   ├── google/                            # 87.5% ±1.5%
+│   ├── deepseek/                          # 81.0% ±2.2%
+│   ├── xai/                               # 80.4% ±0.8% (NEW)
+│   └── minimax/                           # 52.7% ±1.5%
 │
 ├── results_tier3_v1/                      # Tier 3 V1 results (backup)
 │
 ├── analysis/
-│   └── deep_investigation_report.md       # 1200-line report: 12 paper-grade analyses
+│   ├── comprehensive_report.md            # 1273-line report: 12 paper-grade analyses (Session 6)
+│   └── deep_investigation_report.md       # 1200-line report: 12 paper-grade analyses (Session 5)
 │
 ├── scripts/
 │   ├── validate_coolprop.py
@@ -726,6 +864,11 @@ ThermoQA/
 │   ├── rescore_tier3.py                   # NEW: re-score with updated ground truth
 │   ├── patch_variable_cp_ground_truth.py  # NEW: NASA polynomial patch for Air
 │   ├── verify_tier3_prepublish.py         # Pre-publication validation
+│   ├── run_batch_xai.py                   # NEW: Tier 1 xAI batch
+│   ├── run_batch_xai_tier2.py             # NEW: Tier 2 xAI batch
+│   ├── run_batch_xai_tier3.py             # NEW: Tier 3 xAI batch
+│   ├── aggregate_runs.py                  # NEW: compute mean ± std across runs
+│   ├── comprehensive_analysis.py          # NEW: 12 paper-grade analyses (~1766 lines)
 │   ├── deep_investigation.py              # 12 paper-grade analyses → analysis/ report
 │   ├── publish_huggingface.py             # Updated: three tiers, multi-config
 │   └── test_scorer.py
@@ -739,7 +882,7 @@ ThermoQA/
 
 ### Phase 1 — Tier 1: Property Lookups ✅ COMPLETE
 - ✅ 110 questions generated with CoolProp ground truth
-- ✅ 5 frontier models evaluated (Gemini, GPT-5.4, Opus, DeepSeek-R1, MiniMax M2.5)
+- ✅ 6 frontier models evaluated (Gemini, GPT-5.4, Opus, Grok 4, DeepSeek-R1, MiniMax M2.5)
 - ✅ LLM-based extraction pipeline (Sonnet 4.6)
 - ✅ Batch evaluation scripts (Anthropic + OpenAI)
 - ✅ Published on HuggingFace: `olivenet/thermoqa-v0.1`
@@ -752,7 +895,7 @@ ThermoQA/
 - ✅ 101 questions generated, CoolProp validated (748 steps)
 - ✅ Anchor-derive state generation with physics validation
 - ✅ Step-level weighted scoring with partial credit
-- ✅ 5 models evaluated with LLM re-extraction
+- ✅ 6 models evaluated with LLM re-extraction
 - ✅ Google Batch API script added (but unreliable for preview models)
 - ✅ Published on HuggingFace: `olivenet/thermoqa` (two configs)
 - ✅ README updated with both leaderboards
@@ -765,15 +908,19 @@ ThermoQA/
 - ✅ NASA polynomial implementation for variable-cp air (Çengel Table A-17)
 - ✅ V1→V2 hardening: 6 changes (ideal reduction, variable cp, IIR ref state, abs_tolerance, consistency scoring, weight scheme)
 - ✅ 6-tier weighted scoring with abs_tolerance=0.02 for dimensionless quantities
-- ✅ 5 models evaluated with LLM re-extraction
+- ✅ 6 models evaluated with LLM re-extraction (3 runs each, gpt-4.1-mini + take-max)
 - ✅ Published on HuggingFace: `olivenet/thermoqa` (three configs)
 - ✅ README updated with all 3 leaderboards
 
-### Phase 3.5 — Improvements (optional, before publication)
-- ⏳ CCGT gas side: patch from CoolProp "Air" to NASA polynomial for consistency
+### Phase 3.5 — Multi-Run + 6th Model ✅ COMPLETE
+- ✅ xAI/Grok 4 added (6th model, 3 tiers)
+- ✅ Multi-run consistency analysis (3 runs × 6 models × 3 tiers)
+- ✅ Take-max extraction logic (commit `6590998`)
+- ✅ CCGT gas side patched to NASA polynomial (commit `aeb156a`)
+- ✅ gpt-4.1-mini extraction (replaced Sonnet 4.6)
+- ✅ Comprehensive analysis (12 paper-grade analyses, 1,766-line script)
+- ✅ v0.4 published on HuggingFace and GitHub
 - ⏳ EntropyHunter v0.4 evaluation via Ollama (Tier 1 + Tier 2 + Tier 3)
-- ⏳ Multi-run consistency analysis (3 runs, mean ± std)
-- ⏳ "Take max of regex vs LLM" extraction logic
 
 ### Phase 4 — Publication
 - arxiv paper: Tier 1 + Tier 2 + Tier 3 combined (293 questions)
@@ -822,6 +969,7 @@ OPENAI_API_KEY=sk-...
 GOOGLE_API_KEY=AI...
 DEEPSEEK_API_KEY=sk-...
 MINIMAX_API_KEY=...
+XAI_API_KEY=xai-...
 HF_TOKEN=hf_...
 ```
 All loaded automatically via python-dotenv from `.env` file.
