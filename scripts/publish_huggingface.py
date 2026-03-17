@@ -61,7 +61,7 @@ configs:
 ---
 """
 
-PROVIDERS = ["anthropic", "deepseek", "google", "minimax", "openai"]
+PROVIDERS = ["anthropic", "deepseek", "google", "minimax", "openai", "xai"]
 
 TIER1_KEEP = {"id", "model", "response_text", "extracted", "scores", "question_score", "input_tokens", "output_tokens"}
 TIER2_KEEP = TIER1_KEEP | {"component", "depth", "fluid", "steps"}
@@ -250,7 +250,7 @@ def main():
         repo_id=args.repo,
         repo_type="dataset",
         operations=operations,
-        commit_message=f"Update {tier_desc}: remove hrsg_balance_error scoring artifact from CCGT",
+        commit_message=f"Update {tier_desc}: 6-model 3-run results (v0.4)",
     )
 
     print(f"\nDone! Commit: {commit_info.commit_url}")
